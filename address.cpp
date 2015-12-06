@@ -130,6 +130,19 @@ QStringList Address::toDebug(TypeOfData t) const
     return list;
 }
 
+void Address::clear()
+{
+    _rawAddress.clear();
+    _street.clear();
+    _korp.clear();
+    _build.clear();
+    _ename.clear();
+    _additional.clear();
+    _city.clear();
+    _district.clear();
+    _fsubj.clear();
+}
+
 bool Address::isEmpty() const
 {
     return (getRawAddress().isEmpty() &&

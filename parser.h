@@ -17,7 +17,6 @@ signals:
     void finished();
     void headBaseParsed(MapAddressElementPosition head);
 
-
 public slots:
     void process();
 
@@ -35,11 +34,13 @@ private:
     void parseBaseRow();
     void parseInRow();
 
-    void parseCity(QString &str, Address &a);
-    void parseAdditional(QString &str, Address &a);
-
-public slots:
-
+    void parseBuild(QString &str, Address &a, int &offset);
+    void parseKorp(QString &str, Address &a, int &offset);
+    void parseDistrict(QString &str, Address &a, int &offset);
+    void parseFSubject(QString &str, Address &a, int &offset);
+    void parseCity(QString &str, Address &a, int &offset);
+    void parseAdditional(QString &str, Address &a, int &offset);
+    void parseStreet(QString &str, Address &a, int &offset); //and Ename
 };
 
 #endif // PARSER_H

@@ -13,6 +13,8 @@
 #include <QDateTime>
 #include <QTextStream>
 
+const int MAX_OPEN_ROWS=0;
+
 enum TypeOfRow
 {
     BASE = 1,

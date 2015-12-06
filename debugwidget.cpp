@@ -27,20 +27,26 @@ void DebugWidget::on__pushButtonSave_clicked()
 void DebugWidget::add(QString str)
 {
     QString s =_ui->_plainTextEdit->toPlainText();
-    QString name = sender()->objectName();
-    QString time = QDateTime::currentDateTime().toString();
-    s.append(time+name+str);
+    QString append = "["+QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz")
+            +"]\n"+sender()->objectName()+":"+str;
+    s.append("***\n"+append+"\n");
+    qDebug() << append;
     _ui->_plainTextEdit->setPlainText(s);
 }
 
 void DebugWidget::add(int n)
 {
-
+    QString s =_ui->_plainTextEdit->toPlainText();
+    QString append = "["+QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz")
+            +"] "+sender()->objectName()+":"+QString::number(n)+"\n";
+    s.append("\n***\n"+append);
+    qDebug() << append;
+    _ui->_plainTextEdit->setPlainText(s);
 }
 
 void DebugWidget::save(QString file)
 {
-
+    Q_UNUSED(file);
 }
 
 void DebugWidget::clear()

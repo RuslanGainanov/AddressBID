@@ -70,11 +70,16 @@ void Parser::onReadHeadBase(QStringList head)
     emit headBaseParsed(_mapHeadBaseAddr);
 }
 
-void Parser::parseAdditional(QString &str, Address &a)
+void Parser::parseAdditional(QString &str, Address &a, int &offset)
 {
-//    QRegExp rx("(?:^|\W+)(село|поселок|пос|деревня|[спд]|ж/д_ст|ж/д_рзд|ж/д_пост|п/ст|массив|рп|снт|пгт|сдт|тер.сот|ст)\W+(\w+|(?:\w+-(?:\w+|\d+)|\w+\s+\d+))");
-    QRegExp rx("(?:^|\\W+)(село|поселок|пос|деревня|[спд]|ж/д_ст|ж/д_рзд|ж/д_пост|п/ст|массив|рп|снт|пгт|сдт|тер.сот|ст)\\W+([\\w\\d\\s-]+)[.,;()]");
-    if(rx.indexIn(str)!=-1)
+    Q_UNUSED(offset);
+    if(str.isEmpty())
+        return;
+    QRegExp rx("(?:^|\\W+)(село|поселок|пос|деревня|[спд]"
+               "|ж/д_ст|ж/д_рзд|ж/д_пост|п/ст|массив|рп|нп|снт|пгт|сдт|"
+               "тер|ст|промзона|метро|мост)\\W+([\\w\\d\\s-]+)[.,;()]");
+    int pos=rx.indexIn(str);
+    if(pos!=-1)
     {
         str.remove(rx.cap(0)); //удаляем все что нашли
         QString add(rx.cap(2).trimmed());
@@ -90,41 +95,125 @@ void Parser::parseAdditional(QString &str, Address &a)
     }
 }
 
-void Parser::parseCity(QString &str, Address &a)
+void Parser::parseStreet(QString &str, Address &a, int &offset)
 {
-    QRegExp rx("(?:^|\\W+)(город|гор|г)\\W+([\\w\\d\\s-]+)[.,;()]");
-    if(rx.indexIn(str)!=-1)
+    if(str.isEmpty())
+        return;
+    QRegExp rx("(?:^|[.,;()])([\\w\\d\\s-]+)(ул|улица|пр-т|пр|проспект|пер|переулок|"
+               "проезд|лин|линия|"
+               "наб|набережная|парк|ш|шоссе|сад|пл|площадь|аллея|ал|кв-л|квартал|"
+               "дор|канал|"
+               "б-р|бульвар|х)\\W{0,}(?:[.,;()]|$)");
+    int pos=rx.indexIn(str,offset);
+    if(pos!=-1)
     {
         str.remove(rx.cap(0)); //удаляем все что нашли
-        QString add(rx.cap(2).trimmed());
-        if(a.getAdditional().isEmpty())
-        {
-            a.setAdditional(add);//добавляем найденное имя
-        }
-        else
-        {
-            QString currAdd = a.getAdditional();
-            a.setAdditional(currAdd+add);
-        }
+        a.setStreet(rx.cap(1).trimmed());
+        QString e=rx.cap(2).trimmed();
+        if(e=="ул"||
+                e=="улица")
+            a.setEname("ул");
+        else if(e=="пр"||
+                e=="пр-т"||
+                e=="проспект")
+            a.setEname("пр");
+//        else if ... //TODO
+        offset = pos+rx.cap(0).size();
     }
 }
+
+
+void Parser::parseDistrict(QString &str, Address &a, int &offset)
+{
+    if(str.isEmpty())
+        return;
+    QRegExp rx("(?:^|[.,;()])([\\w\\d\\s-]+)(р-н)\\W{0,}(?:[.,;()]|$)");
+    int pos=rx.indexIn(str,offset);
+    if(pos!=-1)
+    {
+        str.remove(rx.cap(0)); //удаляем все что нашли
+        a.setDistrict(rx.cap(1).trimmed());
+        offset = pos;
+    }
+}
+
+void Parser::parseFSubject(QString &str, Address &a, int &offset)
+{
+    if(str.isEmpty())
+        return;
+    QRegExp rx("(?:^|[.,;()])([\\w\\d\\s-]+)(респ|Респ|республика|обл|область|край|АО)\\W{0,}(?:[.,;()]|$)");
+    int pos=rx.indexIn(str);
+    if(pos!=-1)
+    {
+        str.remove(rx.cap(0)); //удаляем все что нашли
+        a.setFsubj(rx.cap(1).trimmed());
+        offset = pos;
+    }
+}
+
+
+void Parser::parseCity(QString &str, Address &a, int &offset)
+{
+    if(str.isEmpty())
+        return;
+    QRegExp rx("(?:^|\\W+)(город|гор|г)\\W+([\\w\\s-]+)\\W{0,}(?:[.,;()]|$)");
+    int pos=rx.indexIn(str,offset);
+    if(pos!=-1)
+    {
+        str.remove(rx.cap(0)); //удаляем все что нашли
+        a.setCity(rx.cap(2).trimmed());
+        offset = pos;
+    }
+}
+
+void Parser::parseBuild(QString &str, Address &a, int &offset)
+{
+    if(str.isEmpty())
+        return;
+    QRegExp rx("((?:^[,. ;]{0,}|\\s+)|д.|д|Д|Д.|дом|нетр|ая|а/я)\\s{0,}(\\d+)(?:\\D+|$)");
+    int pos=rx.indexIn(str,offset);
+    if(pos!=-1)
+    {
+        str.remove(rx.cap(0)); //удаляем все что нашли
+        a.setBuild(rx.cap(2).trimmed());
+        offset = pos;
+    }
+}
+
+void Parser::parseKorp(QString &str, Address &a, int &offset)
+{
+    if(str.isEmpty())
+        return;
+    QRegExp rx("((?:^[,. ;]{0,}|\\s+)|к.|к|К|К.|корп.|корпус|корп|лит.|литера|лит)\\s{0,}(\\d+|\\w+)(?:[ ,.;()]|$)");
+    int pos=rx.indexIn(str,offset);
+    if(pos!=-1)
+    {
+        str.remove(rx.cap(0)); //удаляем все что нашли
+        a.setCity(rx.cap(2).trimmed());
+        offset = pos;
+    }
+}
+
 void Parser::parseBaseRow()
 {
-    qDebug() << "Parser parseBaseRow" << this->thread()->currentThreadId() << _rowNumber;
+//    qDebug() << "Parser parseBaseRow"
+//             << this->thread()->currentThreadId()
+//             << _rowNumber
+//             << _row.join('|');
     Address a;
     a.setRawAddress(_row);
     //парсинг строки начат
 
     QString additional;
-    QString ename;
+    int offset=0;
     for(int i=0; i<_row.size(); i++)
     {
         QString str=_row[i];
-        if(i == _mapHeadBaseAddr[STREET]
-                && str.contains("г. Санкт-Петербург", Qt::CaseInsensitive))
-            break;
+//        if(i == _mapHeadBaseAddr[STREET]
+//                && !str.contains("г. Санкт-Петербург", Qt::CaseInsensitive))
+//            break;
 
-        //удаляем боковые символы
+        //удаляем боковые символы ""
         str.remove("\"");
         str=str.trimmed();
 
@@ -142,260 +231,40 @@ void Parser::parseBaseRow()
         //работаем с STR
         if(i==_mapHeadBaseAddr[STREET])
         {
-            str = str.toLower();
-            //работаем с именами элементов (приведение их к одному формату)
-            //(ул., пр., наб., ш., б., пер. и пр.)
-            if (str.contains("ул.,"))
-            {
-              str.remove("ул.,");
-              ename.append("ул");
-            }
-            if (str.contains("пр-кт.,"))
-            {
-              str.remove("пр-кт.,");
-              ename.append("пр-кт");
-            }
-            if (str.contains("пер.,"))
-            {
-              str.remove("пер.,");
-              ename.append("пер");
-            }
-            if (str.contains("проезд.,"))
-            {
-              str.remove("проезд.,");
-              ename.append("проезд");
-            }
-            if (str.contains("линия.,"))
-            {
-              str.remove("линия.,");
-              ename.append("линия");
-            }
-            if (str.contains("наб.,"))
-            {
-              str.remove("наб.,");
-              ename.append("наб");
-            }
-            if (str.contains("парк.,"))
-            {
-              str.remove("парк.,");
-              ename.append("парк");
-            }
-            if (str.contains("б-р.,"))
-            {
-              str.remove("б-р.,");
-              ename.append("б-р");
-            }
-            if (str.contains("ш.,"))
-            {
-              str.remove("ш.,");
-              ename.append("ш");
-            }
-            if (str.contains("сад.,"))
-            {
-              str.remove("сад.,");
-              ename.append("сад");
-            }
-            if (str.contains("остров.,"))
-            {
-              str.remove("остров.,");
-              ename.append("остров");
-            }
-            if (str.contains("пл.,"))
-            {
-              str.remove("пл.,");
-              ename.append("пл");
-            }
-            if (str.contains("аллея.,"))
-            {
-              str.remove("аллея.,");
-              ename.append("аллея");
-            }
-            if (str.contains("кв-л.,"))
-            {
-              str.remove("кв-л.,");
-              ename.append("кв-л");
-            }
-            if (str.contains("снт.,"))
-            {
-              str.remove("снт.,");
-              ename.append("снт");
-            }
-            if (str.contains("тер.,"))
-            {
-              str.remove("тер.,");
-              ename.append("тер");
-            }
-            if (str.contains("дор.,"))
-            {
-              str.remove("дор.,");
-              ename.append("дор");
-            }
-            if (str.contains("канал.,"))
-            {
-              str.remove("канал.,");
-              ename.append("канал");
-            }
-            if (str.contains("метро.,"))
-            {
-              str.remove("метро.,");
-              ename.append("метро");
-            }
-            if (str.contains("мост.,"))
-            {
-              str.remove("мост.,");
-              ename.append("мост");
-            }
-            if (str.contains("х.,"))
-            {
-              str.remove("х.,");
-              ename.append("х");
-            }
-
-            str = str.trimmed();
+//            str = str.toLower();
+            parseFSubject(str, a, offset);
+            parseDistrict(str, a, offset);
+            parseCity(str, a, offset);
+            parseAdditional(str, a, offset);
+            parseStreet(str, a, offset);
 
             //работа со скобками
             int n1=str.indexOf('(');
             if (n1>0 && (str.indexOf(')',n1)>0))
             {
+                additional+=a.getAdditional();
                 int n2=str.indexOf(')', n1);
                 int n3=n2-n1;
-                additional.append(str.mid(n1+1, n3-1));
+                additional+=str.mid(n1+1, n3-1);
                 str.remove(n1, n3+1);
+                a.setAdditional(additional);
             }
+            str = str.trimmed();
         } // конец работы с STR
 
-        /*
-
         //работаем с B
-        if(i==3)
+        if(i==_mapHeadBaseAddr[BUILD])
         {
-            //приведение к формату: "%n" - %n - число
-            if (str.contains("д."))
-            {
-                str.remove("д.");
-            }
-            //удаление записи если это не адрес (напр. "а/я" или "нетр..")
-            if (str.contains("нетр") || str.contains("а/я")|| str.contains("ая"))
-            {
-                row.clear();
-                return;
-            }
-            //выделение корпуса (литеры) из содержимого ячейки
-            if (str.contains("/"))
-            {
-                QRegExp reg("/(.+)");
-                int pos(0);
-                while ((pos = reg.indexIn(str, pos)) != -1) {
-                    row[numbKCol].append( reg.cap(1) );
-                    pos += reg.matchedLength();
-                }
-                QString copy = str;
-                str.clear();
-                copy.remove(reg);
-                row[numbBCol].append(copy);
-            }
-
-//            // работа с "\"
-//            if (str.contains('\\'))
-//            {
-//               // str.clear();
-//                //str.append("1");
-//                QRegExp reg("\\(.+)");
-//                int pos(0);
-//                while ((pos = reg.indexIn(str, pos)) != -1) {
-//                    row[4].append( reg.cap(1) );
-//                    pos += reg.matchedLength();
-//                }
-//                QString copy = str;
-//                str.clear();
-//                copy.remove(reg);
-//                row[3].append(copy);
-//            }
-
-            QRegExp reg("[а-яА-ЯA-za-z]");
-//            QRegExp reg("\\w+");
-            if (str.contains(reg))
-            {
-                int pos(0);
-                QString copy1 = row.at(numbKCol);
-//                row[numbKCol].clear();
-                while ((pos = reg.indexIn(str, pos)) != -1)
-                {
-                    row[numbKCol].append(copy1+ reg.cap());
-                    pos += reg.matchedLength();
-                }
-//                qDebug() << pos << row[numbKCol];
-                QString copy = str;
-                str.clear();
-                copy.remove(reg);
-                row[numbBCol].append(copy);
-            }
+            parseBuild(str, a, offset);
+            continue;
         }//end work with B
 
         //работаем с K
-        if(i==4)
+        if(i==_mapHeadBaseAddr[KORP])
         {
-            //удаление названия элемента ("корп.", "лит." и пр.)
-            if (str.contains("ЛИТ."))
-            {
-                str.remove("ЛИТ.");
-            }
-            if (str.contains("лит"))
-            {
-                str.remove("лит");
-            }
-            if (str.contains("лит."))
-            {
-                str.remove("лит.");
-            }
-            if (str.contains("ЛИТЕ"))
-            {
-                str.remove("ЛИТЕ");
-            }
-            if (str.contains("ЛИТ-"))
-            {
-                str.remove("ЛИТ-");
-            }
-            if (str.contains(",ПОМ."))
-            {
-                str.remove(",ПОМ.");
-            }
-            if (str.contains("ЛИТ"))
-            {
-                str.remove("ЛИТ");
-            }
-            if (str.contains("ер"))
-            {
-                str.remove("ер");
-            }
-
-            //приведение к формату: "%n|%c" - %n - число %a - буква(-ы)
-            QRegExp reg("[^A-Za-zА-Яа-я0-9]*");
-            if (str.contains(reg))
-            {
-                str.remove(reg);
-            }
-
+            parseKorp(str, a, offset);
+            continue;
         }
-
-        //работаем с ENAME
-        if(i==5)
-        {
-            //присваивание выделеннного названия структурного элемента из столбца STREET
-            //например, ул., пр-т, ш. и пр.
-            if(!ename.isEmpty())
-                str = ename;
-        }
-
-        //работаем с ADD
-        if(i==6)
-        {
-            //присваивание выделенной доп.информации из столбца STREET
-            //например, то что содержится в скобках
-            if(!additional.isEmpty())
-                str = additional;
-        }
-        */
     }
     //парсинг строки окончен!
 

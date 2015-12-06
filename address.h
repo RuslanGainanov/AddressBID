@@ -39,6 +39,7 @@ public:
 
     QStringList toDebug(TypeOfData t=RAW) const;
     bool isEmpty() const;
+    void clear();
 
     void setRawAddress(const QStringList &row);
     QStringList getRawAddress() const;

@@ -21,7 +21,8 @@ DatabaseWidget::DatabaseWidget(QWidget *parent) :
             this, SLOT(onBaseOpened()));
     connect(_db, SIGNAL(toDebug(QString)),
              SIGNAL(toDebug(QString)));
-
+    connect(_db, SIGNAL(messageReady(QString)),
+            SIGNAL(toDebug(QString)));
 }
 
 DatabaseWidget::~DatabaseWidget()
@@ -42,6 +43,7 @@ void DatabaseWidget::open()
     _ui->_lineEditFilename->setEnabled(true);
     _ui->_lineEditFilename->setText(fname);
     clear();
+    _db->setBaseName("Base_1.db");
     _db->openBase(fname);
 }
 
@@ -100,5 +102,5 @@ void DatabaseWidget::on__pushButtonLoadOld_clicked()
 {
 //    QString date = QDateTime::currentDateTime().date().toString("yyyy_MM_dd");
 //    _baseName = "Base"+date;
-    _db->openOldBase("Base_1");
+    _db->openOldBase("Base_1.db");
 }

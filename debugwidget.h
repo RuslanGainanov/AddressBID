@@ -24,7 +24,6 @@ public slots:
 
 private slots:
     void on__pushButtonClear_clicked();
-
     void on__pushButtonSave_clicked();
 
 private:

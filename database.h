@@ -30,11 +30,12 @@ signals:
     void baseOpened();
 
     void toDebug(QString);
+    void messageReady(QString);
 
 public slots:
     void openBase(QString filename);
     void openOldBase(QString name);
-    void removeAllDataInBase();
+    void setBaseName(QString name);
     void clear();
 
     void onReadRow(int rowNumber, QStringList row);
@@ -45,40 +46,21 @@ public slots:
     void onFinishCsvWorker();
 
 private:
-    bool _connected;
     CsvWorker *_csvWorker;
 //    QScopedPointer<CsvWorker> _csvWorker;
     Parser *_parser;
 //    QScopedPointer<Parser> _parser;
     QThread *_thread;
+    QMap< AddressElements, QSet<QString> > _mapSet;
     QSqlDatabase _db;
     QString _baseName;
+    bool _connected;
+    int _countParsedRows;
 
-    inline bool createConnection()
-    {
-        if(_connected)
-            return true;
-        _db = QSqlDatabase::addDatabase("QSQLITE");
-        _db.setDatabaseName(_baseName);
-        _db.setUserName("user");
-        _db.setHostName("rt");
-        _db.setPassword("user");
-        QString str ;
-        if (!_db.open())
-        {
-            str += "Cannot open database:" + _db.lastError().text();
-            qDebug()<< "error open ";
-            emit toDebug(str);
-            return false;
-        }
-        else
-        {
-            qDebug() << "success open";
-            str += "Success open base:" + _baseName;
-        }
-        return true;
-    }
-
+    void createConnection();
+    void createTable();
+    void dropTable();
+    void insertAddress(int row, const Address &a);
 };
 
 #endif // DATABASE_H
