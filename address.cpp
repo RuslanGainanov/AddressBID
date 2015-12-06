@@ -10,6 +10,16 @@ void Address::setStreet(const QString s)
     _street=s;
 }
 
+void Address::setStreetId(const quint64 sid)
+{
+    _streetId=sid;
+}
+
+quint64 Address::getStreetId() const
+{
+    return _streetId;
+}
+
 QString Address::getStreet() const
 {
     return _street;
@@ -28,6 +38,16 @@ QString Address::getKorp() const
 void Address::setBuild(const QString b)
 {
     _build=b;
+}
+
+void Address::setBuildId(const quint64 bid)
+{
+    _buildId=bid;
+}
+
+quint64 Address::getBuildId() const
+{
+    return _buildId;
 }
 
 QString Address::getBuild() const

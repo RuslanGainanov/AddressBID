@@ -23,11 +23,13 @@ public slots:
     void viewInfo();
 
 private slots:
-    void on_pushButtonOpen_clicked();
+    void on__pushButtonOpen_clicked();
     void onReadRow(int row);
     void onReadRows(int rows);
     void onParseRow(int row);
     void onCountRow(int count);
+    void onOpenBase();
+    void onBaseOpened();
 
 private:
     Ui::DatabaseWidget *_ui;

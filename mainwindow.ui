@@ -13,7 +13,78 @@
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
-  <widget class="QWidget" name="centralWidget"/>
+  <widget class="QWidget" name="centralWidget">
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="1" column="0">
+     <layout class="QGridLayout" name="_gridLayoutButtons">
+      <item row="0" column="0">
+       <widget class="QPushButton" name="_pushButtonSearch">
+        <property name="text">
+         <string>Поиск</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="3">
+       <widget class="QPushButton" name="_pushButtonDeleteRows">
+        <property name="text">
+         <string>Удалить 
+строки</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QPushButton" name="_pushButtonOpen">
+        <property name="text">
+         <string>Открыть</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="2">
+       <widget class="QPushButton" name="_pushButtonSave">
+        <property name="text">
+         <string>Сохранить</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="4">
+       <widget class="QPushButton" name="_pushButtonCheckRows">
+        <property name="text">
+         <string>Проверить 
+строки</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item row="2" column="0">
+     <widget class="QProgressBar" name="_progressBar">
+      <property name="value">
+       <number>0</number>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="0">
+     <widget class="TabWidget" name="_tabWidget">
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="QWidget" name="tab">
+       <attribute name="title">
+        <string/>
+       </attribute>
+       <zorder>gridLayoutWidget</zorder>
+      </widget>
+     </widget>
+    </item>
+    <item row="0" column="1">
+     <widget class="DebugWidget" name="_debugWidget" native="true">
+      <zorder>verticalLayoutWidget</zorder>
+      <zorder>verticalLayoutWidget</zorder>
+      <zorder>_progressBar</zorder>
+     </widget>
+    </item>
+   </layout>
+  </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
     <rect>
@@ -23,38 +94,38 @@
      <height>20</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menu">
+   <widget class="QMenu" name="_menuFile">
     <property name="title">
      <string>Файл</string>
     </property>
-    <widget class="QMenu" name="_menuFile">
+    <widget class="QMenu" name="_menuOpen">
      <property name="title">
       <string>Открыть</string>
      </property>
      <addaction name="_actionOpenBase"/>
-     <addaction name="action_6"/>
+     <addaction name="_actionOpenFile"/>
     </widget>
-    <addaction name="_menuFile"/>
-    <addaction name="action_3"/>
+    <addaction name="_menuOpen"/>
+    <addaction name="_actionSave"/>
     <addaction name="separator"/>
-    <addaction name="action_4"/>
+    <addaction name="_actionExit"/>
    </widget>
-   <widget class="QMenu" name="menu_3">
+   <widget class="QMenu" name="_menuHelp">
     <property name="title">
      <string>Справка</string>
     </property>
-    <addaction name="action_8"/>
+    <addaction name="_actionAbout"/>
    </widget>
-   <widget class="QMenu" name="menu_4">
+   <widget class="QMenu" name="_menuEdit">
     <property name="title">
      <string>Правка</string>
     </property>
     <addaction name="action_9"/>
     <addaction name="action_11"/>
    </widget>
-   <addaction name="menu"/>
-   <addaction name="menu_4"/>
-   <addaction name="menu_3"/>
+   <addaction name="_menuFile"/>
+   <addaction name="_menuEdit"/>
+   <addaction name="_menuHelp"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
@@ -70,12 +141,12 @@
     <string>Открыть файл с адресами</string>
    </property>
   </action>
-  <action name="action_3">
+  <action name="_actionSave">
    <property name="text">
     <string>Сохранить результаты</string>
    </property>
   </action>
-  <action name="action_4">
+  <action name="_actionExit">
    <property name="text">
     <string>Выход</string>
    </property>
@@ -85,12 +156,12 @@
     <string>Открыть базу</string>
    </property>
   </action>
-  <action name="action_6">
+  <action name="_actionOpenFile">
    <property name="text">
     <string>Открыть файл с адресами</string>
    </property>
   </action>
-  <action name="action_8">
+  <action name="_actionAbout">
    <property name="text">
     <string>О программе</string>
    </property>
@@ -112,6 +183,20 @@
   </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>DebugWidget</class>
+   <extends>QWidget</extends>
+   <header>debugwidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>TabWidget</class>
+   <extends>QTabWidget</extends>
+   <header>tabwidget.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

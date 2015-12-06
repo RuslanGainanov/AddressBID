@@ -15,21 +15,18 @@ public:
 signals:
     void rowParsed(int rowNumber, Address addr);
     void finished();
-    void headBaseReaded(QMap<QString, int> head);
+    void headBaseParsed(MapAddressElementPosition head);
 
 
 public slots:
     void process();
 
-    void setHeadBase(const QMap<QString, int> &head);
-    void setHeadIn(const QMap<QString, int> &head);
     void setTypeOfRow(const TypeOfRow &type);
     void onReadRow(const int &rowNumber, const QStringList &row);
     void onReadHeadBase(QStringList head);
 
 private:
-    QMap<QString, int> _mapHeadBase; //Name column and position column
-    QMap<QString, int> _mapHeadIn;
+    MapAddressElementPosition _mapHeadBaseAddr;
     QStringList _row;
     int _rowNumber;
     Address _addr;
@@ -37,6 +34,9 @@ private:
 
     void parseBaseRow();
     void parseInRow();
+
+    void parseCity(QString &str, Address &a);
+    void parseAdditional(QString &str, Address &a);
 
 public slots:
 

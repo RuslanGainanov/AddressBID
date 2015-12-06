@@ -5,6 +5,8 @@
 #include "defines.h"
 #include "databasewidget.h"
 #include "address.h"
+#include "excelwidget.h"
+#include "debugwidget.h"
 
 namespace Ui {
 class MainWindow;
@@ -19,11 +21,17 @@ public:
     ~MainWindow();
 
 public slots:
-    void onBaseOpenClicked();
+    void onBaseOpenTriggered();
+    void onExcelOpenTriggered();
+
+private slots:
+    void on__pushButtonOpen_clicked();
 
 private:
     Ui::MainWindow *_ui;
     DatabaseWidget *_dbw;
+    ExcelWidget *_excel;
+    DebugWidget *_debugWidget;
 };
 
 #endif // MAINWINDOW_H

@@ -10,11 +10,17 @@ public:
     void setStreet(const QString s);
     QString getStreet() const;
 
+    void setStreetId(const quint64 sid);
+    quint64 getStreetId() const;
+
     void setKorp(const QString k);
     QString getKorp() const;
 
     void setBuild(const QString b);
     QString getBuild() const;
+
+    void setBuildId(const quint64 bid);
+    quint64 getBuildId() const;
 
     void setEname(const QString e);
     QString getEname() const;
@@ -40,8 +46,10 @@ public:
 private:
     QStringList _rawAddress;///< строка адреса как она есть
     QString _street;        ///< название ул. (пр., ш., бул. и пр.)
+    quint64 _streetId;      ///< id ул.
     QString _korp;          ///< корпус
     QString _build;         ///< дом
+    quint64 _buildId;       ///< id дома
     QString _ename;         ///< element name (элементарное имя) (ул., пр., ш., бул. и пр.)
     QString _additional;    ///< допольнительная информация
 

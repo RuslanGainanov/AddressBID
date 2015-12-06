@@ -15,6 +15,10 @@ DatabaseWidget::DatabaseWidget(QWidget *parent) :
             this, SLOT(onReadRow(int)));
     connect(_db, SIGNAL(readedRows(int)),
             this, SLOT(onReadRows(int)));
+    connect(_db, SIGNAL(workingWithOpenBase()),
+            this, SLOT(onOpenBase()));
+    connect(_db, SIGNAL(baseOpened()),
+            this, SLOT(onBaseOpened()));
 }
 
 DatabaseWidget::~DatabaseWidget()
@@ -32,8 +36,8 @@ void DatabaseWidget::open()
                                          tr("Excel (*.csv)"));
     if(fname.isEmpty())
         return;
-    _ui->lineEditFilename->setEnabled(true);
-    _ui->lineEditFilename->setText(fname);
+    _ui->_lineEditFilename->setEnabled(true);
+    _ui->_lineEditFilename->setText(fname);
     clear();
     _db->openBase(fname);
 }
@@ -50,14 +54,14 @@ void DatabaseWidget::viewInfo()
 
 }
 
-void DatabaseWidget::on_pushButtonOpen_clicked()
+void DatabaseWidget::on__pushButtonOpen_clicked()
 {
     open();
 }
 
 void DatabaseWidget::onReadRow(int row)
 {
-    _ui->_progressBarReaded->setValue(row);
+    _ui->_progressBarReaded->setValue(row+1);
 }
 
 void DatabaseWidget::onReadRows(int rows)
@@ -68,7 +72,7 @@ void DatabaseWidget::onReadRows(int rows)
 
 void DatabaseWidget::onParseRow(int row)
 {
-    _ui->_progressBarParsed->setValue(row);
+    _ui->_progressBarParsed->setValue(row+1);
 }
 
 void DatabaseWidget::onCountRow(int count)
@@ -76,4 +80,15 @@ void DatabaseWidget::onCountRow(int count)
     _ui->_progressBarReaded->reset();
     _ui->_progressBarReaded->setMaximum(count);
     _ui->_progressBarParsed->setMaximum(count);
+}
+
+
+void DatabaseWidget::onOpenBase()
+{
+    _ui->_pushButtonOpen->setEnabled(false);
+}
+
+void DatabaseWidget::onBaseOpened()
+{
+    _ui->_pushButtonOpen->setEnabled(true);
 }

@@ -11,6 +11,7 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = AddressConverterV2
 TEMPLATE = app
 
+DEFINES += QT_NO_DEBUG_OUTPUT
 
 SOURCES += main.cpp\
         mainwindow.cpp \
@@ -19,7 +20,12 @@ SOURCES += main.cpp\
     address.cpp \
     database.cpp \
     databasewidget.cpp \
-    csvworker.cpp
+    csvworker.cpp \
+    debugwidget.cpp \
+    tabwidget.cpp \
+    tableview.cpp \
+    excelwidget.cpp \
+    xlsworker.cpp
 
 HEADERS  += mainwindow.h \
     parser.h \
@@ -28,10 +34,17 @@ HEADERS  += mainwindow.h \
     address.h \
     database.h \
     databasewidget.h \
-    csvworker.h
+    csvworker.h \
+    debugwidget.h \
+    tabwidget.h \
+    tableview.h \
+    excelwidget.h \
+    xlsworker.h
 
 FORMS    += mainwindow.ui \
-    databasewidget.ui
+    databasewidget.ui \
+    debugwidget.ui \
+    excelwidget.ui
 
 CONFIG += c++11
 QMAKE_CXXFLAGS += -std=c++11

@@ -80,6 +80,6 @@ void CsvWorker::process()
     }
     delete rowList;
     //чтение данных окончено!
-    emit rowsReaded(rows-1);
+    emit rowsReaded(rows);
     emit finished();
 }
