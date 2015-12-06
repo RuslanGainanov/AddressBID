@@ -2,7 +2,8 @@
 
 Database::Database(QObject *parent) :
     QObject(parent),
-    _thread(nullptr)
+    _thread(nullptr),
+    _connected(false)
 {
     _thread = new QThread;
 }
@@ -17,12 +18,24 @@ Database::~Database()
     }
 }
 
+void Database::openOldBase(QString name)
+{
+    _baseName = name;
+    createConnection();
+}
+
+void Database::removeAllDataInBase()
+{
+
+}
 
 void Database::openBase(QString filename)
 {
     qDebug() << "Database openBase" << this->thread()->currentThreadId();
     if(_thread->isRunning())
         return;
+
+    removeAllDataInBase();
 
     _csvWorker = new CsvWorker;
 //    _csvWorker.reset(new CsvWorker);

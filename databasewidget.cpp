@@ -19,6 +19,9 @@ DatabaseWidget::DatabaseWidget(QWidget *parent) :
             this, SLOT(onOpenBase()));
     connect(_db, SIGNAL(baseOpened()),
             this, SLOT(onBaseOpened()));
+    connect(_db, SIGNAL(toDebug(QString)),
+             SIGNAL(toDebug(QString)));
+
 }
 
 DatabaseWidget::~DatabaseWidget()
@@ -91,4 +94,11 @@ void DatabaseWidget::onOpenBase()
 void DatabaseWidget::onBaseOpened()
 {
     _ui->_pushButtonOpen->setEnabled(true);
+}
+
+void DatabaseWidget::on__pushButtonLoadOld_clicked()
+{
+//    QString date = QDateTime::currentDateTime().date().toString("yyyy_MM_dd");
+//    _baseName = "Base"+date;
+    _db->openOldBase("Base_1");
 }

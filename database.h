@@ -7,8 +7,10 @@
 #include "parser.h"
 #include "address.h"
 #include <QScopedPointer>
+#include <QtSql>
+#include <QSqlError>
+#include <QSqlDatabase>
 
-typedef QVector<QString> VectorOfString;
 
 class Database : public QObject
 {
@@ -27,8 +29,12 @@ signals:
     void workingWithOpenBase();
     void baseOpened();
 
+    void toDebug(QString);
+
 public slots:
     void openBase(QString filename);
+    void openOldBase(QString name);
+    void removeAllDataInBase();
     void clear();
 
     void onReadRow(int rowNumber, QStringList row);
@@ -39,11 +45,39 @@ public slots:
     void onFinishCsvWorker();
 
 private:
+    bool _connected;
     CsvWorker *_csvWorker;
 //    QScopedPointer<CsvWorker> _csvWorker;
     Parser *_parser;
 //    QScopedPointer<Parser> _parser;
     QThread *_thread;
+    QSqlDatabase _db;
+    QString _baseName;
+
+    inline bool createConnection()
+    {
+        if(_connected)
+            return true;
+        _db = QSqlDatabase::addDatabase("QSQLITE");
+        _db.setDatabaseName(_baseName);
+        _db.setUserName("user");
+        _db.setHostName("rt");
+        _db.setPassword("user");
+        QString str ;
+        if (!_db.open())
+        {
+            str += "Cannot open database:" + _db.lastError().text();
+            qDebug()<< "error open ";
+            emit toDebug(str);
+            return false;
+        }
+        else
+        {
+            qDebug() << "success open";
+            str += "Success open base:" + _baseName;
+        }
+        return true;
+    }
 
 };
 

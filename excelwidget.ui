@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>DatabaseWidget</class>
- <widget class="QWidget" name="DatabaseWidget">
+ <class>ExcelWidget</class>
+ <widget class="QWidget" name="ExcelWidget">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Открытие базы данных</string>
+   <string>Form</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -29,34 +29,10 @@
     </layout>
    </item>
    <item>
-    <widget class="QLabel" name="_labelInfo">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="text">
-      <string/>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QPushButton" name="_pushButtonLoadOld">
-     <property name="text">
-      <string>Загрузить сохраненную базу</string>
-     </property>
-    </widget>
+    <widget class="QTableView" name="tableView"/>
    </item>
    <item>
     <widget class="QProgressBar" name="_progressBarReaded">
-     <property name="value">
-      <number>0</number>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QProgressBar" name="_progressBarParsed">
      <property name="value">
       <number>0</number>
      </property>

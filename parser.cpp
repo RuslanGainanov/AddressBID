@@ -73,7 +73,7 @@ void Parser::onReadHeadBase(QStringList head)
 void Parser::parseAdditional(QString &str, Address &a)
 {
 //    QRegExp rx("(?:^|\W+)(село|поселок|пос|деревня|[спд]|ж/д_ст|ж/д_рзд|ж/д_пост|п/ст|массив|рп|снт|пгт|сдт|тер.сот|ст)\W+(\w+|(?:\w+-(?:\w+|\d+)|\w+\s+\d+))");
-    QRegExp rx("(?:^|\W+)(село|поселок|пос|деревня|[спд]|ж/д_ст|ж/д_рзд|ж/д_пост|п/ст|массив|рп|снт|пгт|сдт|тер.сот|ст)\W+([\w\d\s-]+)[.,;()]");
+    QRegExp rx("(?:^|\\W+)(село|поселок|пос|деревня|[спд]|ж/д_ст|ж/д_рзд|ж/д_пост|п/ст|массив|рп|снт|пгт|сдт|тер.сот|ст)\\W+([\\w\\d\\s-]+)[.,;()]");
     if(rx.indexIn(str)!=-1)
     {
         str.remove(rx.cap(0)); //удаляем все что нашли
@@ -92,7 +92,7 @@ void Parser::parseAdditional(QString &str, Address &a)
 
 void Parser::parseCity(QString &str, Address &a)
 {
-    QRegExp rx("(?:^|\W+)(город|гор|г)\W+([\w\d\s-]+)[.,;()]");
+    QRegExp rx("(?:^|\\W+)(город|гор|г)\\W+([\\w\\d\\s-]+)[.,;()]");
     if(rx.indexIn(str)!=-1)
     {
         str.remove(rx.cap(0)); //удаляем все что нашли

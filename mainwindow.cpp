@@ -22,6 +22,9 @@ MainWindow::MainWindow(QWidget *parent) :
             this, SLOT(onBaseOpenTriggered()));
     connect(_ui->_actionOpenFile, SIGNAL(triggered()),
             this, SLOT(onExcelOpenTriggered()));
+
+    connect(_dbw, SIGNAL(toDebug(QString)),
+            _ui->_debugWidget, SLOT(add(QString)));
 }
 
 MainWindow::~MainWindow()

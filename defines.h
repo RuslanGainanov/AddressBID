@@ -10,6 +10,8 @@
 #include <QMutex>
 #include <QMap>
 #include <QSet>
+#include <QDateTime>
+#include <QTextStream>
 
 enum TypeOfRow
 {
@@ -43,6 +45,8 @@ const QList<AddressElements> ListAddressElements {
 };
 
 typedef QMap<AddressElements, int> MapAddressElementPosition;
+
+typedef QVector<QString> VectorOfString;
 
 const QMap<AddressElements, QString> MapColumnNames {
     {STREET, "STREET"},

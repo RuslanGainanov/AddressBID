@@ -31,6 +31,10 @@ private slots:
     void onOpenBase();
     void onBaseOpened();
 
+    void on__pushButtonLoadOld_clicked();
+signals:
+    void toDebug(QString);
+
 private:
     Ui::DatabaseWidget *_ui;
     Database *_db;
