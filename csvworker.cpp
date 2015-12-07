@@ -35,51 +35,43 @@ void CsvWorker::process()
         qDebug() << "Ошибка открытия для чтения";
         return;
     }
-    QTextCodec *defaultTextCodec = QTextCodec::codecForName("Windows-1251");
-    QTextDecoder *decoder = new QTextDecoder(defaultTextCodec);
-    QString *readedFileStr = new QString (decoder->toUnicode(file1.readAll()));
-    delete decoder;
-    file1.close();
 
-    QStringList *rowList = new QStringList (readedFileStr->split("\n"));
+    int approxRows = file1.size()/90; // 90байт - столько примерно занимает одна строка в файле
     if(_maxCount>0)
         emit countRows(_maxCount);
     else
-    {
-        emit countRows(rowList->size()-1); //-1 - 1 строка - шапка
-    }
-    delete readedFileStr;
+        emit countRows(approxRows);
 
-    //получение шапки
-    QStringList head = rowList->at(0).split(";");
-    for(int i=0; i<head.size(); i++)
-    {
-        head[i].remove("\"");
-        head[i] = head.at(i).trimmed();
-    }
-    emit headReaded(head);
-    //шапка прочитана!
-
-    //чтение данных
+    QTextStream in(&file1);
+    QTextCodec *defaultTextCodec = QTextCodec::codecForName("Windows-1251");
+    QTextDecoder *decoder = new QTextDecoder(defaultTextCodec);
     int rows=0;
-    for(int i=1; i<rowList->size(); i++)
+    while (!in.atEnd())
     {
-//        qDebug() << rowList.at(i);
-        QStringList row = rowList->at(i).split(";");
+        QString line = in.readLine();
+        QString readedStr = decoder->toUnicode(line.toLocal8Bit());
+
+        QStringList row = readedStr.split(";");
         if(!row.isEmpty())
         {
-            emit rowReaded(i-1, row);
-            rows++;
-
-            //оставливаем обработку если получено нужное количество строк
-            if(_maxCount>0 && rows >= _maxCount)
+            for(int i=0; i<row.size(); i++)
             {
-                break;
+                row[i].remove("\"");
+                row[i] = row.at(i).trimmed();
             }
+
+            if(rows==0)
+                emit headReaded(row);
+            else
+                emit rowReaded(rows-1, row);
+            rows++;
         }
+        //оставливаем обработку если получено нужное количество строк
+        if(_maxCount>0 && rows >= _maxCount)
+            break;
     }
-    delete rowList;
-    //чтение данных окончено!
+    delete decoder;
+    file1.close();
     emit rowsReaded(rows);
     emit finished();
 }
