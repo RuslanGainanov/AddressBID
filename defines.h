@@ -12,6 +12,7 @@
 #include <QSet>
 #include <QDateTime>
 #include <QTextStream>
+#include <assert.h>
 
 const int MAX_OPEN_ROWS=0;
 
@@ -40,6 +41,7 @@ enum AddressElements
     CITY,          ///< город
     DISTRICT,      ///< район
     FSUBJ,         ///< federal subject (федеральный субъект) (название области, края, республики и пр.)
+    RAW_ADDR,      ///< "сырой" адрес (тот который был прочитан из файла сsv)
 };
 
 const QList<AddressElements> ListAddressElements {
@@ -56,12 +58,12 @@ const QMap<AddressElements, QString> MapColumnNames {
     {KORP, "KORP"},
     {BUILD, "BLD"},
     {BUILD_ID, "BLD_ID"},
-    {STREET, "STREET"},
     {ENAME, "ENAME"},
     {ADDITIONAL, "ADD"},
     {CITY, "CITY"},
     {DISTRICT, "DISTRICT"},
     {FSUBJ, "FSUBJ"},
+    {RAW_ADDR, "RAW"},
 };
 
 const QVector<QString> Cities {

@@ -127,12 +127,12 @@ void Database::onFinishCsvWorker()
     _thread->wait();
     emit baseOpened();
     QString mes;
-    mes+="Count rows:"+QString::number(_countParsedRows)+"\n";
-    mes+="Count city:"+QString::number(_mapSet[CITY].size())+"\n";
-    mes+="Count district:"+QString::number(_mapSet[DISTRICT].size())+"\n";
-    mes+="Count ename:"+QString::number(_mapSet[ENAME].size())+"\n";
-    mes+="Count federal subject:"+QString::number(_mapSet[FSUBJ].size())+"\n";
-    mes+="Count street:"+QString::number(_mapSet[STREET].size())+"\n";
+    mes+="Count rows:"+QString::number(_countParsedRows)+"\r\n";
+    mes+="Count city:"+QString::number(_mapSet[CITY].size())+"\r\n";
+    mes+="Count district:"+QString::number(_mapSet[DISTRICT].size())+"\r\n";
+    mes+="Count ename:"+QString::number(_mapSet[ENAME].size())+"\r\n";
+    mes+="Count federal subject:"+QString::number(_mapSet[FSUBJ].size())+"\r\n";
+    mes+="Count street:"+QString::number(_mapSet[STREET].size())+"\r\n";
     emit messageReady(mes);
 
 }
@@ -166,19 +166,35 @@ void Database::createTable()
 {
     QSqlQuery query;
     QString str =
-            QString("CREATE TABLE base ( "
-            "%1 INTEGER PRIMARY KEY NOT NULL, "
-            "%2 VARCHAR(15), "
-            "%3 VARCHAR(15), "
-            "%4 VARCHAR(255) "
-            ");")
-            .arg("row")
-            .arg("sid")
-            .arg("bid")
-            .arg("raw");
+            QString("CREATE TABLE IF NOT EXISTS base ( "
+                    "'%1' INTEGER PRIMARY KEY NOT NULL, "
+                    "'%2' TEXT, "
+                    "'%3' TEXT, "
+                    "'%4' TEXT, "
+                    "'%5' TEXT, "
+                    "'%6' TEXT, "
+                    "'%7' TEXT, "
+                    "'%8' TEXT, "
+                    "'%9' TEXT, "
+                    "'%10' TEXT, "
+                    "'%11' TEXT, "
+                    "'%12' TEXT "
+                    ");")
+            .arg("ID") //rowNumber
+            .arg(MapColumnNames[STREET])
+            .arg(MapColumnNames[STREET_ID])
+            .arg(MapColumnNames[KORP])
+            .arg(MapColumnNames[BUILD])
+            .arg(MapColumnNames[BUILD_ID])
+            .arg(MapColumnNames[ENAME])
+            .arg(MapColumnNames[ADDITIONAL])
+            .arg(MapColumnNames[CITY])
+            .arg(MapColumnNames[DISTRICT])
+            .arg(MapColumnNames[FSUBJ])
+            .arg(MapColumnNames[RAW_ADDR]);
 
     if(!query.exec(str))
-        toDebug("Unable to create a table");
+        toDebug("Unable to create a table:\r\n"+query.lastError().text());
     else
         toDebug("Success create a table");
 
@@ -188,17 +204,46 @@ void Database::insertAddress(int row, const Address &a)
 {
     QSqlQuery query;
     QString strF =
-          "INSERT INTO  base (row, sid, bid, raw) "
-          "VALUES(%1, '%2', '%3', '%4');";
+          "INSERT INTO  base ('ID', '%1', '%2', '%3', '%4', '%5',"
+          " '%6', '%7', '%8', '%9', '%10', '%11') "
+          "VALUES('%12', '%13', '%14', '%15', '%16',"
+          " '%17', '%18', '%19', '%20', '%21', '%22', '%23');";
 
-    QString str = strF.arg(QString::number(row))
-              .arg(QString::number(a.getStreetId()))
-              .arg(QString::number(a.getBuildId()))
-              .arg(a.getRawAddress().join(' '));
+    QString str =
+            strF
+            .arg(MapColumnNames[STREET])
+            .arg(MapColumnNames[STREET_ID])
+            .arg(MapColumnNames[KORP])
+            .arg(MapColumnNames[BUILD])
+            .arg(MapColumnNames[BUILD_ID])
+            .arg(MapColumnNames[ENAME])
+            .arg(MapColumnNames[ADDITIONAL])
+            .arg(MapColumnNames[CITY])
+            .arg(MapColumnNames[DISTRICT])
+            .arg(MapColumnNames[FSUBJ])
+            .arg(MapColumnNames[RAW_ADDR])
+            .arg(QString::number(row))
+            .arg(a.getStreet())
+            .arg(QString::number(a.getStreetId()))
+            .arg(a.getKorp())
+            .arg(a.getBuild())
+            .arg(QString::number(a.getBuildId()))
+            .arg(a.getEname())
+            .arg(a.getAdditional())
+            .arg(a.getCity())
+            .arg(a.getDistrict())
+            .arg(a.getFsubj())
+            .arg(a.getRawAddress().join(';'));
     if (!query.exec(str))
-        toDebug("Unable to make insert opeation");
-    else
-        toDebug("Success make insert opeation");
+    {
+        toDebug("Unable to make insert opeation:"
+                +a.toDebug(RAW).join(';')
+                +":\r\n"+query.lastError().text());
+//        Q_ASSERT(0);
+//        assert(0);
+    }
+//    else
+//        toDebug("Success make insert opeation");
 
 }
 
@@ -206,10 +251,10 @@ void Database::dropTable()
 {
     QSqlQuery query;
     QString str =
-            "DROP TABLE base;";
+            "DROP TABLE IF EXISTS base;";
 
     if(!query.exec(str))
-        toDebug("Unable to drop a table");
+        toDebug("Unable to drop a table:\n"+query.lastError().text());
     else
         toDebug("Success drop a table");
 }
