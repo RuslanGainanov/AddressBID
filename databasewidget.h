@@ -23,7 +23,6 @@ public slots:
     void viewInfo();
 
 private slots:
-    void on__pushButtonOpen_clicked();
     void onReadRow(int row);
     void onReadRows(int rows);
     void onParseRow(int row);
@@ -31,13 +30,17 @@ private slots:
     void onOpenBase();
     void onBaseOpened();
 
+    void on__pushButtonOpen_clicked();
     void on__pushButtonLoadOld_clicked();
+
 signals:
     void toDebug(QString);
 
 private:
     Ui::DatabaseWidget *_ui;
     Database *_db;
+
+    void connectModelWithView(QSqlTableModel *model);
 
 };
 

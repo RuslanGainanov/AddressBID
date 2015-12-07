@@ -7,6 +7,15 @@ DatabaseWidget::DatabaseWidget(QWidget *parent) :
 {
     _ui->setupUi(this);
     _db = new Database(this);
+
+    _ui->_progressBarReaded->hide();
+
+    if(QFile("Base_1.db").exists())
+        _ui->_pushButtonLoadOld->setEnabled(true);
+    else
+        _ui->_pushButtonLoadOld->setEnabled(false);
+    _db->setBaseName("Base_1.db");
+
     connect(_db, SIGNAL(countRows(int)),
             this, SLOT(onCountRow(int)));
     connect(_db, SIGNAL(rowParsed(int)),
@@ -43,7 +52,6 @@ void DatabaseWidget::open()
     _ui->_lineEditFilename->setEnabled(true);
     _ui->_lineEditFilename->setText(fname);
     clear();
-    _db->setBaseName("Base_1.db");
     _db->openBase(fname);
 }
 
@@ -96,11 +104,25 @@ void DatabaseWidget::onOpenBase()
 void DatabaseWidget::onBaseOpened()
 {
     _ui->_pushButtonOpen->setEnabled(true);
+    _ui->_pushButtonLoadOld->setEnabled(true);
+
+    connectModelWithView(_db->getModel());
+
+    _ui->_progressBarReaded->setMaximum(1);
+    _ui->_progressBarParsed->setMaximum(1);
+    _ui->_progressBarReaded->setValue(1);
+    _ui->_progressBarParsed->setValue(1);
 }
 
 void DatabaseWidget::on__pushButtonLoadOld_clicked()
 {
-//    QString date = QDateTime::currentDateTime().date().toString("yyyy_MM_dd");
-//    _baseName = "Base"+date;
-    _db->openOldBase("Base_1.db");
+    _db->openOldBase();
+}
+
+
+void DatabaseWidget::connectModelWithView(QSqlTableModel *model)
+{
+    _ui->_tableView->setModel(model);
+    _ui->_tableView->hideColumn(0);
+    _ui->_tableView->hideColumn(model->columnCount()-1);
 }

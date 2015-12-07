@@ -25,6 +25,11 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(_dbw, SIGNAL(toDebug(QString)),
             _ui->_debugWidget, SLOT(add(QString)));
+
+    connect( this, SIGNAL(windowClosed()),
+             _dbw, SLOT(close()) );
+    connect( this, SIGNAL(windowClosed()),
+             _excel, SLOT(close()) );
 }
 
 MainWindow::~MainWindow()
@@ -32,6 +37,12 @@ MainWindow::~MainWindow()
     delete _ui;
     delete _dbw;
     delete _excel;
+}
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    emit windowClosed();
+    QWidget::closeEvent(event);
 }
 
 void MainWindow::onBaseOpenTriggered()
@@ -47,4 +58,9 @@ void MainWindow::onExcelOpenTriggered()
 void MainWindow::on__pushButtonOpen_clicked()
 {
     _excel->show();
+}
+
+void MainWindow::on__pushButtonOpenBase_clicked()
+{
+    _dbw->show();
 }

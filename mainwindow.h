@@ -20,12 +20,20 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
+signals:
+    void windowClosed();
+
+protected:
+    void closeEvent(QCloseEvent *);
+
 public slots:
     void onBaseOpenTriggered();
     void onExcelOpenTriggered();
 
 private slots:
     void on__pushButtonOpen_clicked();
+
+    void on__pushButtonOpenBase_clicked();
 
 private:
     Ui::MainWindow *_ui;

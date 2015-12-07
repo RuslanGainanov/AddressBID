@@ -36,7 +36,7 @@ void Parser::setTypeOfRow(const TypeOfRow &type)
 
 void Parser::onReadRow(const int &rowNumber, const QStringList &row)
 {
-    qDebug() << "Parser onReadRow" << this->thread()->currentThreadId() << rowNumber;
+//    qDebug() << "Parser onReadRow" << this->thread()->currentThreadId() << rowNumber;
     _rowNumber=rowNumber;
     _row=row;
     switch (_type) {

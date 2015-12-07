@@ -8,8 +8,8 @@
 #include "address.h"
 #include <QScopedPointer>
 #include <QtSql>
-#include <QSqlError>
-#include <QSqlDatabase>
+//#include <QSqlError>
+//#include <QSqlDatabase>
 
 
 class Database : public QObject
@@ -18,6 +18,7 @@ class Database : public QObject
 public:
     explicit Database(QObject *parent = 0);
     ~Database();
+    QSqlTableModel *getModel();
 
 signals:
     void headReaded(QStringList head);
@@ -34,7 +35,7 @@ signals:
 
 public slots:
     void openBase(QString filename);
-    void openOldBase(QString name);
+    void openOldBase();
     void setBaseName(QString name);
     void clear();
 
@@ -47,16 +48,16 @@ public slots:
 
 private:
     CsvWorker *_csvWorker;
-//    QScopedPointer<CsvWorker> _csvWorker;
     Parser *_parser;
-//    QScopedPointer<Parser> _parser;
     QThread *_thread;
     QMap< AddressElements, QSet<QString> > _mapSet;
     QSqlDatabase _db;
     QString _baseName;
     bool _connected;
     int _countParsedRows;
+    QSqlTableModel *_model;
 
+    void openTableToModel();
     void createConnection();
     void createTable();
     void dropTable();

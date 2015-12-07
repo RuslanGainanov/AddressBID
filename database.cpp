@@ -4,7 +4,8 @@ Database::Database(QObject *parent) :
     QObject(parent),
     _thread(nullptr),
     _connected(false),
-    _countParsedRows(0)
+    _countParsedRows(0),
+    _model(nullptr)
 {
     _thread = new QThread;
 }
@@ -17,6 +18,8 @@ Database::~Database()
         _thread->wait();
         delete _thread;
     }
+    if(_model!=nullptr)
+        delete _model;
 }
 
 void Database::setBaseName(QString name)
@@ -24,10 +27,12 @@ void Database::setBaseName(QString name)
     _baseName = name;
 }
 
-void Database::openOldBase(QString name)
+void Database::openOldBase()
 {
-    _baseName = name;
     createConnection();
+    openTableToModel();
+    emit countRows(_model->rowCount());
+    emit baseOpened();
 }
 
 
@@ -98,14 +103,14 @@ void Database::onReadRows(int rows)
 void Database::onReadRow(int rowNumber, QStringList row)
 {
     Q_UNUSED(row);
-    qDebug() << "Database onReadRow" /*<< row*/ << rowNumber;
+//    qDebug() << "Database onReadRow" /*<< row*/ << rowNumber;
     emit rowReaded(rowNumber);
 }
 
 void Database::onParseRow(int rowNumber, Address a)
 {
 //    Q_UNUSED(addr);
-    qDebug() << "Database onParseRow" << rowNumber /*<< addr.toDebug()*/;
+//    qDebug() << "Database onParseRow" << rowNumber /*<< addr.toDebug()*/;
     _countParsedRows++;
     _mapSet[ENAME].insert(a.getEname());
     _mapSet[CITY].insert(a.getCity());
@@ -125,7 +130,6 @@ void Database::onFinishCsvWorker()
 {
     _thread->quit();
     _thread->wait();
-    emit baseOpened();
     QString mes;
     mes+="Count rows:"+QString::number(_countParsedRows)+"\r\n";
     mes+="Count city:"+QString::number(_mapSet[CITY].size())+"\r\n";
@@ -134,7 +138,26 @@ void Database::onFinishCsvWorker()
     mes+="Count federal subject:"+QString::number(_mapSet[FSUBJ].size())+"\r\n";
     mes+="Count street:"+QString::number(_mapSet[STREET].size())+"\r\n";
     emit messageReady(mes);
+    openTableToModel();
+    emit baseOpened();
+}
 
+QSqlTableModel *Database::getModel()
+{
+    return _model;
+}
+
+void Database::openTableToModel()
+{
+    if(_model!=nullptr)
+        delete _model;
+    _model = new QSqlTableModel(this, _db);
+    _model->setTable("base");
+    _model->setEditStrategy(QSqlTableModel::OnManualSubmit);
+    _model->select();
+
+    if(_model->lastError().isValid())
+        emit toDebug("Database openModel:"+_model->lastError().text());
 }
 
 void Database::createConnection()
@@ -198,6 +221,13 @@ void Database::createTable()
     else
         toDebug("Success create a table");
 
+//    if(_model==nullptr)
+//    {
+//        _model = new QSqlTableModel;
+//        _model->setTable("base");
+//        _model->setEditStrategy(QSqlTableModel::OnManualSubmit);
+//        _model->select();
+//    }
 }
 
 void Database::insertAddress(int row, const Address &a)
@@ -239,8 +269,6 @@ void Database::insertAddress(int row, const Address &a)
         toDebug("Unable to make insert opeation:"
                 +a.toDebug(RAW).join(';')
                 +":\r\n"+query.lastError().text());
-//        Q_ASSERT(0);
-//        assert(0);
     }
 //    else
 //        toDebug("Success make insert opeation");
@@ -257,4 +285,10 @@ void Database::dropTable()
         toDebug("Unable to drop a table:\n"+query.lastError().text());
     else
         toDebug("Success drop a table");
+
+//    if(_model!=nullptr)
+//    {
+//        delete _model;
+//        _model=nullptr;
+//    }
 }
