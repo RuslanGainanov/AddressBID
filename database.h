@@ -6,11 +6,7 @@
 #include "defines.h"
 #include "parser.h"
 #include "address.h"
-#include <QScopedPointer>
 #include <QtSql>
-//#include <QSqlError>
-//#include <QSqlDatabase>
-
 
 class Database : public QObject
 {

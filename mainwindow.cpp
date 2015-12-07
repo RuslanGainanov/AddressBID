@@ -25,6 +25,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(_dbw, SIGNAL(toDebug(QString)),
             _ui->_debugWidget, SLOT(add(QString)));
+    connect(_excel, SIGNAL(toDebug(QString)),
+            _ui->_debugWidget, SLOT(add(QString)));
 
     connect( this, SIGNAL(windowClosed()),
              _dbw, SLOT(close()) );
