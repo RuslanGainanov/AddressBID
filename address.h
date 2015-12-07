@@ -7,6 +7,7 @@ class Address
 {
 public:
     Address();
+    Address(const Address &a);
     void setStreet(const QString s);
     QString getStreet() const;
 

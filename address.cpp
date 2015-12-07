@@ -1,8 +1,25 @@
 #include "address.h"
 
-Address::Address()
+Address::Address():
+    _streetId(0),
+    _buildId(0)
 {
 //    qDebug() << "Address constructor";
+}
+
+Address::Address(const Address &a)
+{
+    setStreet(a.getStreet());
+    setStreetId(a.getStreetId());
+    setBuild(a.getBuild());
+    setBuildId(a.getBuildId());
+    setAdditional(a.getAdditional());
+    setCity(a.getCity());
+    setFsubj(a.getFsubj());
+    setDistrict(a.getDistrict());
+    setKorp(a.getKorp());
+    setEname(a.getEname());
+    setRawAddress(a.getRawAddress());
 }
 
 void Address::setStreet(const QString s)
