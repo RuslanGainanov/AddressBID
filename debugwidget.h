@@ -17,6 +17,7 @@ public:
     ~DebugWidget();
 
 public slots:
+    void add(QString objName, QString mes);
     void add(QString str);
     void add(int n);
     void save(QString file);

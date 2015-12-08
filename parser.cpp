@@ -34,6 +34,17 @@ void Parser::setTypeOfRow(const TypeOfRow &type)
     _type=type;
 }
 
+void Parser::onReadRow(const int &sheet,
+                       const int &rowNumber,
+                       const QStringList &row)
+{
+    _rowNumber=rowNumber;
+    _row=row;
+    _sheet=sheet;
+    parseInRow();
+    emit finished();
+}
+
 void Parser::onReadRow(const int &rowNumber, const QStringList &row)
 {
 //    qDebug() << "Parser onReadRow" << this->thread()->currentThreadId() << rowNumber;
@@ -52,6 +63,26 @@ void Parser::onReadRow(const int &rowNumber, const QStringList &row)
     emit finished();
 }
 
+void Parser::onReadHeadInput(int sheet, QStringList head)
+{
+    qDebug() << "Parser onReadHeadInput"
+             << sheet << head
+             << this->thread()->currentThreadId();
+    for(int i=0; i<ListAddressElements.size(); i++)
+    {
+        QString colname=MapColumnNames[ ListAddressElements.at(i) ];
+        if(!head.contains(colname))
+            head.append(colname);
+    }
+    QMap<AddressElements, QString>::const_iterator it = MapColumnNames.begin();
+    while(it!=MapColumnNames.end())
+    {
+        _mapHeadInput[sheet].insert(it.key(), head.indexOf(it.value()));
+        it++;
+    }
+    emit headInputParsed(sheet, _mapHeadInput[sheet]);
+}
+
 void Parser::onReadHeadBase(QStringList head)
 {
     qDebug() << "Parser onReadHeadBase" << this->thread()->currentThreadId();
@@ -64,10 +95,10 @@ void Parser::onReadHeadBase(QStringList head)
     QMap<AddressElements, QString>::const_iterator it = MapColumnNames.begin();
     while(it!=MapColumnNames.end())
     {
-        _mapHeadBaseAddr.insert(it.key(), head.indexOf(it.value()));
+        _mapHeadBase.insert(it.key(), head.indexOf(it.value()));
         it++;
     }
-    emit headBaseParsed(_mapHeadBaseAddr);
+    emit headBaseParsed(_mapHeadBase);
 }
 
 void Parser::parseAdditional(QString &str, Address &a, int &offset)
@@ -217,19 +248,19 @@ void Parser::parseBaseRow()
         str.remove("\"");
         str=str.trimmed();
 
-        if(i==_mapHeadBaseAddr[STREET_ID])
+        if(i==_mapHeadBase[STREET_ID])
         {
             a.setStreetId(str.toULongLong());
             continue;
         }
-        if(i==_mapHeadBaseAddr[BUILD_ID])
+        if(i==_mapHeadBase[BUILD_ID])
         {
             a.setBuildId(str.toULongLong());
             continue;
         }
 
         //работаем с STR
-        if(i==_mapHeadBaseAddr[STREET])
+        if(i==_mapHeadBase[STREET])
         {
 //            str = str.toLower();
             parseFSubject(str, a, offset);
@@ -253,14 +284,14 @@ void Parser::parseBaseRow()
         } // конец работы с STR
 
         //работаем с B
-        if(i==_mapHeadBaseAddr[BUILD])
+        if(i==_mapHeadBase[BUILD])
         {
             parseBuild(str, a, offset);
             continue;
         }//end work with B
 
         //работаем с K
-        if(i==_mapHeadBaseAddr[KORP])
+        if(i==_mapHeadBase[KORP])
         {
             parseKorp(str, a, offset);
             continue;
@@ -273,5 +304,13 @@ void Parser::parseBaseRow()
 
 void Parser::parseInRow()
 {
-    qDebug() << "Parser parseInRow" << this->thread()->currentThreadId();
+    qDebug() << "Parser parseInRow" << _rowNumber
+             /*<< _row */<< this->thread()->currentThreadId() ;
+
+    Address a;
+    a.setRawAddress(_row);
+    //парсинг строки начат
+
+    emit rowParsed(_sheet, _rowNumber, a); //парсинг строки окончен
+
 }

@@ -29,10 +29,10 @@ protected:
 public slots:
     void onBaseOpenTriggered();
     void onExcelOpenTriggered();
+    void onErrorOccured(QString nameObject, int code, QString errorDesc);
 
 private slots:
     void on__pushButtonOpen_clicked();
-
     void on__pushButtonOpenBase_clicked();
 
 private:

@@ -15,6 +15,7 @@
 #include <assert.h>
 
 const int MAX_OPEN_ROWS=0;
+const int MAX_OPEN_IN_ROWS=10;
 
 enum TypeOfRow
 {
@@ -45,7 +46,8 @@ enum AddressElements
 };
 
 const QList<AddressElements> ListAddressElements {
-    STREET, STREET_ID, KORP, BUILD, BUILD_ID, ENAME, ADDITIONAL, CITY, DISTRICT, FSUBJ
+    STREET, STREET_ID, KORP, BUILD, BUILD_ID, ENAME, ADDITIONAL,
+            CITY, DISTRICT, FSUBJ
 };
 
 typedef QMap<AddressElements, int> MapAddressElementPosition;
@@ -64,6 +66,11 @@ const QMap<AddressElements, QString> MapColumnNames {
     {DISTRICT, "DISTRICT"},
     {FSUBJ, "FSUBJ"},
     {RAW_ADDR, "RAW"},
+};
+
+enum Errors
+{
+    XLS_WORKER_ERROR=1,
 };
 
 const QVector<QString> Cities {

@@ -26,7 +26,6 @@ public slots:
     void process();
 
 private:
-    QMultiMap<QString, QStringList> *_mapBase;
     QString _filename;
     int _maxCount;
 

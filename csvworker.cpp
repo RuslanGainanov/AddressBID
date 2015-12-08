@@ -63,7 +63,7 @@ void CsvWorker::process()
             if(rows==0)
                 emit headReaded(row);
             else
-                emit rowReaded(rows-1, row);
+                emit rowReaded(rows-1, row); //-1 - 1-я строка шапка (нумерация с 0)
             rows++;
         }
         //оставливаем обработку если получено нужное количество строк
@@ -72,6 +72,6 @@ void CsvWorker::process()
     }
     delete decoder;
     file1.close();
-    emit rowsReaded(rows);
+    emit rowsReaded(rows-1); //-1 - 1-я строка шапка (нумерация с 0)
     emit finished();
 }

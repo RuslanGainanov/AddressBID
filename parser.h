@@ -11,23 +11,32 @@ class Parser : public QObject
 public:
     explicit Parser(QObject *parent = 0);
     ~Parser();
+    void setTypeOfRow(const TypeOfRow &type);
 
 signals:
     void rowParsed(int rowNumber, Address addr);
-    void finished();
+    void rowParsed(int sheet, int row, Address addr);
     void headBaseParsed(MapAddressElementPosition head);
+    void headInputParsed(int sheet, MapAddressElementPosition head);
+
+    void finished();
 
 public slots:
     void process();
 
-    void setTypeOfRow(const TypeOfRow &type);
     void onReadRow(const int &rowNumber, const QStringList &row);
+
+    //inputFile only //TODO make individual class
+    void onReadRow(const int &sheet, const int &rowNumber, const QStringList &row);
     void onReadHeadBase(QStringList head);
+    void onReadHeadInput(int sheet, QStringList head);
 
 private:
-    MapAddressElementPosition _mapHeadBaseAddr;
+    MapAddressElementPosition _mapHeadBase;
+    QMap<int, MapAddressElementPosition> _mapHeadInput;
     QStringList _row;
     int _rowNumber;
+    int _sheet;
     Address _addr;
     TypeOfRow _type;
 

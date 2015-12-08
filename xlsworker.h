@@ -4,9 +4,9 @@
 #include <QObject>
 #include <QFile>
 #include <QTextCodec>
-#include "defines.h"
 #include <QAxBase>
 #include <QAxObject>
+#include "defines.h"
 
 class XlsWorker : public QObject
 {
@@ -16,26 +16,28 @@ public:
     ~XlsWorker();
     void setFileName(QString fname);
     void setMaxCountRead(int maxCount);
-    QString getListName(int numberList);
 
 signals:
-    void countLists(int count);
-    void listNames(QStringList list);
-    void rowReaded(int listNumber, int rowNumber, QStringList row);
-    void rowsReaded(int listNumber, int count);
-    void countRows(int listNumber, int count);
-    void headReaded(int listNumber, QStringList head);
+    void sheetsReaded(QMap<int, QString> sheets);
+    void rowReaded(int sheet, int row, QStringList listRow);
+    void rowsReaded(int sheet, int count);
+    void countRows(int sheet, int count);
+    void headReaded(int sheet, QStringList head);
+    void errorOccured(QString nameObject, int code, QString errorDesc);
     void finished();
 
     void toDebug(QString);
+    void toDebug(QString,QString);
 
 public slots:
     void process();
 
+private slots:
+    void debugError(int,QString,QString,QString);
+
 private:
-    QMultiMap<QString, QStringList> *_mapBase;
     QString _filename;
-    QStringList _listNames;
+    QMap<int, QString> _sheetNames;
     int _maxCount;
 
 };

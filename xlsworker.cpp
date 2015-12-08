@@ -23,143 +23,194 @@ void XlsWorker::setMaxCountRead(int maxCount)
         _maxCount=maxCount;
 }
 
-QString XlsWorker::getListName(int numberList)
+void XlsWorker::debugError(int i, QString s1, QString s2, QString s3)
 {
-    if(numberList>0&&numberList<_listNames.size())
-        return _listNames.at(numberList);
-    else
-        return QString();
+#if 1
+    emit toDebug(objectName(), QString::number(i) + s1 + s2 + s3);
+#else
+    Q_UNUSED(i);
+    Q_UNUSED(s1);
+    Q_UNUSED(s2);
+    Q_UNUSED(s3);
+#endif
 }
 
 void XlsWorker::process()
 {
     qDebug() << "XlsWorker process" << this->thread()->currentThreadId();
 
-    QAxObject *excel = new QAxObject("Excel.Application",this); // получаем указатель на Excel
+    QAxObject *excel = new QAxObject("Excel.Application"); // получаем указатель на Excel
     if(excel==NULL)
     {
-        toDebug(objectName()+"Cannot get Excel.Application");
+        QString error="Cannot get Excel.Application";
+        toDebug(objectName(), error);
+        emit errorOccured(objectName(), XLS_WORKER_ERROR, error);
+        emit finished();
         return;
     }
+    connect(excel,SIGNAL(exception(int, QString, QString, QString)),
+            this,SLOT(debugError(int,QString,QString,QString)));
+
     QAxObject *workbooks = excel->querySubObject("Workbooks");
     if(workbooks==NULL)
     {
-        qDebug() << "false";
-//        return false;
+        QString error="Cannot query Workbooks";
+        toDebug(objectName(), error);
+        emit errorOccured(objectName(), XLS_WORKER_ERROR, error);
+        emit finished();
+        return;
     }
+    connect(workbooks, SIGNAL(exception(int,QString,QString,QString)),
+            this, SLOT(debugError(int,QString,QString,QString)));
+
     // на директорию, откуда грузить книгу
     QAxObject *workbook = workbooks->querySubObject(
                 "Open(const QString&)",
-                str);
+                _filename);
+    if(workbook==NULL)
+    {
+        QString error=
+                QString("Cannot query workbook.Open(const %1)")
+                .arg(_filename);
+        toDebug(objectName(), error);
+        emit errorOccured(objectName(), XLS_WORKER_ERROR, error);
+        emit finished();
+        return;
+    }
+    connect(workbook, SIGNAL(exception(int,QString,QString,QString)),
+            this, SLOT(debugError(int,QString,QString,QString)));
 
-//    QAxObject *workbook = workbooks->querySubObject("Add()");
-//    if(workbook==NULL)
-//    {
-//        qDebug() << "false";
-////        return false;
-//    }
     QAxObject *sheets = workbook->querySubObject("Sheets");
     if(sheets==NULL)
     {
-        qDebug() << "false";
-//        return false;
+        QString error="Cannot query Sheets";
+        toDebug(objectName(), error);
+        emit errorOccured(objectName(), XLS_WORKER_ERROR, error);
+        emit finished();
+        return;
     }
+    connect(sheets, SIGNAL(exception(int,QString,QString,QString)),
+            this, SLOT(debugError(int,QString,QString,QString)));
 
-    int count = sheets->dynamicCall("Count()").toInt();
-    QString firstSheetName;
+    int count = sheets->dynamicCall("Count()").toInt(); //получаем кол-во листов
+    QStringList sheetNames;
+    //читаем имена листов
     for (int i=1; i<=count; i++)
     {
         QAxObject *sheet1 = sheets->querySubObject("Item(int)", i);
         if(sheet1==NULL)
         {
-            qDebug() << "false";
-//            return false;
+            QString error="Cannot query Item(int)"+QString::number(i);
+            toDebug(objectName(), error);
+            emit errorOccured(objectName(), XLS_WORKER_ERROR, error);
+            emit finished();
+            return;
         }
-        firstSheetName = sheet1->dynamicCall("Name()").toString();
+        sheetNames.append( sheet1->dynamicCall("Name()").toString() );
         sheet1->clear();
         delete sheet1;
         sheet1 = NULL;
-        break;
     }
 
-    QAxObject *sheet = NULL;
-    if(!firstSheetName.isEmpty())
+    // проходим по всем листам документа
+    int sheetNumber=0;
+    foreach (QString sheetName, sheetNames)
+    {
+//        if(sheetName.isEmpty())
+//            continue;
+        QAxObject *sheet = NULL;
         sheet = sheets->querySubObject(
-                    "Item(const QVariant&)", QVariant(firstSheetName));
-    if(sheet==NULL)
-    {
-        qDebug() << "false";
-//        return false;
-    }
-
-    connect(excel,SIGNAL(exception(int, QString, QString, QString)),
-                     this,SLOT(debugError(int,QString,QString,QString)));
-    connect(workbooks, SIGNAL(exception(int,QString,QString,QString)),
-            this, SLOT(debugError(int,QString,QString,QString)));
-    connect(workbook, SIGNAL(exception(int,QString,QString,QString)),
-            this, SLOT(debugError(int,QString,QString,QString)));
-    connect(sheets, SIGNAL(exception(int,QString,QString,QString)),
-            this, SLOT(debugError(int,QString,QString,QString)));
-    connect(sheet, SIGNAL(exception(int,QString,QString,QString)),
-            this, SLOT(debugError(int,QString,QString,QString)));
-
-    QAxObject *usedRange = sheet->querySubObject("UsedRange");
-    QAxObject *usedRows = usedRange->querySubObject("Rows");
-    QAxObject *usedCols = usedRange->querySubObject("Columns");
-    int rows = usedRows->property("Count").toInt();
-    int cols = usedCols->property("Count").toInt();
-    qDebug() << "Количество строк и столбцов в файле: " << rows << cols;
-
-    //заполняем таблицу
-    QTableWidget *tbl = ui->tableWidgetIn;
-    QTableWidgetItem *ptwi = 0;
-    tbl->setColumnCount(cols);
-    //получение шапки
-    QStringList lst;
-    for(int i=1; i<=cols; i++)
-    {
-        // получение указателя на ячейку [row][col] ((!)нумерация с единицы)
-        QAxObject* cell = sheet->querySubObject("Cells(QVariant,QVariant)", 1, i);
-        // получение содержимого
-        QVariant result = cell->property("Value");
-        lst.append(result.toString());
-        // освобождение памяти
-        delete cell;
-    }
-    tbl->setHorizontalHeaderLabels(lst);
-
-    //заполнение таблицы TableWidget
-    for(int row=2; row<=rows; row++)
-    {
-        tbl->insertRow(tbl->rowCount());
-        for(int col=1; col<=cols; col++)
+                    "Item(const QVariant&)", QVariant(sheetName));
+        if(sheet==NULL)
         {
-            // получение указателя на ячейку [row][col] ((!)нумерация с единицы)
-            QAxObject* cell = sheet->querySubObject("Cells(QVariant,QVariant)", row, col);
-            // получение содержимого
-            QVariant result = cell->property("Value");
-//            qDebug() << row << col << result.toString();
-            ptwi = new QTableWidgetItem(result.toString());
-            tbl->setItem(row-2, col-1, ptwi);
-            // освобождение памяти
-            delete cell;
+            QString error=
+                    QString("Cannot query Item(const %1)")
+                    .arg(sheetName);
+            toDebug(objectName(), error);
+            emit errorOccured(objectName(), XLS_WORKER_ERROR, error);
+            emit finished();
+            return;
         }
-    }
+        connect(sheet, SIGNAL(exception(int,QString,QString,QString)),
+                this, SLOT(debugError(int,QString,QString,QString)));
 
-    // освобождение памяти
-    usedRange->clear();
-    delete usedRange;
-    usedRange = NULL;
+        QAxObject *usedRange = sheet->querySubObject("UsedRange");
+        QAxObject *usedRows = usedRange->querySubObject("Rows");
+        QAxObject *usedCols = usedRange->querySubObject("Columns");
+        int rows = usedRows->property("Count").toInt();
+        int cols = usedCols->property("Count").toInt();
 
-//    delete usedRows;
-//    usedRows = NULL;
+        //если на данном листе всего 1 строка (или меньше), т.е. данный лист пуст
+        if(rows<=1)
+        {
+            // освобождение памяти
+            usedRange->clear();
+            delete usedRange;
+            usedRange = NULL;
 
-//    delete usedCols;
-//    usedCols = NULL;
+        //    delete usedRows;
+        //    usedRows = NULL;
 
-    sheet->clear();
-    delete sheet;
-    sheet = NULL;
+        //    delete usedCols;
+        //    usedCols = NULL;
+
+            sheet->clear();
+            delete sheet;
+            sheet = NULL;
+
+            sheetNumber++;
+            continue;
+        }
+        _sheetNames.insert(sheetNumber, sheetName);
+
+        emit toDebug(objectName(),
+                QString("На листе %1: %2 строк, %3 столбцов")
+                .arg(sheetName)
+                .arg(QString::number(rows))
+                .arg(QString::number(cols)));
+        emit countRows(sheetNumber, rows);
+
+        //чтение данных
+        for(int row=1; row<=rows; row++)
+        {
+            QStringList strListRow;
+            for(int col=1; col<=cols; col++)
+            {
+                QAxObject* cell =
+                        sheet->querySubObject("Cells(QVariant,QVariant)", row, col);
+                QString result = cell->property("Value").toString();
+                strListRow.append(result);
+                delete cell;
+            }
+            if(row==1)
+                emit headReaded(sheetNumber, strListRow); //шапка прочитана (1 строки у таблиц)
+            else
+                emit rowReaded(sheetNumber, row-2, strListRow); //строка прочитана
+                                            //(-2 - 1-я строка шапка + нумерация с 1
+                                            //- приводим к нумерации к 0)
+            //оставливаем обработку если получено нужное количество строк
+            if(_maxCount>0 && row-1 >= _maxCount)
+                break;
+        }
+        emit rowsReaded(sheetNumber, rows); //прочитано строк на данном листе
+        sheetNumber++;
+
+        // освобождение памяти
+        usedRange->clear();
+        delete usedRange;
+        usedRange = NULL;
+
+    //    delete usedRows;
+    //    usedRows = NULL;
+
+    //    delete usedCols;
+    //    usedCols = NULL;
+
+        sheet->clear();
+        delete sheet;
+        sheet = NULL;
+    }//end foreach _sheetNames
+    emit sheetsReaded(_sheetNames); //список листов прочитан в документе
 
     sheets->clear();
     delete sheets;
@@ -178,6 +229,5 @@ void XlsWorker::process()
     delete excel;
     excel = NULL;
 
-    emit rowsReaded(rows);
     emit finished();
 }

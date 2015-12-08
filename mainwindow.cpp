@@ -9,15 +9,15 @@ MainWindow::MainWindow(QWidget *parent) :
     _dbw = new DatabaseWidget;
     _excel = new ExcelWidget;
     int id = qRegisterMetaType< Address >("Address");
-    qDebug() << "qRegisterMetaType< Address >(\"Address\")"
-             << id;
+//    qDebug() << "qRegisterMetaType< Address >(\"Address\")"
+//             << id;
     id = qRegisterMetaType< QMap<QString,int> >("QMap<QString,int>");
-    qDebug() << "qRegisterMetaType< QMap<QString,int> >(\"QMap<QString,int>\")"
-             << id;
+//    qDebug() << "qRegisterMetaType< QMap<QString,int> >(\"QMap<QString,int>\")"
+//             << id;
     id = qRegisterMetaType< MapAddressElementPosition >("MapAddressElementPosition");
-    qDebug() << "qRegisterMetaType< MapAddressElementPosition >(\"MapAddressElementPosition\")"
-             << id;
-
+//    qDebug() << "qRegisterMetaType< MapAddressElementPosition >(\"MapAddressElementPosition\")"
+//             << id;
+    Q_UNUSED(id);
     connect(_ui->_actionOpenBase, SIGNAL(triggered()),
             this, SLOT(onBaseOpenTriggered()));
     connect(_ui->_actionOpenFile, SIGNAL(triggered()),
@@ -27,6 +27,11 @@ MainWindow::MainWindow(QWidget *parent) :
             _ui->_debugWidget, SLOT(add(QString)));
     connect(_excel, SIGNAL(toDebug(QString)),
             _ui->_debugWidget, SLOT(add(QString)));
+    connect(_excel, SIGNAL(toDebug(QString,QString)),
+            _ui->_debugWidget, SLOT(add(QString,QString)));
+
+    connect(_excel, SIGNAL(errorOccured(QString,int,QString)),
+            this, SLOT(onErrorOccured(QString,int,QString)));
 
     connect( this, SIGNAL(windowClosed()),
              _dbw, SLOT(close()) );
@@ -55,6 +60,13 @@ void MainWindow::onBaseOpenTriggered()
 void MainWindow::onExcelOpenTriggered()
 {
     _excel->show();
+}
+
+void MainWindow::onErrorOccured(QString nameObject, int code, QString errorDesc)
+{
+    Q_UNUSED(nameObject);
+    Q_UNUSED(code);
+    _ui->statusBar->showMessage(errorDesc, 5000);
 }
 
 void MainWindow::on__pushButtonOpen_clicked()

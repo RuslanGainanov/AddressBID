@@ -24,6 +24,16 @@ void DebugWidget::on__pushButtonSave_clicked()
 }
 
 
+void DebugWidget::add(QString objName, QString mes)
+{
+    QString s =_ui->_plainTextEdit->toPlainText();
+    QString append = "["+QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz")
+            +"]\n"+objName+":"+mes;
+    s.append("***\n"+append+"\n");
+    qDebug() << append;
+    _ui->_plainTextEdit->setPlainText(s);
+}
+
 void DebugWidget::add(QString str)
 {
     QString s =_ui->_plainTextEdit->toPlainText();
