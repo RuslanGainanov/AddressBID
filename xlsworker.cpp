@@ -39,8 +39,9 @@ void XlsWorker::process()
 {
     qDebug() << "XlsWorker process" << this->thread()->currentThreadId();
 
-    QAxObject *excel = new QAxObject("Excel.Application"); // получаем указатель на Excel
-    if(excel==NULL)
+    // получаем указатель на Excel
+    QScopedPointer<QAxObject> excel(new QAxObject("Excel.Application"));
+    if(excel.isNull())
     {
         QString error="Cannot get Excel.Application";
         toDebug(objectName(), error);
@@ -48,11 +49,11 @@ void XlsWorker::process()
         emit finished();
         return;
     }
-    connect(excel,SIGNAL(exception(int, QString, QString, QString)),
+    connect(excel.data(),SIGNAL(exception(int, QString, QString, QString)),
             this,SLOT(debugError(int,QString,QString,QString)));
 
-    QAxObject *workbooks = excel->querySubObject("Workbooks");
-    if(workbooks==NULL)
+    QScopedPointer<QAxObject> workbooks(excel->querySubObject("Workbooks"));
+    if(workbooks.isNull())
     {
         QString error="Cannot query Workbooks";
         toDebug(objectName(), error);
@@ -60,14 +61,15 @@ void XlsWorker::process()
         emit finished();
         return;
     }
-    connect(workbooks, SIGNAL(exception(int,QString,QString,QString)),
+    connect(workbooks.data(), SIGNAL(exception(int,QString,QString,QString)),
             this, SLOT(debugError(int,QString,QString,QString)));
 
     // на директорию, откуда грузить книгу
-    QAxObject *workbook = workbooks->querySubObject(
-                "Open(const QString&)",
-                _filename);
-    if(workbook==NULL)
+    QScopedPointer<QAxObject> workbook(workbooks->querySubObject(
+                                           "Open(const QString&)",
+                                           _filename)
+                                       );
+    if(workbook.isNull())
     {
         QString error=
                 QString("Cannot query workbook.Open(const %1)")
@@ -77,11 +79,11 @@ void XlsWorker::process()
         emit finished();
         return;
     }
-    connect(workbook, SIGNAL(exception(int,QString,QString,QString)),
+    connect(workbook.data(), SIGNAL(exception(int,QString,QString,QString)),
             this, SLOT(debugError(int,QString,QString,QString)));
 
-    QAxObject *sheets = workbook->querySubObject("Sheets");
-    if(sheets==NULL)
+    QScopedPointer<QAxObject> sheets(workbook->querySubObject("Sheets"));
+    if(sheets.isNull())
     {
         QString error="Cannot query Sheets";
         toDebug(objectName(), error);
@@ -89,7 +91,7 @@ void XlsWorker::process()
         emit finished();
         return;
     }
-    connect(sheets, SIGNAL(exception(int,QString,QString,QString)),
+    connect(sheets.data(), SIGNAL(exception(int,QString,QString,QString)),
             this, SLOT(debugError(int,QString,QString,QString)));
 
     int count = sheets->dynamicCall("Count()").toInt(); //получаем кол-во листов
@@ -97,8 +99,8 @@ void XlsWorker::process()
     //читаем имена листов
     for (int i=1; i<=count; i++)
     {
-        QAxObject *sheet1 = sheets->querySubObject("Item(int)", i);
-        if(sheet1==NULL)
+        QScopedPointer<QAxObject> sheetItem(sheets->querySubObject("Item(int)", i));
+        if(sheetItem.isNull())
         {
             QString error="Cannot query Item(int)"+QString::number(i);
             toDebug(objectName(), error);
@@ -106,22 +108,19 @@ void XlsWorker::process()
             emit finished();
             return;
         }
-        sheetNames.append( sheet1->dynamicCall("Name()").toString() );
-        sheet1->clear();
-        delete sheet1;
-        sheet1 = NULL;
+        sheetNames.append( sheetItem->dynamicCall("Name()").toString() );
+        sheetItem->clear();
     }
 
     // проходим по всем листам документа
     int sheetNumber=0;
     foreach (QString sheetName, sheetNames)
     {
-//        if(sheetName.isEmpty())
-//            continue;
-        QAxObject *sheet = NULL;
-        sheet = sheets->querySubObject(
-                    "Item(const QVariant&)", QVariant(sheetName));
-        if(sheet==NULL)
+        QScopedPointer<QAxObject> sheet(
+                    sheets->querySubObject("Item(const QVariant&)",
+                                           QVariant(sheetName))
+                    );
+        if(sheet.isNull())
         {
             QString error=
                     QString("Cannot query Item(const %1)")
@@ -131,12 +130,12 @@ void XlsWorker::process()
             emit finished();
             return;
         }
-        connect(sheet, SIGNAL(exception(int,QString,QString,QString)),
+        connect(sheet.data(), SIGNAL(exception(int,QString,QString,QString)),
                 this, SLOT(debugError(int,QString,QString,QString)));
 
-        QAxObject *usedRange = sheet->querySubObject("UsedRange");
-        QAxObject *usedRows = usedRange->querySubObject("Rows");
-        QAxObject *usedCols = usedRange->querySubObject("Columns");
+        QScopedPointer<QAxObject> usedRange(sheet->querySubObject("UsedRange"));
+        QScopedPointer<QAxObject> usedRows(usedRange->querySubObject("Rows"));
+        QScopedPointer<QAxObject> usedCols(usedRange->querySubObject("Columns"));
         int rows = usedRows->property("Count").toInt();
         int cols = usedCols->property("Count").toInt();
 
@@ -145,22 +144,13 @@ void XlsWorker::process()
         {
             // освобождение памяти
             usedRange->clear();
-            delete usedRange;
-            usedRange = NULL;
-
-        //    delete usedRows;
-        //    usedRows = NULL;
-
-        //    delete usedCols;
-        //    usedCols = NULL;
-
             sheet->clear();
-            delete sheet;
-            sheet = NULL;
-
+            usedRows->clear();
+            usedCols->clear();
             sheetNumber++;
             continue;
         }
+
         _sheetNames.insert(sheetNumber, sheetName);
 
         emit toDebug(objectName(),
@@ -176,11 +166,14 @@ void XlsWorker::process()
             QStringList strListRow;
             for(int col=1; col<=cols; col++)
             {
-                QAxObject* cell =
-                        sheet->querySubObject("Cells(QVariant,QVariant)", row, col);
+                QScopedPointer<QAxObject> cell (
+                            sheet->querySubObject("Cells(QVariant,QVariant)",
+                                                  row,
+                                                  col)
+                            );
                 QString result = cell->property("Value").toString();
                 strListRow.append(result);
-                delete cell;
+                cell->clear();
             }
             if(row==1)
                 emit headReaded(sheetNumber, strListRow); //шапка прочитана (1 строки у таблиц)
@@ -197,37 +190,16 @@ void XlsWorker::process()
 
         // освобождение памяти
         usedRange->clear();
-        delete usedRange;
-        usedRange = NULL;
-
-    //    delete usedRows;
-    //    usedRows = NULL;
-
-    //    delete usedCols;
-    //    usedCols = NULL;
-
+        usedRows->clear();
+        usedCols->clear();
         sheet->clear();
-        delete sheet;
-        sheet = NULL;
     }//end foreach _sheetNames
     emit sheetsReaded(_sheetNames); //список листов прочитан в документе
 
     sheets->clear();
-    delete sheets;
-    sheets = NULL;
-
     workbook->clear();
-    delete workbook;
-    workbook = NULL;
-
     workbooks->dynamicCall("Close()");
     workbooks->clear();
-    delete workbooks;
-    workbooks = NULL;
-
     excel->dynamicCall("Quit()");
-    delete excel;
-    excel = NULL;
-
     emit finished();
 }

@@ -6,6 +6,7 @@
 #include <QTextCodec>
 #include <QAxBase>
 #include <QAxObject>
+#include <QScopedPointer>
 #include "defines.h"
 
 class XlsWorker : public QObject
