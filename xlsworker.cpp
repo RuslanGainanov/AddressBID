@@ -39,6 +39,8 @@ void XlsWorker::process()
 {
     qDebug() << "XlsWorker process" << this->thread()->currentThreadId();
 
+    QMap<int, QString> sheetNames;
+
     // получаем указатель на Excel
     QScopedPointer<QAxObject> excel(new QAxObject("Excel.Application"));
     if(excel.isNull())
@@ -95,7 +97,7 @@ void XlsWorker::process()
             this, SLOT(debugError(int,QString,QString,QString)));
 
     int count = sheets->dynamicCall("Count()").toInt(); //получаем кол-во листов
-    QStringList sheetNames;
+    QStringList readedSheetNames;
     //читаем имена листов
     for (int i=1; i<=count; i++)
     {
@@ -108,13 +110,13 @@ void XlsWorker::process()
             emit finished();
             return;
         }
-        sheetNames.append( sheetItem->dynamicCall("Name()").toString() );
+        readedSheetNames.append( sheetItem->dynamicCall("Name()").toString() );
         sheetItem->clear();
     }
 
     // проходим по всем листам документа
     int sheetNumber=0;
-    foreach (QString sheetName, sheetNames)
+    foreach (QString sheetName, readedSheetNames)
     {
         QScopedPointer<QAxObject> sheet(
                     sheets->querySubObject("Item(const QVariant&)",
@@ -151,7 +153,7 @@ void XlsWorker::process()
             continue;
         }
 
-        _sheetNames.insert(sheetNumber, sheetName);
+        sheetNames.insert(sheetNumber, sheetName);
 
         emit toDebug(objectName(),
                 QString("На листе %1: %2 строк, %3 столбцов")
@@ -188,13 +190,13 @@ void XlsWorker::process()
         emit rowsReaded(sheetNumber, rows); //прочитано строк на данном листе
         sheetNumber++;
 
-        // освобождение памяти
         usedRange->clear();
         usedRows->clear();
         usedCols->clear();
         sheet->clear();
     }//end foreach _sheetNames
-    emit sheetsReaded(_sheetNames); //список листов прочитан в документе
+
+    emit sheetsReaded(sheetNames); //список листов прочитан
 
     sheets->clear();
     workbook->clear();

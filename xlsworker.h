@@ -38,7 +38,6 @@ private slots:
 
 private:
     QString _filename;
-    QMap<int, QString> _sheetNames;
     int _maxCount;
 
 };
