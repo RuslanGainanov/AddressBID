@@ -15,7 +15,7 @@
 #include <assert.h>
 
 const int MAX_OPEN_ROWS=0;
-const int MAX_OPEN_IN_ROWS=10;
+//const int MAX_OPEN_IN_ROWS=0; //moved in ExcelWidget
 
 enum TypeOfRow
 {

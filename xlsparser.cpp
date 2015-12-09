@@ -8,7 +8,7 @@ XlsParser::XlsParser(QObject *parent) :
 
 XlsParser::~XlsParser()
 {
-    qDebug() << "XlsParser destructor" << this->thread()->currentThreadId();;
+    qDebug() << "XlsParser destructor" << this->thread()->currentThreadId();
 }
 
 void XlsParser::process()
@@ -20,9 +20,9 @@ void XlsParser::process()
 void XlsParser::onReadHead(int sheet,
                            QStringList head)
 {
-    qDebug() << "XlsParser onReadHead"
+//    qDebug() << "XlsParser onReadHead"
 //             << sheet << head
-             << this->thread()->currentThreadId();
+//             << this->thread()->currentThreadId();
     QList< AddressElements > listAddressElements = MapColumnNames.keys();
     for(int i=0; i<listAddressElements.size(); i++)
     {
@@ -43,8 +43,8 @@ void XlsParser::onReadRow(const int &sheet,
                           const int &rowNumber,
                           const QStringList &row)
 {
-    qDebug() << "XlsParser onReadRow" << rowNumber
-             /*<< row */<< this->thread()->currentThreadId() ;
+//    qDebug() << "XlsParser onReadRow" << rowNumber
+//             /*<< row */<< this->thread()->currentThreadId() ;
 
     Address a;
     a.setRawAddress(row);

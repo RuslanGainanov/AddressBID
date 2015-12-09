@@ -26,7 +26,8 @@ SOURCES += main.cpp\
     tableview.cpp \
     excelwidget.cpp \
     xlsworker.cpp \
-    xlsparser.cpp
+    xlsparser.cpp \
+    tablemodel.cpp
 
 HEADERS  += mainwindow.h \
     parser.h \
@@ -41,7 +42,8 @@ HEADERS  += mainwindow.h \
     tableview.h \
     excelwidget.h \
     xlsworker.h \
-    xlsparser.h
+    xlsparser.h \
+    tablemodel.h
 
 FORMS    += mainwindow.ui \
     databasewidget.ui \

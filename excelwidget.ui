@@ -29,7 +29,21 @@
     </layout>
    </item>
    <item>
-    <widget class="QTableView" name="tableView"/>
+    <widget class="TabWidget" name="_tabWidget">
+     <property name="currentIndex">
+      <number>-1</number>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QTableView" name="tableView">
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>25</height>
+      </size>
+     </property>
+    </widget>
    </item>
    <item>
     <widget class="QProgressBar" name="_progressBarReaded">
@@ -40,6 +54,14 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>TabWidget</class>
+   <extends>QTabWidget</extends>
+   <header>tabwidget.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

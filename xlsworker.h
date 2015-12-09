@@ -20,6 +20,7 @@ public:
 
 signals:
     void sheetsReaded(QMap<int, QString> sheets);
+    void sheetsAllReaded(QStringList sheets);
     void rowReaded(int sheet, int row, QStringList listRow);
     void rowsReaded(int sheet, int count);
     void countRows(int sheet, int count);
@@ -27,7 +28,6 @@ signals:
     void errorOccured(QString nameObject, int code, QString errorDesc);
     void finished();
 
-    void toDebug(QString);
     void toDebug(QString,QString);
 
 public slots:

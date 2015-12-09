@@ -26,10 +26,13 @@ void DebugWidget::on__pushButtonSave_clicked()
 
 void DebugWidget::add(QString objName, QString mes)
 {
+    if(objName=="ExcelWidget")
+        return;
     QString s =_ui->_plainTextEdit->toPlainText();
-    QString append = "["+QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz")
-            +"]\n"+objName+":"+mes;
-    s.append("***\n"+append+"\n");
+    QString currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
+    QString append = objName+": "+mes;
+    s.append("***\n")
+     .append("["+currTime+"]\n"+append+"\n");
     qDebug() << append;
     _ui->_plainTextEdit->setPlainText(s);
 }

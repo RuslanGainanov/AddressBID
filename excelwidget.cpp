@@ -11,6 +11,8 @@ ExcelWidget::ExcelWidget(QWidget *parent) :
 {
     _ui->setupUi(this);
     _thread = new QThread;
+    connect(this, SIGNAL(removeEmptySheets(QVector<int>)),
+            this, SLOT(onRemoveEmptySheets(QVector<int>)));
 }
 
 ExcelWidget::~ExcelWidget()
@@ -21,6 +23,9 @@ ExcelWidget::~ExcelWidget()
         _thread->quit();
         _thread->wait();
         delete _thread;
+    }
+    foreach (int key, _data.keys()) {
+        delete _data.take(key);
     }
 }
 
@@ -58,6 +63,8 @@ void ExcelWidget::runThread(QString openFilename)
             this, SIGNAL(toDebug(QString,QString)));
     connect(_xls, SIGNAL(sheetsReaded(QMap<int,QString>)),
             this, SLOT(onSheetsReaded(QMap<int,QString>)));
+    connect(_xls, SIGNAL(sheetsAllReaded(QStringList)),
+            this, SLOT(onSheetsAllReaded(QStringList)));
     connect(_xls, SIGNAL(errorOccured(QString,int,QString)),
             this, SIGNAL(errorOccured(QString,int,QString)));
     connect(_xls, SIGNAL(countRows(int,int)),
@@ -97,14 +104,30 @@ void ExcelWidget::onReadHead(int sheet, QStringList head)
 {
     emit toDebug(objectName(),
                  QString("Прочитана шапка у листа №%1").arg(sheet));
+    for(int i=0; i < head.size(); i++)
+        _data.value(sheet)->setHeaderData(i, Qt::Horizontal, head.at(i));
+
+    TableView *view = new TableView(_ui->_tabWidget);
+    view->setModel(_data.value(sheet));
+    _ui->_tabWidget->addTab(view, _data.value(sheet)->getName());
+
     _sheetsHead.insert(sheet, head);
     emit headReaded(sheet, head);
 }
 
 void ExcelWidget::onReadRow(int sheet, int row, QStringList listRow)
 {
-    Q_UNUSED(listRow);
+//    Q_UNUSED(listRow);
     emit toDebug(objectName(), "ExcelWidget::onReadRow");
+
+    TableModel *tm = _data.value(sheet);
+    tm->insertRow(tm->rowCount());
+    for(int col=0; col<listRow.size(); col++)
+    {
+        QModelIndex mi = tm->index(row, col);
+        tm->setData(mi,
+                    QVariant::fromValue(listRow.at(col)));
+    }
     emit rowReaded(sheet, row);
 }
 
@@ -118,18 +141,46 @@ void ExcelWidget::onCountRows(int sheet, int count)
     emit countRows(sheet, count);
 }
 
-void ExcelWidget::onHeadReaded(int sheet, QStringList head)
+void ExcelWidget::onSheetsAllReaded(QStringList sheets)
 {
-    emit headReaded(sheet, head);
+    emit toDebug(objectName(),
+                 "В документе есть следующий(-ие) лист(-ы):\r\n"
+                 +sheets.join(", "));
+    for(int i=0; i<sheets.size(); i++)
+    {
+        _sheets.insert(i, sheets.at(i));
+        _data.insert(i, new TableModel(sheets.at(i)));
+    }
+    emit sheetsAllReaded(sheets);
 }
 
 void ExcelWidget::onSheetsReaded(const QMap<int, QString> &sheets)
 {
     emit toDebug(objectName(),
-                 "В документе есть следующие лист(-ы) с информацией:\r\n"
+                 "В документе есть следующий(-ие) лист(-ы) с информацией:\r\n"
                  +QStringList(sheets.values()).join(", "));
-    _sheets=sheets;
+    QMap<int, QString>::const_iterator i = _sheets.constBegin();
+    QVector<int> sheetNumbers;
+    while (i != _sheets.constEnd()) {
+        //если новый список не содержит лист из старого,
+        //то этот лист пустой и его нужно удалить
+        if(!sheets.contains(i.key()))
+            sheetNumbers.push_back(i.key());
+        ++i;
+    }
+//    _sheets=sheets;
     emit sheetsReaded(sheets);
+    emit removeEmptySheets(sheetNumbers);
+}
+
+void ExcelWidget::onRemoveEmptySheets(QVector<int> numb)
+{
+    for(int i=0; i<numb.size(); i++)
+    {
+        _sheets.remove(numb.at(i));
+        _sheetsHead.remove(numb.at(i));
+        delete _data.take(numb.at(i));
+    }
 }
 
 void ExcelWidget::onFinishWorker()
@@ -153,6 +204,7 @@ void ExcelWidget::onHeadParsed(int sheet, MapAddressElementPosition head)
 
 void ExcelWidget::onParseRow(int sheet, int rowNumber, Address a)
 {
+    Q_UNUSED(a);
     emit toDebug(objectName(),
                  "ExcelWidget onParseRow "
                  +QString::number(sheet)+" "

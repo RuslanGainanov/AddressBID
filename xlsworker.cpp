@@ -113,6 +113,7 @@ void XlsWorker::process()
         readedSheetNames.append( sheetItem->dynamicCall("Name()").toString() );
         sheetItem->clear();
     }
+    emit sheetsAllReaded(readedSheetNames); //список листов прочитан
 
     // проходим по всем листам документа
     int sheetNumber=0;
@@ -196,7 +197,7 @@ void XlsWorker::process()
         sheet->clear();
     }//end foreach _sheetNames
 
-    emit sheetsReaded(sheetNames); //список листов прочитан
+    emit sheetsReaded(sheetNames); //список листов скорректирван
 
     sheets->clear();
     workbook->clear();
