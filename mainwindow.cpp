@@ -7,16 +7,12 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     _ui->setupUi(this);
     _dbw = new DatabaseWidget;
-    _excel = new ExcelWidget;
+    _excel = _ui->_excelWidget;
     int id = qRegisterMetaType< Address >("Address");
-//    qDebug() << "qRegisterMetaType< Address >(\"Address\")"
-//             << id;
     id = qRegisterMetaType< QMap<QString,int> >("QMap<QString,int>");
-//    qDebug() << "qRegisterMetaType< QMap<QString,int> >(\"QMap<QString,int>\")"
-//             << id;
     id = qRegisterMetaType< MapAddressElementPosition >("MapAddressElementPosition");
-//    qDebug() << "qRegisterMetaType< MapAddressElementPosition >(\"MapAddressElementPosition\")"
-//             << id;
+    id = qRegisterMetaType< ExcelSheet >("ExcelSheet");
+    id = qRegisterMetaType< ExcelDocument >("ExcelDocument");
     Q_UNUSED(id);
     connect(_ui->_actionOpenBase, SIGNAL(triggered()),
             this, SLOT(onBaseOpenTriggered()));
@@ -24,8 +20,6 @@ MainWindow::MainWindow(QWidget *parent) :
             this, SLOT(onExcelOpenTriggered()));
 
     connect(_dbw, SIGNAL(toDebug(QString)),
-            _ui->_debugWidget, SLOT(add(QString)));
-    connect(_excel, SIGNAL(toDebug(QString)),
             _ui->_debugWidget, SLOT(add(QString)));
     connect(_excel, SIGNAL(toDebug(QString,QString)),
             _ui->_debugWidget, SLOT(add(QString,QString)));
@@ -43,7 +37,6 @@ MainWindow::~MainWindow()
 {
     delete _ui;
     delete _dbw;
-    delete _excel;
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -59,7 +52,7 @@ void MainWindow::onBaseOpenTriggered()
 
 void MainWindow::onExcelOpenTriggered()
 {
-    _excel->show();
+    _excel->open();
 }
 
 void MainWindow::onErrorOccured(QString nameObject, int code, QString errorDesc)
@@ -71,7 +64,7 @@ void MainWindow::onErrorOccured(QString nameObject, int code, QString errorDesc)
 
 void MainWindow::on__pushButtonOpen_clicked()
 {
-    _excel->show();
+    _excel->open();
 }
 
 void MainWindow::on__pushButtonOpenBase_clicked()

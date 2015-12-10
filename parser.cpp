@@ -17,10 +17,10 @@ void Parser::process()
 {
 //    qDebug() << "Parser process" << this->thread()->currentThreadId();
     switch (_type) {
-    case BASE:
+    case BASE_TYPE:
         parseBaseRow();
         break;
-    case INPUT:
+    case INPUT_TYPE:
         parseInRow();
         break;
     default:
@@ -51,10 +51,10 @@ void Parser::onReadRow(const int &rowNumber, const QStringList &row)
     _rowNumber=rowNumber;
     _row=row;
     switch (_type) {
-    case BASE:
+    case BASE_TYPE:
         parseBaseRow();
         break;
-    case INPUT:
+    case INPUT_TYPE:
         parseInRow();
         break;
     default:

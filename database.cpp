@@ -66,7 +66,7 @@ void Database::openBase(QString filename)
             this, SLOT(onFinishCsvWorker()));
 
     _parser = new Parser;
-    _parser->setTypeOfRow(BASE);
+    _parser->setTypeOfRow(BASE_TYPE);
     _parser->moveToThread(_thread);
     connect(_csvWorker, SIGNAL(headReaded(QStringList)),
             _parser, SLOT(onReadHeadBase(QStringList)));

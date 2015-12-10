@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>435</width>
+    <width>521</width>
     <height>300</height>
    </rect>
   </property>
@@ -70,20 +70,18 @@
       </property>
      </widget>
     </item>
-    <item row="0" column="0">
-     <widget class="TabWidget" name="_tabWidget">
-      <property name="currentIndex">
-       <number>0</number>
+    <item row="0" column="1">
+     <widget class="DebugWidget" name="_debugWidget" native="true">
+      <property name="maximumSize">
+       <size>
+        <width>150</width>
+        <height>16777215</height>
+       </size>
       </property>
-      <widget class="QWidget" name="tab">
-       <attribute name="title">
-        <string/>
-       </attribute>
-      </widget>
      </widget>
     </item>
-    <item row="0" column="1">
-     <widget class="DebugWidget" name="_debugWidget" native="true"/>
+    <item row="0" column="0">
+     <widget class="ExcelWidget" name="_excelWidget" native="true"/>
     </item>
    </layout>
   </widget>
@@ -92,8 +90,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>435</width>
-     <height>21</height>
+     <width>521</width>
+     <height>20</height>
     </rect>
    </property>
    <widget class="QMenu" name="_menuFile">
@@ -193,9 +191,9 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>TabWidget</class>
-   <extends>QTabWidget</extends>
-   <header>tabwidget.h</header>
+   <class>ExcelWidget</class>
+   <extends>QWidget</extends>
+   <header>excelwidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

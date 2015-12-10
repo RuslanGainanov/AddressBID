@@ -26,8 +26,8 @@ void DebugWidget::on__pushButtonSave_clicked()
 
 void DebugWidget::add(QString objName, QString mes)
 {
-    if(objName=="ExcelWidget")
-        return;
+//    if(objName=="ExcelWidget")
+//        return;
     QString s =_ui->_plainTextEdit->toPlainText();
     QString currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
     QString append = objName+": "+mes;

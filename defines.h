@@ -19,8 +19,8 @@ const int MAX_OPEN_ROWS=0;
 
 enum TypeOfRow
 {
-    BASE = 1,
-    INPUT = 2
+    BASE_TYPE = 1,
+    INPUT_TYPE = 2
 };
 
 enum TypeOfData
@@ -51,6 +51,11 @@ const QList<AddressElements> ListAddressElements {
 };
 
 typedef QMap<AddressElements, int> MapAddressElementPosition;
+
+//key of map - sheet name, value - list of rows, row - string list
+typedef QList< QStringList > ExcelSheet;
+typedef QMap<QString, ExcelSheet > ExcelDocument;
+
 
 typedef QVector<QString> VectorOfString;
 

@@ -4,34 +4,29 @@
 ExcelWidget::ExcelWidget(QWidget *parent) :
     QWidget(parent),
     _ui(new Ui::ExcelWidget),
-    _xls(nullptr),
-    _thread(nullptr),
-    _parser(nullptr),
     _xlsParser(nullptr)
 {
     _ui->setupUi(this);
-    _thread = new QThread;
-    connect(this, SIGNAL(removeEmptySheets(QVector<int>)),
-            this, SLOT(onRemoveEmptySheets(QVector<int>)));
+    _dialog.setCancelButtonText(trUtf8("Отмена"));
+
+    QObject::connect(&_futureWatcher, SIGNAL(finished()),
+                     &_dialog, SLOT(reset()));
+    QObject::connect(&_dialog, SIGNAL(canceled()),
+                     &_futureWatcher, SLOT(cancel()));
+    QObject::connect(&_futureWatcher, SIGNAL(progressRangeChanged(int,int)),
+                     &_dialog, SLOT(setRange(int,int)));
+    QObject::connect(&_futureWatcher, SIGNAL(progressValueChanged(int)),
+                     &_dialog, SLOT(setValue(int)));
+    QObject::connect(&_futureWatcher, SIGNAL(finished()),
+                     this, SLOT(onProcessOfOpenFinished()));
 }
 
 ExcelWidget::~ExcelWidget()
 {
     delete _ui;
-    if(_thread)
-    {
-        _thread->quit();
-        _thread->wait();
-        delete _thread;
-    }
-    foreach (int key, _data.keys()) {
+    foreach (QString key, _data.keys()) {
         delete _data.take(key);
     }
-}
-
-void ExcelWidget::on__pushButtonOpen_clicked()
-{
-    open();
 }
 
 void ExcelWidget::open()
@@ -47,167 +42,235 @@ void ExcelWidget::open()
     runThread(str);
 }
 
+QVariant ExcelWidget::openExcelFile(QString filename, int maxCountRows)
+{
+    QString currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
+    qDebug() << "openExcelFile BEGIN"
+             << QThread::currentThread()->currentThreadId()
+             << currTime;
+
+    HRESULT h_result = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    switch(h_result)
+    {
+    case S_OK:
+        qDebug("TestConnector: The COM library was initialized successfully on this thread");
+        break;
+    case S_FALSE:
+        qWarning("TestConnector: The COM library is already initialized on this thread");
+        break;
+    case RPC_E_CHANGED_MODE:
+        qWarning() << "TestConnector: A previous call to CoInitializeEx specified the concurrency model for this thread as multithread apartment (MTA)."
+                   << " This could also indicate that a change from neutral-threaded apartment to single-threaded apartment has occurred";
+        break;
+    }
+
+    // получаем указатель на Excel
+    QScopedPointer<QAxObject> excel(new QAxObject("Excel.Application"));
+    if(excel.isNull())
+    {
+        QString error="Cannot get Excel.Application";
+        return QVariant(error);
+    }
+
+    QScopedPointer<QAxObject> workbooks(excel->querySubObject("Workbooks"));
+    if(workbooks.isNull())
+    {
+        QString error="Cannot query Workbooks";
+        return QVariant(error);
+    }
+
+    // на директорию, откуда грузить книгу
+    QScopedPointer<QAxObject> workbook(workbooks->querySubObject(
+                                           "Open(const QString&)",
+                                           filename)
+                                       );
+    if(workbook.isNull())
+    {
+        QString error=
+                QString("Cannot query workbook.Open(const %1)")
+                .arg(filename);
+        return QVariant(error);
+    }
+
+    QScopedPointer<QAxObject> sheets(workbook->querySubObject("Sheets"));
+    if(sheets.isNull())
+    {
+        QString error="Cannot query Sheets";
+        return QVariant(error);
+    }
+
+    int count = sheets->dynamicCall("Count()").toInt(); //получаем кол-во листов
+    QStringList readedSheetNames;
+    //читаем имена листов
+    for (int i=1; i<=count; i++)
+    {
+        QScopedPointer<QAxObject> sheetItem(sheets->querySubObject("Item(int)", i));
+        if(sheetItem.isNull())
+        {
+            QString error="Cannot query Item(int)"+QString::number(i);
+            return QVariant(error);
+        }
+        readedSheetNames.append( sheetItem->dynamicCall("Name()").toString() );
+        sheetItem->clear();
+    }
+    // проходим по всем листам документа
+    int sheetNumber=0;
+    ExcelDocument data;
+    foreach (QString sheetName, readedSheetNames)
+    {
+        QScopedPointer<QAxObject> sheet(
+                    sheets->querySubObject("Item(const QVariant&)",
+                                           QVariant(sheetName))
+                    );
+        if(sheet.isNull())
+        {
+            QString error=
+                    QString("Cannot query Item(const %1)")
+                    .arg(sheetName);
+            return QVariant(error);
+        }
+
+        QScopedPointer<QAxObject> usedRange(sheet->querySubObject("UsedRange"));
+        QScopedPointer<QAxObject> usedRows(usedRange->querySubObject("Rows"));
+        QScopedPointer<QAxObject> usedCols(usedRange->querySubObject("Columns"));
+        int rows = usedRows->property("Count").toInt();
+        int cols = usedCols->property("Count").toInt();
+
+        //если на данном листе всего 1 строка (или меньше), то данный лист пуст => зачем он нам?
+        if(rows>1)
+        {
+            //чтение данных
+            ExcelSheet excelSheet; //таблица
+            for(int row=1; row<=rows; row++)
+            {
+                QStringList rowList; //строка с данными
+                for(int col=1; col<=cols; col++)
+                {
+                    QScopedPointer<QAxObject> cell (
+                                sheet->querySubObject("Cells(QVariant,QVariant)",
+                                                      row,
+                                                      col)
+                                );
+                    QString result = cell->property("Value").toString();
+                    rowList.append(result);
+                    cell->clear();
+                }
+                excelSheet.append(rowList);
+
+                //оставливаем обработку если получено нужное количество строк
+                if(maxCountRows>0 && row-1 >= maxCountRows)
+                    break;
+            }
+            data.insert(sheetName, excelSheet); //добавляем таблицу в документ
+        }
+        usedRange->clear();
+        usedRows->clear();
+        usedCols->clear();
+        sheet->clear();
+        sheetNumber++;
+    }//end foreach _sheetNames
+
+    sheets->clear();
+    workbook->clear();
+    workbooks->dynamicCall("Close()");
+    workbooks->clear();
+    excel->dynamicCall("Quit()");
+
+    qDebug() << "openExcelFile END"
+             << QThread::currentThread()->currentThreadId()
+             << QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
+    return QVariant::fromValue(data);
+}
+
+void ExcelWidget::onProcessOfOpenFinished()
+{
+    QString currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
+    qDebug() << "ExcelWidget onProcessOfOpenFinished" << currTime;
+
+    if(_futureWatcher.isFinished()
+            && !_futureWatcher.isCanceled())
+    {
+        QVariant result = _futureWatcher.future().result();
+        if(result.isValid())
+        {
+            if(result.canConvert< ExcelDocument >())
+            {
+                ExcelDocument data = result.value<ExcelDocument>();
+                foreach (QString sheetName, data.keys()) {
+                    _data.insert(sheetName, new TableModel(sheetName));
+                    QList<QStringList> rows = data[sheetName];
+                    int nRow=0;
+                    foreach (QStringList row, rows) {
+                        if(nRow==0)
+                        {
+                            emit toDebug(objectName(),
+                                         QString("Прочитана шапка у листа %1").arg(sheetName));
+                            for(int col=0; col < row.size(); col++)
+                                _data.value(sheetName)->setHeaderData(col, Qt::Horizontal, row.at(col));
+
+                        }
+                        else
+                        {
+                            TableModel *tm = _data.value(sheetName);
+                            tm->insertRow(tm->rowCount());
+                            for(int col=0; col<row.size(); col++)
+                                tm->setData(tm->index(nRow-1, col),
+                                            QVariant::fromValue(row.at(col)));
+                            //emit rowReaded(sheetName, nRow);
+                        }
+                        nRow++;
+                    }
+
+                    TableView *view = new TableView(_ui->_tabWidget);
+                    view->setModel(_data.value(sheetName));
+                    _ui->_tabWidget->addTab(view, sheetName);
+                }
+            }
+            else if(result.canConvert< QString >())
+            {
+                QString error = result.toString();
+                emit toDebug(objectName(), error);
+                emit errorOccured(objectName(), -1, error);
+            }
+        }
+    }
+}
 
 void ExcelWidget::runThread(QString openFilename)
 {
     qDebug() << "ExcelWidget runThread" << this->thread()->currentThreadId();
-    if(_thread->isRunning())
-        return;
 
-    _xls = new XlsWorker;
-    _xls->setFileName(openFilename);
-    _xls->setMaxCountRead(MAX_OPEN_IN_ROWS);
-    _xlsParser = new XlsParser;
-    _xlsParser->moveToThread(_thread);
-    connect(_xls, SIGNAL(toDebug(QString,QString)),
-            this, SIGNAL(toDebug(QString,QString)));
-    connect(_xls, SIGNAL(sheetsReaded(QMap<int,QString>)),
-            this, SLOT(onSheetsReaded(QMap<int,QString>)));
-    connect(_xls, SIGNAL(sheetsAllReaded(QStringList)),
-            this, SLOT(onSheetsAllReaded(QStringList)));
-    connect(_xls, SIGNAL(errorOccured(QString,int,QString)),
-            this, SIGNAL(errorOccured(QString,int,QString)));
-    connect(_xls, SIGNAL(countRows(int,int)),
-            this, SLOT(onCountRows(int,int)));
-    connect(_xls, SIGNAL(headReaded(int,QStringList)),
-            this, SLOT(onReadHead(int,QStringList)));
-    connect(_xls, SIGNAL(headReaded(int,QStringList)),
-            _xlsParser, SLOT(onReadHead(int,QStringList)));
-    connect(_xls, SIGNAL(rowReaded(int,int,QStringList)),
-            this, SLOT(onReadRow(int,int,QStringList)));
-    connect(_xls, SIGNAL(rowReaded(int,int,QStringList)),
-            _xlsParser, SLOT(onReadRow(int,int,QStringList)));
-    connect(_xls, SIGNAL(rowsReaded(int,int)),
-            this, SLOT(onReadRows(int,int)));
-    connect(_xls, SIGNAL(finished()),
-            this, SLOT(onFinishWorker()));
-    connect(_xlsParser, SIGNAL(finished()),
-            this, SLOT(onFinishParser()));
-    connect(_xlsParser, SIGNAL(rowParsed(int,int,Address)),
-            this, SLOT(onParseRow(int,int,Address)));
-    connect(_xlsParser, SIGNAL(headParsed(int,MapAddressElementPosition)),
-            this, SLOT(onHeadParsed(int,MapAddressElementPosition)));
-
-    connect(_thread, SIGNAL(finished()),
-            _xlsParser, SLOT(deleteLater()));
-    connect(_thread, SIGNAL(finished()),
-            _xls, SLOT(deleteLater()));
-
-    _thread->start();
-
-    _xls->process();
+    QString name = QFileInfo(openFilename).fileName();
+    _dialog.setLabelText(
+                trUtf8("Открывается файл \"%1\". Ожидайте ...")
+                .arg(name)
+                        );
+    QFuture<QVariant> f1 = QtConcurrent::run(this,
+                                             &ExcelWidget::openExcelFile,
+                                             openFilename,
+                                             MAX_OPEN_IN_ROWS);
+    // Start the computation.
+    _futureWatcher.setFuture(f1);
+    _dialog.exec();
 
     emit working();
 }
 
-void ExcelWidget::onReadHead(int sheet, QStringList head)
-{
-    emit toDebug(objectName(),
-                 QString("Прочитана шапка у листа №%1").arg(sheet));
-    for(int i=0; i < head.size(); i++)
-        _data.value(sheet)->setHeaderData(i, Qt::Horizontal, head.at(i));
-
-    TableView *view = new TableView(_ui->_tabWidget);
-    view->setModel(_data.value(sheet));
-    _ui->_tabWidget->addTab(view, _data.value(sheet)->getName());
-
-    _sheetsHead.insert(sheet, head);
-    emit headReaded(sheet, head);
-}
-
-void ExcelWidget::onReadRow(int sheet, int row, QStringList listRow)
-{
-//    Q_UNUSED(listRow);
-    emit toDebug(objectName(), "ExcelWidget::onReadRow");
-
-    TableModel *tm = _data.value(sheet);
-    tm->insertRow(tm->rowCount());
-    for(int col=0; col<listRow.size(); col++)
-    {
-        QModelIndex mi = tm->index(row, col);
-        tm->setData(mi,
-                    QVariant::fromValue(listRow.at(col)));
-    }
-    emit rowReaded(sheet, row);
-}
-
-void ExcelWidget::onReadRows(int sheet, int count)
-{
-    emit readedRows(sheet, count);
-}
-
-void ExcelWidget::onCountRows(int sheet, int count)
-{
-    emit countRows(sheet, count);
-}
-
-void ExcelWidget::onSheetsAllReaded(QStringList sheets)
-{
-    emit toDebug(objectName(),
-                 "В документе есть следующий(-ие) лист(-ы):\r\n"
-                 +sheets.join(", "));
-    for(int i=0; i<sheets.size(); i++)
-    {
-        _sheets.insert(i, sheets.at(i));
-        _data.insert(i, new TableModel(sheets.at(i)));
-    }
-    emit sheetsAllReaded(sheets);
-}
-
-void ExcelWidget::onSheetsReaded(const QMap<int, QString> &sheets)
-{
-    emit toDebug(objectName(),
-                 "В документе есть следующий(-ие) лист(-ы) с информацией:\r\n"
-                 +QStringList(sheets.values()).join(", "));
-    QMap<int, QString>::const_iterator i = _sheets.constBegin();
-    QVector<int> sheetNumbers;
-    while (i != _sheets.constEnd()) {
-        //если новый список не содержит лист из старого,
-        //то этот лист пустой и его нужно удалить
-        if(!sheets.contains(i.key()))
-            sheetNumbers.push_back(i.key());
-        ++i;
-    }
-//    _sheets=sheets;
-    emit sheetsReaded(sheets);
-    emit removeEmptySheets(sheetNumbers);
-}
-
-void ExcelWidget::onRemoveEmptySheets(QVector<int> numb)
-{
-    for(int i=0; i<numb.size(); i++)
-    {
-        _sheets.remove(numb.at(i));
-        _sheetsHead.remove(numb.at(i));
-        delete _data.take(numb.at(i));
-    }
-}
-
-void ExcelWidget::onFinishWorker()
-{
-    _thread->quit();
-    _thread->wait();
-    emit toDebug(objectName(),
-                 "ExcelWidget::onFinishWorker()"
-                 );
-    emit finished();
-}
-
-void ExcelWidget::onHeadParsed(int sheet, MapAddressElementPosition head)
+void ExcelWidget::onHeadParsed(QString sheet, MapAddressElementPosition head)
 {
     emit toDebug(objectName(),
                  "ExcelWidget onHeadParsed "
-                 +QString::number(sheet)
+                 +sheet
                  );
     emit headParsed(sheet, head);
 }
 
-void ExcelWidget::onParseRow(int sheet, int rowNumber, Address a)
+void ExcelWidget::onParseRow(QString sheet, int rowNumber, Address a)
 {
     Q_UNUSED(a);
     emit toDebug(objectName(),
                  "ExcelWidget onParseRow "
-                 +QString::number(sheet)+" "
+                 +sheet+" "
                  +QString::number(rowNumber)
 //                 +"\nstr:"+a.getStreet()+"\nb:"+a.getBuild()+"\nk:"+a.getKorp()
                  );

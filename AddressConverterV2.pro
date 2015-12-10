@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui sql axcontainer
+QT       += core gui sql axcontainer concurrent
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -25,7 +25,6 @@ SOURCES += main.cpp\
     tabwidget.cpp \
     tableview.cpp \
     excelwidget.cpp \
-    xlsworker.cpp \
     xlsparser.cpp \
     tablemodel.cpp
 
@@ -41,7 +40,6 @@ HEADERS  += mainwindow.h \
     tabwidget.h \
     tableview.h \
     excelwidget.h \
-    xlsworker.h \
     xlsparser.h \
     tablemodel.h
 
