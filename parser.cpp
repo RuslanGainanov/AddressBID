@@ -68,19 +68,7 @@ void Parser::onReadHeadInput(int sheet, QStringList head)
     qDebug() << "Parser onReadHeadInput"
              << sheet << head
              << this->thread()->currentThreadId();
-    for(int i=0; i<ListAddressElements.size(); i++)
-    {
-        QString colname=MapColumnNames[ ListAddressElements.at(i) ];
-        if(!head.contains(colname))
-            head.append(colname);
-    }
-    QMap<AddressElements, QString>::const_iterator it = MapColumnNames.begin();
-    while(it!=MapColumnNames.end())
-    {
-        _mapHeadInput[sheet].insert(it.key(), head.indexOf(it.value()));
-        it++;
-    }
-    emit headInputParsed(sheet, _mapHeadInput[sheet]);
+
 }
 
 void Parser::onReadHeadBase(QStringList head)

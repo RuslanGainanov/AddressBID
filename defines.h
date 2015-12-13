@@ -45,6 +45,10 @@ enum AddressElements
     RAW_ADDR,      ///< "сырой" адрес (тот который был прочитан из файла сsv)
 };
 
+const QList<AddressElements> ListMandatoryAddressElements {
+    STREET, STREET_ID, BUILD_ID
+};
+
 const QList<AddressElements> ListAddressElements {
     STREET, STREET_ID, KORP, BUILD, BUILD_ID, ENAME, ADDITIONAL,
             CITY, DISTRICT, FSUBJ
@@ -71,6 +75,19 @@ const QMap<AddressElements, QString> MapColumnNames {
     {DISTRICT, "DISTRICT"},
     {FSUBJ, "FSUBJ"},
     {RAW_ADDR, "RAW"},
+};
+
+const QMap<AddressElements, QString> MapColumnParsedNames {
+    {STREET, "!P_STREET"},
+    {STREET_ID, "!P_STRT_ID"},
+    {KORP, "!P_KORP"},
+    {BUILD, "!P_BLD"},
+    {BUILD_ID, "!P_BLD_ID"},
+    {ENAME, "!P_ENAME"},
+    {ADDITIONAL, "!P_ADD"},
+    {CITY, "!P_CITY"},
+    {DISTRICT, "!P_DISTRICT"},
+    {FSUBJ, "!P_FSUBJ"},
 };
 
 enum Errors

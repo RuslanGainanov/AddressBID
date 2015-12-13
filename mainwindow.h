@@ -35,6 +35,8 @@ private slots:
     void on__pushButtonOpen_clicked();
     void on__pushButtonOpenBase_clicked();
 
+    void on__pushButtonParse_clicked();
+
 private:
     Ui::MainWindow *_ui;
     DatabaseWidget *_dbw;

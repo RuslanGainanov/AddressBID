@@ -71,3 +71,8 @@ void MainWindow::on__pushButtonOpenBase_clicked()
 {
     _dbw->show();
 }
+
+void MainWindow::on__pushButtonParse_clicked()
+{
+    _excel->parse();
+}

@@ -123,6 +123,33 @@ QString Address::getFsubj() const
 }
 
 
+QString Address::toString(TypeOfData t) const
+{
+    QString res("*** Address: ***\n");
+    if(!isEmpty())
+    {
+        if(t==RAW)
+        {
+            res += getRawAddress().join("\n");
+        }
+        else if(t==PARSED)
+        {
+            res += "Federal subj: " + getFsubj() + "\n";
+            res += "District: " + getDistrict() + "\n";
+            res += "City: " + getCity() + "\n";
+            res += "Ename: " + getEname() + "\n";
+            res += "Street: " + getStreet() + "\n";
+            res += "Korpus: " + getKorp() + "\n";
+            res += "Build: " + getBuild() + "\n";
+        }
+    }
+    else
+    {
+        res + "Is empty\n";
+    }
+    return res;
+}
+
 QStringList Address::toDebug(TypeOfData t) const
 {
     QStringList list;

@@ -17,6 +17,24 @@ QString TableModel::getName() const
     return m_name;
 }
 
+QStringList TableModel::getHeader() const
+{
+    return m_horizontalHeader;
+}
+
+QStringList TableModel::getRow(int nRow) const
+{
+    if(nRow>=0 && nRow<m_rowList.size())
+        return m_rowList.at(nRow);
+    else
+        return QStringList();
+}
+
+ExcelSheet TableModel::getExcelSheet() const
+{
+    return m_rowList;
+}
+
 QVariant TableModel::data(const QModelIndex& index, int nRole) const
 {
     if (!index.isValid()) {
@@ -54,7 +72,7 @@ QVariant TableModel::headerData(int section,
     if (role != Qt::DisplayRole) {
         return QVariant();
     }
-    return (orientation == Qt::Horizontal) ? m_horizontalHeader.value(section)
+    return (orientation == Qt::Horizontal) ? m_horizontalHeader.at(section)
                                            : QString::number(section);
 }
 
@@ -106,7 +124,6 @@ bool TableModel::insertColumns(int position, int columns, const QModelIndex &par
     for (int row = 0; row < rows; ++row) {
         for (int column = position; column < columns; ++column) {
             m_rowList[row].insert(position, "");
-            m_horizontalHeader.insert(position, "");
         }
     }
     endInsertColumns();
@@ -133,7 +150,7 @@ bool TableModel::removeColumns(int position, int columns, const QModelIndex &par
     for (int row = 0; row < rows; ++row) {
         for (int column = 0; column < columns; ++column) {
             m_rowList[row].removeAt(position);
-            m_horizontalHeader.remove(position);
+            m_horizontalHeader.removeAt(position);
         }
     }
     endRemoveColumns();

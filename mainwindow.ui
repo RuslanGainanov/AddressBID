@@ -24,29 +24,7 @@
         </property>
        </widget>
       </item>
-      <item row="0" column="4">
-       <widget class="QPushButton" name="_pushButtonDeleteRows">
-        <property name="text">
-         <string>Удалить 
-строки</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="2">
-       <widget class="QPushButton" name="_pushButtonOpen">
-        <property name="text">
-         <string>Открыть</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="3">
-       <widget class="QPushButton" name="_pushButtonSave">
-        <property name="text">
-         <string>Сохранить</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="5">
+      <item row="0" column="6">
        <widget class="QPushButton" name="_pushButtonCheckRows">
         <property name="text">
          <string>Проверить 
@@ -54,10 +32,40 @@
         </property>
        </widget>
       </item>
+      <item row="0" column="4">
+       <widget class="QPushButton" name="_pushButtonSave">
+        <property name="text">
+         <string>Сохранить</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="5">
+       <widget class="QPushButton" name="_pushButtonDeleteRows">
+        <property name="text">
+         <string>Удалить 
+строки</string>
+        </property>
+       </widget>
+      </item>
       <item row="0" column="0">
        <widget class="QPushButton" name="_pushButtonOpenBase">
         <property name="text">
-         <string>Открыть базу</string>
+         <string>Открыть 
+базу</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="3">
+       <widget class="QPushButton" name="_pushButtonOpen">
+        <property name="text">
+         <string>Открыть</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="2">
+       <widget class="QPushButton" name="_pushButtonParse">
+        <property name="text">
+         <string>Обработка</string>
         </property>
        </widget>
       </item>

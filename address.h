@@ -38,6 +38,7 @@ public:
     void setFsubj(const QString f);
     QString getFsubj() const;
 
+    QString toString(TypeOfData t=RAW) const;
     QStringList toDebug(TypeOfData t=RAW) const;
     bool isEmpty() const;
     void clear();

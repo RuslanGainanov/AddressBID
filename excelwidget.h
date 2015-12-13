@@ -4,7 +4,6 @@
 #include <QWidget>
 #include <QFileDialog>
 #include <QScopedPointer>
-#include <QProgressBar>
 #include <QFile>
 #include <QtConcurrentRun>
 #include <QFutureWatcher>
@@ -19,6 +18,7 @@
 #include "tablemodel.h"
 #include "tableview.h"
 #include "tabwidget.h"
+#include "parseexcelwidget.h"
 
 const int MAX_OPEN_IN_ROWS=10;
 
@@ -36,6 +36,7 @@ public:
 
 public slots:
     void open();
+    void parse();
 
 signals:
     void headReaded(QString sheet, QStringList head);
@@ -45,6 +46,7 @@ signals:
 
     void headParsed(QString sheet, MapAddressElementPosition head);
     void rowParsed(QString sheet, int row);
+    void sheetParsed(QString sheet);
 
     void working(); //начало чтения файла
     void finished(); //чтение файла окончено
@@ -54,21 +56,35 @@ signals:
     void errorOccured(QString nameObject, int code, QString errorDesc);
 
 private slots:
-    //parser signal-slots
-    void onParseRow(QString sheet, int rowNumber, Address a);
-    void onHeadParsed(QString sheet, MapAddressElementPosition head);
-    void onFinishParser();
+    void onRowRead(const QString &sheet, const int &nRow, QStringList &row);
+    void onHeadRead(const QString &sheet, QStringList &head);
+    void onSheetRead(const QString &sheet);
+    void onHideColumn(const QString &sheet, int column);
 
-    void runThread(QString openFilename);
-    QVariant openExcelFile(QString filename, int maxCount);
+    //parser signal-slots
+    void onRowParsed(QString sheet, int rowNumber, Address a);
+    void onHeadParsed(QString sheet, MapAddressElementPosition head);
+    void onSheetParsed(QString sheet);
+    void onFinishParser();
+    void onAppendColumn(int nCol, QString nameCol);
+    void onNotFoundMandatoryColumn(QString sheet, AddressElements ae, QString colName);
+
     void onProcessOfOpenFinished();
 
 private:
     Ui::ExcelWidget             *_ui;
     XlsParser                   *_xlsParser;
-    QMap<QString, TableModel *>  _data;
+    QHash<QString, TableModel *> _data;
+    QHash<QString, TableView *>  _views;
+    QHash<QString, int>          _sheetIndex;
     QFutureWatcher<QVariant>     _futureWatcher;
     QProgressDialog              _dialog;
+//    QList<int>                   _hideColumns;
+    bool                         _isOneColumn;
+
+    void runThreadOpen(QString openFilename);
+    QVariant openExcelFile(QString filename, int maxCount);
+    void runThreadParsing();
 };
 
 #endif // EXCELWIDGET_H

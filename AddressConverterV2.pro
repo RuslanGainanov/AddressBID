@@ -26,7 +26,8 @@ SOURCES += main.cpp\
     tableview.cpp \
     excelwidget.cpp \
     xlsparser.cpp \
-    tablemodel.cpp
+    tablemodel.cpp \
+    parseexcelwidget.cpp
 
 HEADERS  += mainwindow.h \
     parser.h \
@@ -41,12 +42,14 @@ HEADERS  += mainwindow.h \
     tableview.h \
     excelwidget.h \
     xlsparser.h \
-    tablemodel.h
+    tablemodel.h \
+    parseexcelwidget.h
 
 FORMS    += mainwindow.ui \
     databasewidget.ui \
     debugwidget.ui \
-    excelwidget.ui
+    excelwidget.ui \
+    parseexcelwidget.ui
 
 CONFIG += c++11
 QMAKE_CXXFLAGS += -std=c++11
