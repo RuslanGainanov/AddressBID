@@ -21,116 +21,71 @@ void XlsParser::setTableOfData(QMap<QString, TableModel *> *data)
 
 void XlsParser::process()
 {
-    qDebug() << "XlsParser process" << this->thread()->currentThreadId();
-    QStringList sheets = _data->keys();
-    foreach (QString sheet, sheets) {
-        TableModel *tm=(*_data)[sheet];
-        QStringList head = tm->getHeader();
-        qDebug() << "XlsParser getHeader" << head;
-        onReadHead(sheet, head);
-        qDebug() << "XlsParser getHeader after" << head;
-        qDebug() << "XlsParser getHeader mapHead" << _mapHead.value(sheet).values();
-        if(!_error)
-            for(int row=0; row<tm->rowCount(); row++)
-            {
-                Address a = onReadRow(sheet, row, tm->getRow(row));//парсим строку
+//    qDebug() << "XlsParser process" << this->thread()->currentThreadId();
+//    QStringList sheets = _data->keys();
+//    foreach (QString sheet, sheets) {
+//        TableModel *tm=(*_data)[sheet];
+//        QStringList head = tm->getHeader();
+//        qDebug() << "XlsParser getHeader" << head;
+//        onReadHead(sheet, head);
+//        qDebug() << "XlsParser getHeader after" << head;
+//        qDebug() << "XlsParser getHeader mapHead" << _mapHead.value(sheet).values();
+//        if(!_error)
+//            for(int row=0; row<tm->rowCount(); row++)
+//            {
+//                Address a = onReadRow(sheet, row, tm->getRow(row));//парсим строку
 
-                int nCol=0;
-                nCol = _mapPHead.value(sheet).value(FSUBJ);//получаем номер столбца
-                tm->setData(tm->index(row, nCol), a.getFsubj());//заносим в ячейку распарсенный элемент
+//                int nCol=0;
+//                nCol = _mapPHead.value(sheet).value(FSUBJ);//получаем номер столбца
+//                tm->setData(tm->index(row, nCol), a.getFsubj());//заносим в ячейку распарсенный элемент
 
-                nCol = _mapPHead.value(sheet).value(DISTRICT);
-                tm->setData(tm->index(row, nCol), a.getDistrict());
+//                nCol = _mapPHead.value(sheet).value(DISTRICT);
+//                tm->setData(tm->index(row, nCol), a.getDistrict());
 
-                nCol = _mapPHead.value(sheet).value(CITY);
-                tm->setData(tm->index(row, nCol), a.getCity());
+//                nCol = _mapPHead.value(sheet).value(CITY);
+//                tm->setData(tm->index(row, nCol), a.getCity());
 
-                nCol = _mapPHead.value(sheet).value(ADDITIONAL);
-                tm->setData(tm->index(row, nCol), a.getAdditional());
+//                nCol = _mapPHead.value(sheet).value(ADDITIONAL);
+//                tm->setData(tm->index(row, nCol), a.getAdditional());
 
-                nCol = _mapPHead.value(sheet).value(STREET);
-                tm->setData(tm->index(row, nCol), a.getStreet());
+//                nCol = _mapPHead.value(sheet).value(STREET);
+//                tm->setData(tm->index(row, nCol), a.getStreet());
 
-                nCol = _mapPHead.value(sheet).value(BUILD);
-                tm->setData(tm->index(row, nCol), a.getBuild());
+//                nCol = _mapPHead.value(sheet).value(BUILD);
+//                tm->setData(tm->index(row, nCol), a.getBuild());
 
-                nCol = _mapPHead.value(sheet).value(KORP);
-                tm->setData(tm->index(row, nCol), a.getKorp());
-            }
-        emit sheetParsed(sheet);
-    }
-    emit finished();
+//                nCol = _mapPHead.value(sheet).value(KORP);
+//                tm->setData(tm->index(row, nCol), a.getKorp());
+//            }
+//        emit sheetParsed(sheet);
+//    }
+//    emit finished();
 }
 
-void XlsParser::onReadHead(const QString &sheet,
-                           QStringList &head)
+void XlsParser::onReadHead(const QString sheet,
+                           MapAddressElementPosition head)
 {
     qDebug() << "XlsParser onReadHead"
-             << sheet << head
+             << sheet << head.values()
              << this->thread()->currentThreadId();
-    QString colname;
-    TableModel *tm = (*_data)[sheet];
-    colname = MapColumnNames[ STREET ];
-    if(!head.contains(colname))//если остуствует столбец с данными о улице (городе и пр.)
-    {
-        emit notFoundMandatoryColumn(STREET, colname);
-        _error=true;
-        return;
-    }
-    colname = MapColumnNames[ STREET_ID ];
-    if(head.indexOf(colname)==-1)
-    {
-        int nCol = head.size();
-        tm->insertColumn(nCol);
-        tm->setHeaderData(nCol, Qt::Horizontal, colname);
-//        emit appendColumn(head.size(), colname);
-        head.append(colname);
-    }
-    colname = MapColumnNames[ BUILD_ID ];
-    if(!head.contains(colname))
-    {
-        int nCol = head.size();
-        tm->insertColumn(nCol);
-        tm->setHeaderData(nCol, Qt::Horizontal, colname);
-//        emit appendColumn(head.size(), colname);
-        head.append(colname);
-    }
-
-    if(!head.contains(MapColumnNames[ BUILD ])
-            && !head.contains(MapColumnNames[ KORP ]))
-        _isOneColumn=false;
-    else
-        _isOneColumn=true;
-    QMap<AddressElements, QString>::const_iterator it = MapColumnNames.begin();
-    while(it!=MapColumnNames.end())
-    {
-        int pos = head.indexOf(it.value());
-        if(pos!=-1)
-            _mapHead[sheet].insert(it.key(), pos);
-        it++;
-    }
+    _mapHead.insert(sheet, head);
+//    QList<AddressElements> keys = MapColumnParsedNames.keys();
+//    foreach (AddressElements ae, keys) {
+//        QString colname;
+//        int pos=0;
+//        colname = MapColumnNames.value(ae);
+//        pos = head.indexOf(colname);
+//        if(pos!=-1)
+//            _mapHead[sheet].insert(ae, pos);
+//        colname = MapColumnParsedNames.value(ae);
+//        pos = head.indexOf(colname);
+//        if(pos!=-1)
+//            _mapPHead[sheet].insert(ae, pos);
+//    }
 //    emit headParsed(sheet, _mapHead[sheet]);
-
-    it = MapColumnParsedNames.begin();
-    while(it!=MapColumnParsedNames.end())
-    {
-        colname = it.value();
-        int nCol = head.size();
-        tm->insertColumn(nCol);
-        tm->setHeaderData(nCol, Qt::Horizontal, colname);
-        emit appendColumn(nCol, colname);
-        head.append(colname);
-        _mapPHead[sheet].insert(it.key(), nCol);
-        it++;
-    }
+//    emit headPParsed(sheet, _mapPHead[sheet]);
 }
 
-void XlsParser::onAppendColumn(int nCol, QString nameCol)
-{
-    qDebug() << "XlsParser onAppendColumn"
-             << nCol << nameCol
-             << this->thread()->currentThreadId();
-}
 
 Address XlsParser::onReadRow(const QString &sheet,
                           const int &rowNumber,

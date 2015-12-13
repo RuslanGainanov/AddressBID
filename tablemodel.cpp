@@ -87,7 +87,6 @@ bool TableModel::setHeaderData(int section, Qt::Orientation orientation,
         m_horizontalHeader.insert(section, value.toString());
     emit headerDataChanged(orientation, section, section);
     return true;
-
 }
 
 int TableModel::columnCount(const QModelIndex&) const

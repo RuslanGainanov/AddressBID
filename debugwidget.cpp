@@ -33,7 +33,7 @@ void DebugWidget::add(QString objName, QString mes)
     QString append = objName+": "+mes;
     s.append("***\n")
      .append("["+currTime+"]\n"+append+"\n");
-    qDebug() << append;
+    qDebug().noquote() << append;
     _ui->_plainTextEdit->setPlainText(s);
 }
 

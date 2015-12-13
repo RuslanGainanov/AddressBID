@@ -24,13 +24,15 @@ signals:
 
 public slots:
     void process();
-    void onReadHead(const QString &sheet,
-                    QStringList &head);
+    void onReadHead(const QString sheet,
+                    MapAddressElementPosition head);
     Address onReadRow(const QString &sheet,
                    const int &rowNumber,
                    const QStringList &row);
-    void onAppendColumn(int nCol,
-                        QString nameCol);
+    void onIsOneColumn(bool b)
+    {
+        _isOneColumn=b;
+    }
 
 private:
     QMap<QString, MapAddressElementPosition> _mapHead;
