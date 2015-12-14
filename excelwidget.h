@@ -22,7 +22,7 @@
 #include "parseexcelwidget.h"
 #include "itemselectionmodel.h"
 
-const int MAX_OPEN_IN_ROWS=100;
+const int MAX_OPEN_IN_ROWS=0;
 
 namespace Ui {
 class ExcelWidget;
