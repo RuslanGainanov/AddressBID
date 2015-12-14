@@ -88,7 +88,6 @@ private:
     QHash<QString, int>          _sheetIndex;
     QFutureWatcher<QVariant>     _futureWatcher;
     QProgressDialog              _dialog;
-    bool                         _isOneColumn;
     QMap<QString, MapAddressElementPosition> _mapHead;
     QMap<QString, MapAddressElementPosition> _mapPHead;
     QThread *_thread;

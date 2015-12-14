@@ -29,10 +29,7 @@ public slots:
     Address onReadRow(const QString &sheet,
                    const int &rowNumber,
                    const QStringList &row);
-    void onIsOneColumn(bool b)
-    {
-        _isOneColumn=b;
-    }
+    void onIsOneColumn(bool b);
 
 private:
     QMap<QString, MapAddressElementPosition> _mapHead;

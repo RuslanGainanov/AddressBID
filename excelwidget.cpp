@@ -5,7 +5,6 @@ ExcelWidget::ExcelWidget(QWidget *parent) :
     QWidget(parent),
     _ui(new Ui::ExcelWidget),
     _parser(nullptr),
-    _isOneColumn(false),
     _thread(nullptr)
 {
     _ui->setupUi(this);
@@ -405,17 +404,15 @@ void ExcelWidget::onHeadRead(const QString &sheet, QStringList &head)
         tm->setHeaderData(nCol, Qt::Horizontal, colname);
         head.append(colname);
     }
-    if(!head.contains(MapColumnNames[ BUILD ])
-            && !head.contains(MapColumnNames[ KORP ]))
-    {
-        emit isOneColumn(false);
-        _isOneColumn=false;
-    }
-    else if(head.contains(MapColumnNames[ BUILD ])
+    if(head.contains(MapColumnNames[ BUILD ])
             && head.contains(MapColumnNames[ KORP ]))
     {
+        emit isOneColumn(false);
+    }
+    else if(!head.contains(MapColumnNames[ BUILD ])
+            && !head.contains(MapColumnNames[ KORP ]))
+    {
         emit isOneColumn(true);
-        _isOneColumn=true;
     }
 
     QMap<AddressElements, QString>::const_iterator it

@@ -86,6 +86,10 @@ void XlsParser::onReadHead(const QString sheet,
 //    emit headPParsed(sheet, _mapPHead[sheet]);
 }
 
+void XlsParser::onIsOneColumn(bool b)
+{
+    _isOneColumn=b;
+}
 
 Address XlsParser::onReadRow(const QString &sheet,
                           const int &rowNumber,
@@ -204,7 +208,6 @@ Address XlsParser::onReadRow(const QString &sheet,
             a.setBuild("B1");
             a.setKorp("K1");
         }
-
     } // конец работы с STR
 
     //если номер дома и корпус находятся в другом столбце
