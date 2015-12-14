@@ -27,7 +27,8 @@ SOURCES += main.cpp\
     excelwidget.cpp \
     xlsparser.cpp \
     tablemodel.cpp \
-    parseexcelwidget.cpp
+    parseexcelwidget.cpp \
+    itemselectionmodel.cpp
 
 HEADERS  += mainwindow.h \
     parser.h \
@@ -43,7 +44,8 @@ HEADERS  += mainwindow.h \
     excelwidget.h \
     xlsparser.h \
     tablemodel.h \
-    parseexcelwidget.h
+    parseexcelwidget.h \
+    itemselectionmodel.h
 
 FORMS    += mainwindow.ui \
     databasewidget.ui \

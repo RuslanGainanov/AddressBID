@@ -28,6 +28,11 @@ ExcelWidget::ExcelWidget(QWidget *parent) :
 
     connect(this, SIGNAL(parserFinished()),
             this, SLOT(onFinishParser()));
+
+    connect(_ui->_parseWidget, SIGNAL(dataChanged(QString,int,MapAEValue)),
+            this, SLOT(onParsedDataChanged(QString,int,MapAEValue)));
+    connect(this, SIGNAL(currentRowChanged(QString,int,MapAEValue)),
+            _ui->_parseWidget, SLOT(onCurrentRowChanged(QString,int,MapAEValue)));
 }
 
 ExcelWidget::~ExcelWidget()
@@ -219,6 +224,12 @@ void ExcelWidget::onProcessOfOpenFinished()
                     _data.insert(sheetName, new TableModel(sheetName));
                     _views.insert(sheetName, new TableView(_ui->_tabWidget));
                     _views[sheetName]->setModel(_data[sheetName]);
+                    _selections.insert(sheetName, new ItemSelectionModel(_data[sheetName], this));
+                    _views[sheetName]->setSelectionModel(_selections[sheetName]);
+                    connect(_selections[sheetName], SIGNAL(currentRowChanged(QModelIndex,QModelIndex)),
+                            _data[sheetName], SLOT(onCurrentRowChanged(QModelIndex,QModelIndex)));
+                    connect(_data[sheetName], SIGNAL(currentRowChanged(QString,int,QStringList)),
+                            this, SLOT(onCurrentRowChanged(QString,int,QStringList)));
                     ExcelSheet rows = data[sheetName];
                     _countRow.insert(sheetName, rows.size());
                     _countParsedRow.insert(sheetName, 0);
@@ -246,6 +257,34 @@ void ExcelWidget::onProcessOfOpenFinished()
              << currTime
              << this->thread()->currentThreadId();
     emit finished();
+}
+
+void ExcelWidget::onCurrentRowChanged(QString sheet, int nRow,
+                                      QStringList row)
+{
+    MapAEValue data;
+    foreach (AddressElements ae, MapColumnParsedNames.keys()) {
+        QString param = row.value(
+                    _mapPHead.value(sheet).value(ae), QString()
+                    );
+        data.insert(ae, param);
+    }
+
+    emit currentRowChanged(sheet, nRow, data);
+}
+
+void ExcelWidget::onParsedDataChanged(QString sheet, int nRow,
+                                      MapAEValue row)
+{
+    foreach (AddressElements ae, row.keys()) {
+        TableModel *tm=_data[sheet];
+        assert(tm);
+        QString param = row.value(ae).toLower();
+        tm->setData(tm->index(nRow,
+                              _mapPHead.value(sheet).value(ae)),
+                    param
+                    );
+    }
 }
 
 void ExcelWidget::runThreadOpen(QString openFilename)

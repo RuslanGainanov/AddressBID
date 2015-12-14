@@ -20,6 +20,7 @@
 #include "tableview.h"
 #include "tabwidget.h"
 #include "parseexcelwidget.h"
+#include "itemselectionmodel.h"
 
 const int MAX_OPEN_IN_ROWS=100;
 
@@ -58,6 +59,8 @@ signals:
     void messageReady(QString);
     void errorOccured(QString nameObject, int code, QString errorDesc);
 
+    void currentRowChanged(QString sheet, int nRow, MapAEValue data); //срабатывает по изменении строки в модели
+
 private slots:
     void onRowRead(const QString &sheet, const int &nRow, QStringList &row);
     void onHeadRead(const QString &sheet, QStringList &head);
@@ -73,12 +76,15 @@ private slots:
     void onNotFoundMandatoryColumn(QString sheet, AddressElements ae, QString colName);
 
     void onProcessOfOpenFinished();//после того окончили с открытием excel документа
+    void onCurrentRowChanged(QString sheet, int nRow, QStringList row);
+    void onParsedDataChanged(QString sheet, int nRow, MapAEValue row);
 
 private:
     Ui::ExcelWidget             *_ui;
     XlsParser                   *_parser;
     QHash<QString, TableModel *> _data;
     QHash<QString, TableView *>  _views;
+    QHash<QString, ItemSelectionModel *>  _selections;
     QHash<QString, int>          _sheetIndex;
     QFutureWatcher<QVariant>     _futureWatcher;
     QProgressDialog              _dialog;

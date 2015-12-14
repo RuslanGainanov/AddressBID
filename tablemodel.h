@@ -37,8 +37,10 @@ public:
 
 
 signals:
+    void currentRowChanged(QString sheet, int nRow, QStringList row);
 
 public slots:
+    void onCurrentRowChanged(QModelIndex curr,QModelIndex prev);
 
 private:
     QString                      m_name;

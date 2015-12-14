@@ -55,6 +55,7 @@ const QList<AddressElements> ListAddressElements {
 };
 
 typedef QMap<AddressElements, int> MapAddressElementPosition;
+typedef QMap<AddressElements, QString> MapAEValue;
 
 //key of map - sheet name, value - list of rows, row - string list
 typedef QList< QStringList > ExcelSheet;
