@@ -8,22 +8,10 @@ ExcelWidget::ExcelWidget(QWidget *parent) :
     _thread(nullptr)
 {
     _ui->setupUi(this);
-    _dialog.setCancelButtonText(trUtf8("Отмена"));
-    QObject::connect(&_futureWatcher, SIGNAL(started()),
-                     &_dialog, SLOT(show()));
-    QObject::connect(&_futureWatcher, SIGNAL(finished()),
-                     &_dialog, SLOT(hide()));
-    QObject::connect(&_futureWatcher, SIGNAL(finished()),
-                     &_dialog, SLOT(reset()));
-    QObject::connect(&_dialog, SIGNAL(canceled()),
-                     &_futureWatcher, SLOT(cancel()));
-    QObject::connect(&_futureWatcher, SIGNAL(progressRangeChanged(int,int)),
-                     &_dialog, SLOT(setRange(int,int)));
-    QObject::connect(&_futureWatcher, SIGNAL(progressValueChanged(int)),
-                     &_dialog, SLOT(setValue(int)));
+
     QObject::connect(&_futureWatcher, SIGNAL(finished()),
                      this, SLOT(onProcessOfOpenFinished()));
-    _dialog.hide();
+//    _dialog.hide();
 
     connect(this, SIGNAL(parserFinished()),
             this, SLOT(onFinishParser()));
@@ -291,17 +279,29 @@ void ExcelWidget::runThreadOpen(QString openFilename)
     qDebug() << "ExcelWidget runThreadOpen" << this->thread()->currentThreadId();
 
     QString name = QFileInfo(openFilename).fileName();
-    _dialog.setLabelText(
+
+    QProgressDialog *dialog = new QProgressDialog;
+    dialog->setLabelText(
                 trUtf8("Открывается файл \"%1\". Ожидайте ...")
                 .arg(name)
                         );
+    dialog->setCancelButtonText(trUtf8("Отмена"));
+    QObject::connect(dialog, SIGNAL(canceled()),
+                     &_futureWatcher, SLOT(cancel()));
+    QObject::connect(&_futureWatcher, SIGNAL(progressRangeChanged(int,int)),
+                     dialog, SLOT(setRange(int,int)));
+    QObject::connect(&_futureWatcher, SIGNAL(progressValueChanged(int)),
+                     dialog, SLOT(setValue(int)));
+    QObject::connect(&_futureWatcher, SIGNAL(finished()),
+                     dialog, SLOT(deleteLater()));
+
     QFuture<QVariant> f1 = QtConcurrent::run(this,
                                              &ExcelWidget::openExcelFile,
                                              openFilename,
                                              MAX_OPEN_IN_ROWS);
     // Start the computation.
     _futureWatcher.setFuture(f1);
-    _dialog.exec();
+    dialog->exec();
 
     emit working();
 }
@@ -327,8 +327,8 @@ void ExcelWidget::runThreadParsing()
             _parser, SLOT(onIsOneColumn(bool)));
     connect(_parser, SIGNAL(rowParsed(QString,int,Address)),
             this, SLOT(onRowParsed(QString,int,Address)));
-    connect(_parser, SIGNAL(headParsed(QString,MapAddressElementPosition)),
-            this, SLOT(onHeadParsed(QString,MapAddressElementPosition)));
+//    connect(_parser, SIGNAL(headParsed(QString,MapAddressElementPosition)),
+//            this, SLOT(onHeadParsed(QString,MapAddressElementPosition)));
     connect(_parser, SIGNAL(sheetParsed(QString)),
             this, SLOT(onSheetParsed(QString)));
     connect(_thread, SIGNAL(finished()),
@@ -336,31 +336,6 @@ void ExcelWidget::runThreadParsing()
     connect(_thread, SIGNAL(finished()),
             _thread, SLOT(deleteLater()));
     _thread->start();
-//    XlsParser *parser = new XlsParser;
-//    QThread *thread = new QThread;
-//    parser->setTableOfData(&_data);
-//    parser->moveToThread(thread);
-//    connect(thread, SIGNAL(started()),
-//            parser, SLOT(process()));
-//    connect(parser, SIGNAL(rowParsed(QString,int,Address)),
-//            this, SLOT(onRowParsed(QString,int,Address)));
-//    connect(parser, SIGNAL(headParsed(QString,MapAddressElementPosition)),
-//            this, SLOT(onHeadParsed(QString,MapAddressElementPosition)));
-//    connect(parser, SIGNAL(sheetParsed(QString)),
-//            this, SLOT(onSheetParsed(QString)));
-//    connect(parser, SIGNAL(appendColumn(int,QString)),
-//            this, SLOT(onAppendColumn(int,QString)));
-//    connect(parser, SIGNAL(notFoundMandatoryColumn(AddressElements,QString)),
-//            this, SLOT(onNotFoundMandatoryColumn(AddressElements,QString)));
-//    connect(parser, SIGNAL(finished()),
-//            this, SLOT(onFinishParser()));
-//    connect(parser, SIGNAL(finished()),
-//            thread, SLOT(quit()));
-//    connect(thread, SIGNAL(finished()),
-//            parser, SLOT(deleteLater()));
-//    connect(thread, SIGNAL(finished()),
-//            thread, SLOT(deleteLater()));
-//    thread->start();
 }
 
 void ExcelWidget::onRowRead(const QString &sheet, const int &nRow, QStringList &row)
@@ -422,7 +397,9 @@ void ExcelWidget::onHeadRead(const QString &sheet, QStringList &head)
     {
         colname = it.value();
         tm->setHeaderData(nCol, Qt::Horizontal, colname);
-//        onHideColumn(sheet, nCol); //скрываем столбец с распарсенным элементами
+#ifdef HIDE_PARSED_COLUMNS
+        onHideColumn(sheet, nCol); //скрываем столбец с распарсенным элементами
+#endif
         head.append(colname);
         nCol++;
         it++;
@@ -458,33 +435,32 @@ void ExcelWidget::onSheetRead(const QString &sheet)
 
 void ExcelWidget::onHideColumn(const QString &sheet, int column)
 {
-    emit toDebug(objectName(),
-                  "ExcelWidget onHideColumn "
-                  +sheet+" column"
-                  +QString::number(column)
-                  );
+//    emit toDebug(objectName(),
+//                  "ExcelWidget onHideColumn "
+//                  +sheet+" column"
+//                  +QString::number(column)
+//                  );
     TableView *view = _views[sheet];
     assert(view);
     view->setColumnHidden(column, true);
 }
 
-void ExcelWidget::onHeadParsed(QString sheet, MapAddressElementPosition head)
-{
-    emit toDebug(objectName(),
-                 "ExcelWidget onHeadParsed "
-                 +sheet
-                 );
-    emit headParsed(sheet, head);
-}
+//void ExcelWidget::onHeadParsed(QString sheet, MapAddressElementPosition head)
+//{
+//    emit toDebug(objectName(),
+//                 "ExcelWidget onHeadParsed "
+//                 +sheet
+//                 );
+//    emit headParsed(sheet, head);
+//}
 
 void ExcelWidget::onRowParsed(QString sheet, int nRow, Address a)
 {
-    Q_UNUSED(a);
-    emit toDebug(objectName(),
-                 "ExcelWidget::onRowParsed "
-                 +sheet+" row:"
-                 +QString::number(nRow)+"\n"/*+a.toString(PARSED)*/
-                 );
+//    emit toDebug(objectName(),
+//                 "ExcelWidget::onRowParsed "
+//                 +sheet+" row:"
+//                 +QString::number(nRow)+"\n"/*+a.toString(PARSED)*/
+//                 );
     TableModel *tm=_data.value(sheet, 0);
     assert(tm);
     int nCol=0;
@@ -530,14 +506,6 @@ void ExcelWidget::onFinishParser()
                  "ExcelWidget::onFinishParser()"
                  );
     _thread->quit();
-}
-
-void ExcelWidget::onAppendColumn(int nCol, QString nameCol)
-{
-    emit toDebug(objectName(),
-                 "ExcelWidget::onAppendColumn() "
-                 +QString::number(nCol)+"\n"+nameCol
-                 );
 }
 
 void ExcelWidget::onNotFoundMandatoryColumn(QString sheet, AddressElements ae, QString colName)

@@ -31,6 +31,7 @@ MainWindow::MainWindow(QWidget *parent) :
              _dbw, SLOT(close()) );
     connect( this, SIGNAL(windowClosed()),
              _excel, SLOT(close()) );
+    _ui->_debugWidget->hide();
 }
 
 MainWindow::~MainWindow()
@@ -70,9 +71,4 @@ void MainWindow::on__pushButtonOpen_clicked()
 void MainWindow::on__pushButtonOpenBase_clicked()
 {
     _dbw->show();
-}
-
-void MainWindow::on__pushButtonParse_clicked()
-{
-    _excel->parse();
 }

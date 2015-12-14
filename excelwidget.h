@@ -22,7 +22,9 @@
 #include "parseexcelwidget.h"
 #include "itemselectionmodel.h"
 
-const int MAX_OPEN_IN_ROWS=100;
+#define HIDE_PARSED_COLUMNS 1
+
+const int MAX_OPEN_IN_ROWS=0;
 
 namespace Ui {
 class ExcelWidget;
@@ -48,7 +50,7 @@ signals:
     void isOneColumn(bool);
     void parserFinished();
 
-    void headParsed(QString sheet, MapAddressElementPosition head);
+//    void headParsed(QString sheet, MapAddressElementPosition head);
     void rowParsed(QString sheet, int row);
     void sheetParsed(QString sheet);
 
@@ -69,10 +71,9 @@ private slots:
 
     //parser signal-slots
     void onRowParsed(QString sheet, int nRow, Address a);
-    void onHeadParsed(QString sheet, MapAddressElementPosition head);
+//    void onHeadParsed(QString sheet, MapAddressElementPosition head);
     void onSheetParsed(QString sheet);
     void onFinishParser();
-    void onAppendColumn(int nCol, QString nameCol);
     void onNotFoundMandatoryColumn(QString sheet, AddressElements ae, QString colName);
 
     void onProcessOfOpenFinished();//после того окончили с открытием excel документа
@@ -87,7 +88,7 @@ private:
     QHash<QString, ItemSelectionModel *>  _selections;
     QHash<QString, int>          _sheetIndex;
     QFutureWatcher<QVariant>     _futureWatcher;
-    QProgressDialog              _dialog;
+//    QProgressDialog              _dialog;
     QMap<QString, MapAddressElementPosition> _mapHead;
     QMap<QString, MapAddressElementPosition> _mapPHead;
     QThread *_thread;

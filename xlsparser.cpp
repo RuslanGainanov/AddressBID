@@ -65,25 +65,10 @@ void XlsParser::process()
 void XlsParser::onReadHead(const QString sheet,
                            MapAddressElementPosition head)
 {
-    qDebug() << "XlsParser onReadHead"
-             << sheet << head.values()
-             << this->thread()->currentThreadId();
+//    qDebug() << "XlsParser onReadHead"
+//             << sheet << head.values()
+//             << this->thread()->currentThreadId();
     _mapHead.insert(sheet, head);
-//    QList<AddressElements> keys = MapColumnParsedNames.keys();
-//    foreach (AddressElements ae, keys) {
-//        QString colname;
-//        int pos=0;
-//        colname = MapColumnNames.value(ae);
-//        pos = head.indexOf(colname);
-//        if(pos!=-1)
-//            _mapHead[sheet].insert(ae, pos);
-//        colname = MapColumnParsedNames.value(ae);
-//        pos = head.indexOf(colname);
-//        if(pos!=-1)
-//            _mapPHead[sheet].insert(ae, pos);
-//    }
-//    emit headParsed(sheet, _mapHead[sheet]);
-//    emit headPParsed(sheet, _mapPHead[sheet]);
 }
 
 void XlsParser::onIsOneColumn(bool b)
@@ -91,12 +76,12 @@ void XlsParser::onIsOneColumn(bool b)
     _isOneColumn=b;
 }
 
-Address XlsParser::onReadRow(const QString &sheet,
+void XlsParser::onReadRow(const QString &sheet,
                           const int &rowNumber,
                           const QStringList &row)
 {
-    qDebug() << "XlsParser onReadRow" << sheet << rowNumber
-             /*<< row */<< this->thread()->currentThreadId() ;
+//    qDebug() << "XlsParser onReadRow" << sheet << rowNumber
+//             /*<< row */<< this->thread()->currentThreadId() ;
 
     Address a;
 //    a.setRawAddress(row);
@@ -181,11 +166,6 @@ Address XlsParser::onReadRow(const QString &sheet,
                        ptrn))
         {
             str.remove(resList.at(1));
-//            //ename
-//            QString cap = resList.at(2);
-//            cap.trimmed();
-//            cap = (cap.isEmpty()? resList.at(5));
-//            a.setEname(cap.trimmed());
             if(!resList.at(2).isEmpty())
                 a.setEname(resList.at(2));
             else if(!resList.at(5).isEmpty())
@@ -235,7 +215,7 @@ Address XlsParser::onReadRow(const QString &sheet,
     //парсинг строки окончен
 
     emit rowParsed(sheet, rowNumber, a); //парсинг строки окончен
-    return a;
+//    return a;
 }
 
 

@@ -18,15 +18,13 @@ signals:
     void finished();
     void sheetParsed(QString sheet);
     void rowParsed(QString sheet, int row, Address addr);
-    void headParsed(QString sheet, MapAddressElementPosition head);
-    void appendColumn(int nCol, QString nameCol);
-    void notFoundMandatoryColumn(AddressElements ae, QString colName);
+//    void headParsed(QString sheet, MapAddressElementPosition head);
 
 public slots:
     void process();
     void onReadHead(const QString sheet,
                     MapAddressElementPosition head);
-    Address onReadRow(const QString &sheet,
+    void onReadRow(const QString &sheet,
                    const int &rowNumber,
                    const QStringList &row);
     void onIsOneColumn(bool b);
