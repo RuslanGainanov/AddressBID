@@ -181,6 +181,11 @@ Address XlsParser::onReadRow(const QString &sheet,
                        ptrn))
         {
             str.remove(resList.at(1));
+//            //ename
+//            QString cap = resList.at(2);
+//            cap.trimmed();
+//            cap = (cap.isEmpty()? resList.at(5));
+//            a.setEname(cap.trimmed());
             if(!resList.at(2).isEmpty())
                 a.setEname(resList.at(2));
             else if(!resList.at(5).isEmpty())

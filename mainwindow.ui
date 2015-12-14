@@ -27,7 +27,6 @@
     </item>
     <item row="0" column="0">
      <widget class="ExcelWidget" name="_excelWidget" native="true">
-      <zorder></zorder>
      </widget>
     </item>
     <item row="2" column="0">

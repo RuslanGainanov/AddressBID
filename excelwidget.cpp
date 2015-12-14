@@ -503,6 +503,9 @@ void ExcelWidget::onRowParsed(QString sheet, int nRow, Address a)
     nCol = _mapPHead.value(sheet).value(STREET);
     tm->setData(tm->index(nRow, nCol), a.getStreet());
 
+    nCol = _mapPHead.value(sheet).value(ENAME);
+    tm->setData(tm->index(nRow, nCol), a.getEname());
+
     nCol = _mapPHead.value(sheet).value(BUILD);
     tm->setData(tm->index(nRow, nCol), a.getBuild());
 
