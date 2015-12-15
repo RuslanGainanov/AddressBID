@@ -29,7 +29,7 @@ typedef QList< Address > ListAddress;
 
 #define HIDE_PARSED_COLUMNS 1
 
-const int MAX_OPEN_IN_ROWS=10;
+const int MAX_OPEN_IN_ROWS=0;
 const QString FoundedColor = "#33FF66";
 const QString NotFoundedColor = "#FFA07A";
 

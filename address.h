@@ -11,6 +11,7 @@ public:
     void setStreet(const QString s);
     QString getStreet() const;
 
+    void setStreetId(const QString sid);
     void setStreetId(const quint64 sid);
     quint64 getStreetId() const;
 
@@ -20,6 +21,7 @@ public:
     void setBuild(const QString b);
     QString getBuild() const;
 
+    void setBuildId(const QString bid);
     void setBuildId(const quint64 bid);
     quint64 getBuildId() const;
 

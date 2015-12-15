@@ -30,6 +30,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(_excel, SIGNAL(errorOccured(QString,int,QString)),
             this, SLOT(onErrorOccured(QString,int,QString)));
 
+    connect(_ui->_pushButtonSave, SIGNAL(clicked()),
+            this, SLOT(save()));
+
     connect( this, SIGNAL(windowClosed()),
              _dbw, SLOT(close()) );
     connect( this, SIGNAL(windowClosed()),
@@ -87,4 +90,25 @@ void MainWindow::on__pushButtonSearch_clicked()
     Database *db=_dbw->getDatabase();
     _excel->setDatabase(db);
     _excel->search();
+}
+
+void MainWindow::save()
+{
+    QString filter="Excel (*.csv *.xls *.xlsx)";
+    QString str =
+            QFileDialog::getSaveFileName(this,
+                                         trUtf8("Укажите куда сохранить результаты"),
+                                         "",
+                                         filter);
+
+    if(str.isEmpty())
+    {
+        _ui->statusBar->showMessage("Ошибка сохранения", 5000);
+        return;
+    }
+    else
+    {
+        _ui->statusBar->showMessage("Успешно сохранено", 5000);
+        return;
+    }
 }

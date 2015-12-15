@@ -61,6 +61,8 @@ void ExcelWidget::search()
 {
     qDebug() << "ExcelWidget search" << this->thread()->currentThreadId();
     assert(_db);
+    if(_data.isEmpty())
+    {return;}
 
     QString sheetName = _ui->_tabWidget->tabText(_ui->_tabWidget->currentIndex());
     _searchingSheetName=sheetName;
@@ -87,6 +89,7 @@ void ExcelWidget::search()
     ExcelSheet es = tm->getExcelSheet();
     ListAddress listAddr;
     MapAddressElementPosition addrPos = _mapPHead.value(sheetName);
+    MapAddressElementPosition addrPosOrig = _mapHead.value(sheetName);
     foreach (QStringList row, es) {
         Address a;
         a.setTypeOfStreet(row.at(addrPos.value(TYPE_OF_STREET)));
@@ -94,6 +97,8 @@ void ExcelWidget::search()
         a.setBuild(row.at(addrPos.value(BUILD)));
         a.setKorp(row.at(addrPos.value(KORP)));
         a.setCity(row.at(addrPos.value(CITY)));
+        a.setStreetId(row.at(addrPosOrig.value(STREET_ID)));
+        a.setBuildId(row.at(addrPosOrig.value(BUILD_ID)));
         //TODO add other columns
         listAddr.append(a);
     }

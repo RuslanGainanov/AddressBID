@@ -289,6 +289,8 @@ void Database::insertAddress(int row, const Address &a)
 void Database::selectAddress(Address &a)
 {
     int n = qrand();
+    if(a.getBuildId()!=0 && a.getStreetId()!=0)
+        return;
     if(           n%5==0
                || n%5==1
                || n%5==2

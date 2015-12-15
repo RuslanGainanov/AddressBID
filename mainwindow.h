@@ -39,6 +39,8 @@ private slots:
 
     void on__pushButtonSearch_clicked();
 
+    void save();
+
 private:
     Ui::MainWindow *_ui;
     DatabaseWidget *_dbw;
