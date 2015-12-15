@@ -39,6 +39,12 @@ enum AddressElements
     ENAME,         ///< element name (элементарное имя) (ул., пр., ш., бул. и пр.)
     ADDITIONAL,    ///< допольнительная информация
 
+    TYPE_OF_CITY1,
+//    CITY1,
+    TYPE_OF_CITY2,
+    CITY2,
+    TYPE_OF_STREET,
+    LITERA,
     CITY,          ///< город
     DISTRICT,      ///< район
     FSUBJ,         ///< federal subject (федеральный субъект) (название области, края, республики и пр.)
@@ -50,8 +56,14 @@ const QList<AddressElements> ListMandatoryAddressElements {
 };
 
 const QList<AddressElements> ListAddressElements {
-    STREET, STREET_ID, KORP, BUILD, BUILD_ID, ENAME, ADDITIONAL,
-            CITY, DISTRICT, FSUBJ
+    STREET, STREET_ID, KORP, BUILD, BUILD_ID, /*ENAME,*/ ADDITIONAL,
+            CITY, DISTRICT, FSUBJ,
+            TYPE_OF_CITY1,
+//            CITY1,
+            TYPE_OF_CITY2,
+            CITY2,
+            TYPE_OF_STREET,
+            LITERA,
 };
 
 typedef QMap<AddressElements, int> MapAddressElementPosition;
@@ -61,21 +73,26 @@ typedef QMap<AddressElements, QString> MapAEValue;
 typedef QList< QStringList > ExcelSheet;
 typedef QMap<QString, ExcelSheet > ExcelDocument;
 
-
 typedef QVector<QString> VectorOfString;
 
 const QMap<AddressElements, QString> MapColumnNames {
     {STREET, "STREET"},
-    {STREET_ID, "STRT_ID"},
+    {STREET_ID, "STREET_ID"},
     {KORP, "KORP"},
-    {BUILD, "BLD"},
-    {BUILD_ID, "BLD_ID"},
+    {BUILD, "BUILD"},
+    {BUILD_ID, "BUILD_ID"},
     {ENAME, "ENAME"},
     {ADDITIONAL, "ADD"},
-    {CITY, "CITY"},
+    {CITY, "CITY1"},
     {DISTRICT, "DISTRICT"},
     {FSUBJ, "FSUBJ"},
     {RAW_ADDR, "RAW"},
+    {TYPE_OF_CITY1, "TYPE_OF_CITY1"},
+//    {CITY1,	"CITY1"},
+    {TYPE_OF_CITY2, "TYPE_OF_CITY2"},
+    {CITY2, "CITY2"},
+    {TYPE_OF_STREET, "TYPE_OF_STREET"},
+    {LITERA, "LITERA"},
 };
 
 const QMap<AddressElements, QString> MapColumnParsedNames {

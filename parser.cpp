@@ -21,7 +21,7 @@ void Parser::process()
         parseBaseRow();
         break;
     case INPUT_TYPE:
-        parseInRow();
+//        parseInRow();
         break;
     default:
         break;
@@ -34,16 +34,16 @@ void Parser::setTypeOfRow(const TypeOfRow &type)
     _type=type;
 }
 
-void Parser::onReadRow(const int &sheet,
-                       const int &rowNumber,
-                       const QStringList &row)
-{
-    _rowNumber=rowNumber;
-    _row=row;
-    _sheet=sheet;
-    parseInRow();
-    emit finished();
-}
+//void Parser::onReadRow(const int &sheet,
+//                       const int &rowNumber,
+//                       const QStringList &row)
+//{
+//    _rowNumber=rowNumber;
+//    _row=row;
+//    _sheet=sheet;
+//    parseInRow();
+//    emit finished();
+//}
 
 void Parser::onReadRow(const int &rowNumber, const QStringList &row)
 {
@@ -55,7 +55,7 @@ void Parser::onReadRow(const int &rowNumber, const QStringList &row)
         parseBaseRow();
         break;
     case INPUT_TYPE:
-        parseInRow();
+//        parseInRow();
         break;
     default:
         break;
@@ -63,13 +63,13 @@ void Parser::onReadRow(const int &rowNumber, const QStringList &row)
     emit finished();
 }
 
-void Parser::onReadHeadInput(int sheet, QStringList head)
-{
-    qDebug() << "Parser onReadHeadInput"
-             << sheet << head
-             << this->thread()->currentThreadId();
+//void Parser::onReadHeadInput(int sheet, QStringList head)
+//{
+//    qDebug() << "Parser onReadHeadInput"
+//             << sheet << head
+//             << this->thread()->currentThreadId();
 
-}
+//}
 
 void Parser::onReadHeadBase(QStringList head)
 {
@@ -220,11 +220,11 @@ void Parser::parseBaseRow()
 //             << _rowNumber
 //             << _row.join('|');
     Address a;
-    a.setRawAddress(_row);
+//    a.setRawAddress(_row);
     //парсинг строки начат
 
-    QString additional;
-    int offset=0;
+//    QString additional;
+//    int offset=0;
     for(int i=0; i<_row.size(); i++)
     {
         QString str=_row[i];
@@ -251,37 +251,98 @@ void Parser::parseBaseRow()
         if(i==_mapHeadBase[STREET])
         {
 //            str = str.toLower();
-            parseFSubject(str, a, offset);
-            parseDistrict(str, a, offset);
-            parseCity(str, a, offset);
-            parseAdditional(str, a, offset);
-            parseStreet(str, a, offset);
+//            parseFSubject(str, a, offset);
+//            parseDistrict(str, a, offset);
+//            parseCity(str, a, offset);
+//            parseAdditional(str, a, offset);
+//            parseStreet(str, a, offset);
 
             //работа со скобками
-            int n1=str.indexOf('(');
-            if (n1>0 && (str.indexOf(')',n1)>0))
-            {
-                additional+=a.getAdditional();
-                int n2=str.indexOf(')', n1);
-                int n3=n2-n1;
-                additional+=str.mid(n1+1, n3-1);
-                str.remove(n1, n3+1);
-                a.setAdditional(additional);
-            }
-            str = str.trimmed();
+//            int n1=str.indexOf('(');
+//            if (n1>0 && (str.indexOf(')',n1)>0))
+//            {
+//                additional+=a.getAdditional();
+//                int n2=str.indexOf(')', n1);
+//                int n3=n2-n1;
+//                additional+=str.mid(n1+1, n3-1);
+//                str.remove(n1, n3+1);
+//                a.setAdditional(additional);
+//            }
+//            str = str.trimmed();
+
+            a.setStreet(str);
+            continue;
         } // конец работы с STR
+
+        if(i==_mapHeadBase[TYPE_OF_CITY1])
+        {
+            a.setTypeOfCity1(str);
+            continue;
+        }
+
+        if(i==_mapHeadBase[TYPE_OF_CITY2])
+        {
+            a.setTypeOfCity2(str);
+            continue;
+        }
+
+        if(i==_mapHeadBase[TYPE_OF_STREET])
+        {
+            a.setTypeOfStreet(str);
+            continue;
+        }
+
+        if(i==_mapHeadBase[LITERA])
+        {
+            a.setLitera(str);
+            continue;
+        }
+
+        if(i==_mapHeadBase[CITY])
+        {
+            a.setCity(str);
+            continue;
+        }
+
+        if(i==_mapHeadBase[CITY2])
+        {
+            a.setCity2(str);
+            continue;
+        }
+
+        if(i==_mapHeadBase[FSUBJ])
+        {
+            a.setFsubj(str);
+            continue;
+        }
+
+        if(i==_mapHeadBase[DISTRICT])
+        {
+            a.setDistrict(str);
+            continue;
+        }
+
+        if(i==_mapHeadBase[ADDITIONAL])
+        {
+            if(str.at(str.size()-1).isPunct())
+                str.remove(str.size()-1, 1);
+            a.setAdditional(str);
+            continue;
+        }
 
         //работаем с B
         if(i==_mapHeadBase[BUILD])
         {
-            parseBuild(str, a, offset);
+//            parseBuild(str, a, offset);
+            a.setBuild(str);
             continue;
         }//end work with B
 
         //работаем с K
         if(i==_mapHeadBase[KORP])
         {
-            parseKorp(str, a, offset);
+//            parseKorp(str, a, offset);
+            a.setKorp(str);
             continue;
         }
     }
@@ -290,15 +351,15 @@ void Parser::parseBaseRow()
     emit rowParsed(_rowNumber, a);
 }
 
-void Parser::parseInRow()
-{
-    qDebug() << "Parser parseInRow" << _rowNumber
-             /*<< _row */<< this->thread()->currentThreadId() ;
+//void Parser::parseInRow()
+//{
+//    qDebug() << "Parser parseInRow" << _rowNumber
+//             /*<< _row */<< this->thread()->currentThreadId() ;
 
-    Address a;
-    a.setRawAddress(_row);
-    //парсинг строки начат
+//    Address a;
+//    a.setRawAddress(_row);
+//    //парсинг строки начат
 
-    emit rowParsed(_sheet, _rowNumber, a); //парсинг строки окончен
+//    emit rowParsed(_sheet, _rowNumber, a); //парсинг строки окончен
 
-}
+//}

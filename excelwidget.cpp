@@ -5,12 +5,17 @@ ExcelWidget::ExcelWidget(QWidget *parent) :
     QWidget(parent),
     _ui(new Ui::ExcelWidget),
     _parser(nullptr),
-    _thread(nullptr)
+    _thread(nullptr),
+    _db(nullptr),
+    _delegateFounded(new SimpleDelegate(QBrush(QColor(FoundedColor)))),
+    _delegateNotFounded(new SimpleDelegate(QBrush(QColor(NotFoundedColor))))
 {
     _ui->setupUi(this);
 
     QObject::connect(&_futureWatcher, SIGNAL(finished()),
                      this, SLOT(onProcessOfOpenFinished()));
+    QObject::connect(&_futureWatcherS, SIGNAL(finished()),
+                     this, SLOT(onProcessOfSearchFinished()));
 //    _dialog.hide();
 
     connect(this, SIGNAL(parserFinished()),
@@ -30,6 +35,8 @@ ExcelWidget::~ExcelWidget()
     }
     if(_parser)
         delete _parser;
+    delete _delegateFounded;
+    delete _delegateNotFounded;
 }
 
 void ExcelWidget::open()
@@ -48,6 +55,58 @@ void ExcelWidget::open()
 void ExcelWidget::parse()
 {
     runThreadParsing();
+}
+
+void ExcelWidget::search()
+{
+    qDebug() << "ExcelWidget search" << this->thread()->currentThreadId();
+    assert(_db);
+
+    QString sheetName = _ui->_tabWidget->tabText(_ui->_tabWidget->currentIndex());
+    _searchingSheetName=sheetName;
+
+    QProgressDialog *dialog = new QProgressDialog;
+    dialog->setWindowTitle(trUtf8("Ищем..."));
+    dialog->setLabelText(trUtf8("Производится поиск строк из вкладки \"%1\". Ожидайте ...")
+                         .arg(sheetName));
+    dialog->setCancelButtonText(trUtf8("Отмена"));
+
+//    QObject::connect(&_futureWatcherS, SIGNAL(finished()),
+//                     this, SLOT(onProcessOfSearchFinished()));
+    QObject::connect(dialog, SIGNAL(canceled()),
+                     &_futureWatcherS, SLOT(cancel()));
+    QObject::connect(&_futureWatcherS, SIGNAL(progressRangeChanged(int,int)),
+                     dialog, SLOT(setRange(int,int)));
+    QObject::connect(&_futureWatcherS, SIGNAL(progressValueChanged(int)),
+                     dialog, SLOT(setValue(int)));
+    QObject::connect(&_futureWatcherS, SIGNAL(finished()),
+                     dialog, SLOT(deleteLater()));
+
+    TableModel *tm = _data.value(sheetName, 0);
+    assert(tm);
+    ExcelSheet es = tm->getExcelSheet();
+    ListAddress listAddr;
+    MapAddressElementPosition addrPos = _mapPHead.value(sheetName);
+    foreach (QStringList row, es) {
+        Address a;
+        a.setTypeOfStreet(row.at(addrPos.value(TYPE_OF_STREET)));
+        a.setStreet(row.at(addrPos.value(STREET)));
+        a.setBuild(row.at(addrPos.value(BUILD)));
+        a.setKorp(row.at(addrPos.value(KORP)));
+        a.setCity(row.at(addrPos.value(CITY)));
+        //TODO add other columns
+        listAddr.append(a);
+    }
+
+    QFuture<ListAddress> f1 = QtConcurrent::run(_db,
+                                             &Database::search,
+                                             sheetName,
+                                             listAddr);
+    // Start the computation.
+    _futureWatcherS.setFuture(f1);
+    dialog->exec();
+
+    emit searching();
 }
 
 QVariant ExcelWidget::openExcelFile(QString filename, int maxCountRows)
@@ -190,6 +249,46 @@ QVariant ExcelWidget::openExcelFile(QString filename, int maxCountRows)
     return QVariant::fromValue(data);
 }
 
+void ExcelWidget::onProcessOfSearchFinished()
+{
+    QString currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
+    qDebug() << "ExcelWidget onProcessOfSearchFinished BEGIN"
+             << currTime
+             << this->thread()->currentThreadId();
+
+    if(_futureWatcherS.isFinished()
+            && !_futureWatcherS.isCanceled())
+    {
+        ListAddress data = _futureWatcherS.future().result();
+        int row=0;
+        foreach (Address a, data) {
+//            qDebug() << "row getBid & Sid" << row << a.getBuildId() << a.getStreetId();
+            if(a.getBuildId()!=0 && a.getStreetId()!=0)
+            {
+                _views[_searchingSheetName]->setItemDelegateForRow(row, _delegateFounded);
+            }
+            else
+            {
+                _views[_searchingSheetName]->setItemDelegateForRow(row, _delegateNotFounded);
+            }
+            int colSid = _mapHead[_searchingSheetName].value(STREET_ID);
+            int colBid = _mapHead[_searchingSheetName].value(BUILD_ID);
+            TableModel *tm = _data[_searchingSheetName];
+            assert(tm);
+            tm->setData(tm->index(row, colSid),
+                        a.getStreetId());
+            tm->setData(tm->index(row, colBid),
+                        a.getBuildId());
+            row++;
+        }
+    }
+
+    currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
+    qDebug() << "ExcelWidget onProcessOfSearchFinished END"
+             << currTime
+             << this->thread()->currentThreadId();
+}
+
 void ExcelWidget::onProcessOfOpenFinished()
 {
     QString currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
@@ -281,10 +380,9 @@ void ExcelWidget::runThreadOpen(QString openFilename)
     QString name = QFileInfo(openFilename).fileName();
 
     QProgressDialog *dialog = new QProgressDialog;
-    dialog->setLabelText(
-                trUtf8("Открывается файл \"%1\". Ожидайте ...")
-                .arg(name)
-                        );
+    dialog->setWindowTitle(trUtf8("Открываю файл..."));
+    dialog->setLabelText(trUtf8("Открывается файл \"%1\". Ожидайте ...")
+                         .arg(name));
     dialog->setCancelButtonText(trUtf8("Отмена"));
     QObject::connect(dialog, SIGNAL(canceled()),
                      &_futureWatcher, SLOT(cancel()));

@@ -10,11 +10,11 @@ DatabaseWidget::DatabaseWidget(QWidget *parent) :
 
     _ui->_progressBarReaded->hide();
 
-    if(QFile("Base_1.db").exists())
+    if(QFile("Base_2.db").exists())
         _ui->_pushButtonLoadOld->setEnabled(true);
     else
         _ui->_pushButtonLoadOld->setEnabled(false);
-    _db->setBaseName("Base_1.db");
+    _db->setBaseName("Base_2.db");
 
     connect(_db, SIGNAL(countRows(int)),
             this, SLOT(onCountRow(int)));
@@ -32,6 +32,8 @@ DatabaseWidget::DatabaseWidget(QWidget *parent) :
              SIGNAL(toDebug(QString)));
     connect(_db, SIGNAL(messageReady(QString)),
             SIGNAL(toDebug(QString)));
+
+    _ui->_pushButtonLoadOld->hide();
 }
 
 DatabaseWidget::~DatabaseWidget()
@@ -55,6 +57,10 @@ void DatabaseWidget::open()
     _db->openBase(fname);
 }
 
+void DatabaseWidget::openExisting()
+{
+    _db->openOldBase();
+}
 
 void DatabaseWidget::clear()
 {

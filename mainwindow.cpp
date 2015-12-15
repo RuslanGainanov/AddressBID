@@ -6,14 +6,17 @@ MainWindow::MainWindow(QWidget *parent) :
     _ui(new Ui::MainWindow)
 {
     _ui->setupUi(this);
-    _dbw = new DatabaseWidget;
-    _excel = _ui->_excelWidget;
     int id = qRegisterMetaType< Address >("Address");
     id = qRegisterMetaType< QMap<QString,int> >("QMap<QString,int>");
     id = qRegisterMetaType< MapAddressElementPosition >("MapAddressElementPosition");
     id = qRegisterMetaType< ExcelSheet >("ExcelSheet");
     id = qRegisterMetaType< ExcelDocument >("ExcelDocument");
+    id = qRegisterMetaType< ListAddress >("ListAddress");
     Q_UNUSED(id);
+    _dbw = new DatabaseWidget;
+    _dbw->openExisting();
+    _excel = _ui->_excelWidget;
+
     connect(_ui->_actionOpenBase, SIGNAL(triggered()),
             this, SLOT(onBaseOpenTriggered()));
     connect(_ui->_actionOpenFile, SIGNAL(triggered()),
@@ -31,7 +34,13 @@ MainWindow::MainWindow(QWidget *parent) :
              _dbw, SLOT(close()) );
     connect( this, SIGNAL(windowClosed()),
              _excel, SLOT(close()) );
+
     _ui->_debugWidget->hide();
+    _ui->_pushButtonOpenBase->hide();
+    _ui->_pushButtonDeleteRows->hide();
+    _ui->_pushButtonCheckRows->hide();
+    _ui->_progressBar->hide();
+    setWindowTitle(trUtf8("RT: Обработчик тендерных заявок"));
 }
 
 MainWindow::~MainWindow()
@@ -71,4 +80,11 @@ void MainWindow::on__pushButtonOpen_clicked()
 void MainWindow::on__pushButtonOpenBase_clicked()
 {
     _dbw->show();
+}
+
+void MainWindow::on__pushButtonSearch_clicked()
+{
+    Database *db=_dbw->getDatabase();
+    _excel->setDatabase(db);
+    _excel->search();
 }

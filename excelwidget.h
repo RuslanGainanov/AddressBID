@@ -11,6 +11,8 @@
 #include <QProgressDialog>
 #include <QAxObject>
 #include <QMessageBox>
+#include <QStyledItemDelegate>
+#include <QPainter>
 #include <shlobj.h> //для использования QAxObject в отдельном потоке
 
 #include "defines.h"
@@ -21,10 +23,42 @@
 #include "tabwidget.h"
 #include "parseexcelwidget.h"
 #include "itemselectionmodel.h"
+#include "database.h"
+
+typedef QList< Address > ListAddress;
 
 #define HIDE_PARSED_COLUMNS 1
 
-const int MAX_OPEN_IN_ROWS=0;
+const int MAX_OPEN_IN_ROWS=10;
+const QString FoundedColor = "#33FF66";
+const QString NotFoundedColor = "#FFA07A";
+
+class SimpleDelegate : public QStyledItemDelegate {
+public:
+    SimpleDelegate(QBrush b=QBrush(), QObject* pobj = 0) : QStyledItemDelegate(pobj)
+    {
+        _b=b;
+    }
+
+    void paint(QPainter*                   pPainter,
+               const QStyleOptionViewItem& option,
+               const QModelIndex&          index
+              ) const
+    {
+        if(!index.isValid())
+        {
+            QStyledItemDelegate::paint(pPainter, option, index);
+            return;
+        }
+        QRect rect = option.rect;
+        pPainter->setBrush(_b);
+        pPainter->drawRect(rect);
+        QStyledItemDelegate::paint(pPainter, option, index);
+    }
+
+private:
+    QBrush _b;
+};
 
 namespace Ui {
 class ExcelWidget;
@@ -37,10 +71,15 @@ class ExcelWidget : public QWidget
 public:
     explicit ExcelWidget(QWidget *parent = 0);
     ~ExcelWidget();
+    void setDatabase(Database *db)
+    {
+        _db=db;
+    }
 
 public slots:
     void open();
     void parse();
+    void search();
 
 signals:
     void headReaded(QString sheet, MapAddressElementPosition head);
@@ -56,6 +95,8 @@ signals:
 
     void working(); //начало чтения файла
     void finished(); //чтение файла окончено
+
+    void searching();
 
     void toDebug(QString objName, QString mes);
     void messageReady(QString);
@@ -76,6 +117,8 @@ private slots:
     void onFinishParser();
     void onNotFoundMandatoryColumn(QString sheet, AddressElements ae, QString colName);
 
+    void onProcessOfSearchFinished();
+
     void onProcessOfOpenFinished();//после того окончили с открытием excel документа
     void onCurrentRowChanged(QString sheet, int nRow, QStringList row);
     void onParsedDataChanged(QString sheet, int nRow, MapAEValue row);
@@ -88,12 +131,17 @@ private:
     QHash<QString, ItemSelectionModel *>  _selections;
     QHash<QString, int>          _sheetIndex;
     QFutureWatcher<QVariant>     _futureWatcher;
+    QFutureWatcher<ListAddress>     _futureWatcherS;
 //    QProgressDialog              _dialog;
     QMap<QString, MapAddressElementPosition> _mapHead;
     QMap<QString, MapAddressElementPosition> _mapPHead;
     QThread *_thread;
     QHash<QString, int> _countParsedRow;
     QHash<QString, int> _countRow;
+    Database *_db;
+    QString _searchingSheetName;
+    SimpleDelegate *_delegateFounded;
+    SimpleDelegate *_delegateNotFounded;
 
     void runThreadOpen(QString openFilename);
     QVariant openExcelFile(QString filename, int maxCount);

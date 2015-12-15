@@ -15,6 +15,11 @@ Address::Address(const Address &a)
     setBuildId(a.getBuildId());
     setAdditional(a.getAdditional());
     setCity(a.getCity());
+    setCity2(a.getCity2());
+    setTypeOfCity2(a.getTypeOfCity2());
+    setTypeOfCity1(a.getTypeOfCity1());
+    setTypeOfStreet(a.getTypeOfStreet());
+    setLitera(a.getLitera());
     setFsubj(a.getFsubj());
     setDistrict(a.getDistrict());
     setKorp(a.getKorp());
@@ -102,6 +107,55 @@ QString Address::getCity() const
     return _city;
 }
 
+void Address::setCity2(const QString c)
+{
+    _city2=c;
+}
+
+QString Address::getCity2() const
+{
+    return _city2;
+}
+
+void Address::setTypeOfCity1(const QString t)
+{
+    _typeOfCity1=t;
+}
+
+QString Address::getTypeOfCity1() const
+{
+    return _typeOfCity1;
+}
+void Address::setTypeOfCity2(const QString t)
+{
+    _typeOfCity2=t;
+}
+
+QString Address::getTypeOfCity2() const
+{
+    return _typeOfCity2;
+}
+
+void Address::setTypeOfStreet(const QString t)
+{
+    _typeOfStreet=t;
+}
+
+QString Address::getTypeOfStreet() const
+{
+    return _typeOfStreet;
+}
+
+void Address::setLitera(const QString l)
+{
+    _litera=l;
+}
+
+QString Address::getLitera() const
+{
+    return _litera;
+}
+
 void Address::setDistrict(const QString d)
 {
     _district=d;
@@ -136,11 +190,16 @@ QString Address::toString(TypeOfData t) const
         {
             res += "Federal subj: " + getFsubj() + "\n";
             res += "District: " + getDistrict() + "\n";
+            res += "Type of City: " + getTypeOfCity1() + "\n";
             res += "City: " + getCity() + "\n";
+            res += "Type of City2: " + getTypeOfCity2() + "\n";
+            res += "City: " + getCity2() + "\n";
             res += "Ename: " + getEname() + "\n";
+            res += "Type of Street: " + getTypeOfStreet() + "\n";
             res += "Street: " + getStreet() + "\n";
-            res += "Korpus: " + getKorp() + "\n";
             res += "Build: " + getBuild() + "\n";
+            res += "Korpus: " + getKorp() + "\n";
+            res += "Litera: " + getLitera() + "\n";
         }
     }
     else
@@ -183,6 +242,11 @@ void Address::clear()
     _ename.clear();
     _additional.clear();
     _city.clear();
+    _city2.clear();
+    _typeOfCity1.clear();
+    _typeOfCity2.clear();
+    _typeOfStreet.clear();
+    _litera.clear();
     _district.clear();
     _fsubj.clear();
 }
@@ -197,6 +261,10 @@ bool Address::isEmpty() const
             getAdditional().isEmpty() &&
             getCity().isEmpty() &&
             getDistrict().isEmpty() &&
+            getLitera().isEmpty() &&
+            getTypeOfCity1().isEmpty() &&
+            getTypeOfCity2().isEmpty() &&
+            getTypeOfStreet().isEmpty() &&
             getFsubj().isEmpty());
 }
 

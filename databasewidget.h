@@ -16,9 +16,14 @@ class DatabaseWidget : public QWidget
 public:
     explicit DatabaseWidget(QWidget *parent = 0);
     ~DatabaseWidget();
+    Database *getDatabase()
+    {
+        return _db;
+    }
 
 public slots:
     void open();
+    void openExisting();
     void clear();
     void viewInfo();
 

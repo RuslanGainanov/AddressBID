@@ -35,6 +35,16 @@ void Database::openOldBase()
     emit baseOpened();
 }
 
+ListAddress Database::search(QString sheetName, ListAddress addr)
+{
+    qDebug() << "Database::search" << this->thread()->currentThreadId()
+             << sheetName << addr.size();
+    for(int i=0; i<addr.size(); i++)
+    {
+        selectAddress(addr[i]);
+    }
+    return addr;
+}
 
 void Database::openBase(QString filename)
 {
@@ -153,6 +163,7 @@ void Database::openTableToModel()
         delete _model;
     _model = new QSqlTableModel(this, _db);
     _model->setTable("base");
+//    _model->setTable("BASE1");
     _model->setEditStrategy(QSqlTableModel::OnManualSubmit);
     _model->select();
 
@@ -273,6 +284,48 @@ void Database::insertAddress(int row, const Address &a)
 //    else
 //        toDebug("Success make insert opeation");
 
+}
+
+void Database::selectAddress(Address &a)
+{
+    int n = qrand();
+    if(           n%5==0
+               || n%5==1
+               || n%5==2
+               || n%5==3
+               /*|| n%5==4*/ )
+    {
+        a.setBuildId( 100000+qrand()%100000 );
+        a.setStreetId( 100000+qrand()%100000 );
+        return;
+    }
+    return;
+
+    QSqlQuery query;
+    if (!query.exec(QString("SELECT STREET_ID, BUILD_ID "
+                    "FROM BASE"
+                    "WHERE STREET = '%1'"
+                    "  AND TYPE_OF_STREET = '%2.'"
+                    "  AND CITY1 = '%3'"
+                    "  AND BUILD = '%4'"
+                    "  AND KORP = '%5';")
+                    .arg(a.getStreet())
+                    .arg(a.getTypeOfStreet())
+                    .arg(a.getCity())
+                    .arg(a.getBuild())
+                    .arg(a.getKorp()))) {
+        qDebug() << "Unable to execute query - exiting"
+                 << endl
+                 << query.lastError().text();
+        return;
+    }
+
+    //Reading of the data
+    QSqlRecord rec     = query.record();
+    while (query.next()) {
+        a.setBuildId( query.value(rec.indexOf("BUILD_ID")).toULongLong() );
+        a.setStreetId( query.value(rec.indexOf("STREET_ID")).toULongLong() );
+    }
 }
 
 void Database::dropTable()

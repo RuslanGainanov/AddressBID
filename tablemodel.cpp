@@ -158,6 +158,7 @@ bool TableModel::removeColumns(int position, int columns, const QModelIndex &par
 
 void TableModel::onCurrentRowChanged(QModelIndex curr,QModelIndex prev)
 {
+    Q_UNUSED(prev);
     emit currentRowChanged(m_name,
                            curr.row(),
                            m_rowList.value(curr.row(), QStringList())

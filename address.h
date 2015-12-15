@@ -32,6 +32,21 @@ public:
     void setCity(const QString c);
     QString getCity() const;
 
+    void setCity2(const QString c);
+    QString getCity2() const;
+
+    void setTypeOfCity1(const QString c);
+    QString getTypeOfCity1() const;
+
+    void setTypeOfCity2(const QString c);
+    QString getTypeOfCity2() const;
+
+    void setTypeOfStreet(const QString c);
+    QString getTypeOfStreet() const;
+
+    void setLitera(const QString c);
+    QString getLitera() const;
+
     void setDistrict(const QString d);
     QString getDistrict() const;
 
@@ -56,7 +71,12 @@ private:
     QString _ename;         ///< element name (элементарное имя) (ул., пр., ш., бул. и пр.)
     QString _additional;    ///< допольнительная информация
 
-    QString _city;          ///< город
+    QString _typeOfStreet;
+    QString _typeOfCity1;
+    QString _typeOfCity2;
+    QString _city2;         ///< город2
+    QString _litera;        ///< литера
+    QString _city;          ///< город1
     QString _district;      ///< район
     QString _fsubj;         ///< federal subject (федеральный субъект) (название области, края, республики и пр.)
 };

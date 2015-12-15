@@ -86,16 +86,43 @@ void XlsParser::onReadRow(const QString &sheet,
     Address a;
 //    a.setRawAddress(row);
     //парсинг строки начат
+    QString str = row.at(_mapHead[sheet].value(STREET));
+    QStringList resList;
+    QString ptrn;
+    str = str.trimmed();
+    str = str.toLower();
+
+    //работаем с CITY
+    if(_mapHead[sheet].contains(CITY))
+    {
+        str = row.at(_mapHead[sheet].value(CITY));
+        str = str.trimmed();
+        str = str.toLower();
+
+        //с городом
+        ptrn = "((?:(?:^)|(?:[.,;()])\\s*)"
+               "(?:(?:(?:город|гор\\.*|г\\.*)\\s+([\\w\\d\\s-]+))|"
+               "(?:([\\w\\d\\s-]+)\\s+(?:город|гор\\.*|г\\.*)))\\s*)"
+               "(?:(?:[,;()])|(?:$))";
+        if(parseObject(str,
+                       resList,
+                       ptrn))
+        {
+            str.remove(resList.at(1));
+            if(!resList.at(2).isEmpty())
+                a.setCity(resList.at(2));
+            else if(!resList.at(3).isEmpty())
+                a.setCity(resList.at(3));
+        }
+    }
 
     //работаем с STREET
     if(_mapHead[sheet].contains(STREET))
     {
-        QString str = row.at(_mapHead[sheet].value(STREET));
-//        QString res;
-        QStringList resList;
-        QString ptrn;
+        str = row.at(_mapHead[sheet].value(STREET));
         str = str.trimmed();
         str = str.toLower();
+
         //работаем с федеральным субъектом
         ptrn = "((?:^|[.,;()]\\s*)"
                "(?:(?:([\\w\\d\\s-]+)\\s+(?:республика|респ\\.*|область|обл\\.*|край|ао|aобл\\.*))|"

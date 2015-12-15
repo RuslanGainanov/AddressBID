@@ -15,9 +15,9 @@ public:
 
 signals:
     void rowParsed(int rowNumber, Address addr);
-    void rowParsed(int sheet, int row, Address addr);
+//    void rowParsed(int sheet, int row, Address addr);
     void headBaseParsed(MapAddressElementPosition head);
-    void headInputParsed(int sheet, MapAddressElementPosition head);
+//    void headInputParsed(int sheet, MapAddressElementPosition head);
 
     void finished();
 
@@ -27,9 +27,9 @@ public slots:
     void onReadRow(const int &rowNumber, const QStringList &row);
 
     //inputFile only //TODO make individual class
-    void onReadRow(const int &sheet, const int &rowNumber, const QStringList &row);
+//    void onReadRow(const int &sheet, const int &rowNumber, const QStringList &row);
     void onReadHeadBase(QStringList head);
-    void onReadHeadInput(int sheet, QStringList head);
+//    void onReadHeadInput(int sheet, QStringList head);
 
 private:
     MapAddressElementPosition _mapHeadBase;

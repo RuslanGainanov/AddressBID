@@ -8,6 +8,8 @@
 #include "excelwidget.h"
 #include "debugwidget.h"
 
+typedef QList< Address > ListAddress;
+
 namespace Ui {
 class MainWindow;
 }
@@ -34,6 +36,8 @@ public slots:
 private slots:
     void on__pushButtonOpen_clicked();
     void on__pushButtonOpenBase_clicked();
+
+    void on__pushButtonSearch_clicked();
 
 private:
     Ui::MainWindow *_ui;

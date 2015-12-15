@@ -8,6 +8,8 @@
 #include "address.h"
 #include <QtSql>
 
+typedef QList< Address > ListAddress;
+
 class Database : public QObject
 {
     Q_OBJECT
@@ -32,6 +34,9 @@ signals:
 public slots:
     void openBase(QString filename);
     void openOldBase();
+
+    ListAddress search(QString sheetName, ListAddress addr);
+
     void setBaseName(QString name);
     void clear();
 
@@ -58,6 +63,7 @@ private:
     void createTable();
     void dropTable();
     void insertAddress(int row, const Address &a);
+    void selectAddress(Address &a);
 };
 
 #endif // DATABASE_H
