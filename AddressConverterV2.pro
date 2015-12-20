@@ -15,7 +15,6 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    parser.cpp \
     searcher.cpp \
     address.cpp \
     database.cpp \
@@ -31,7 +30,6 @@ SOURCES += main.cpp\
     itemselectionmodel.cpp
 
 HEADERS  += mainwindow.h \
-    parser.h \
     searcher.h \
     defines.h \
     address.h \

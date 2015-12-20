@@ -75,20 +75,20 @@ void Database::openBase(QString filename)
     connect(_csvWorker, SIGNAL(finished()),
             this, SLOT(onFinishCsvWorker()));
 
-    _parser = new Parser;
-    _parser->setTypeOfRow(BASE_TYPE);
-    _parser->moveToThread(_thread);
-    connect(_csvWorker, SIGNAL(headReaded(QStringList)),
-            _parser, SLOT(onReadHeadBase(QStringList)));
-    connect(_csvWorker, SIGNAL(rowReaded(int,QStringList)),
-            _parser, SLOT(onReadRow(int,QStringList)));
-    connect(_parser, SIGNAL(rowParsed(int, Address)),
-            this, SLOT(onParseRow(int, Address)));
+//    _parser = new Parser;
+//    _parser->setTypeOfRow(BASE_TYPE);
+//    _parser->moveToThread(_thread);
+//    connect(_csvWorker, SIGNAL(headReaded(QStringList)),
+//            _parser, SLOT(onReadHeadBase(QStringList)));
+//    connect(_csvWorker, SIGNAL(rowReaded(int,QStringList)),
+//            _parser, SLOT(onReadRow(int,QStringList)));
+//    connect(_parser, SIGNAL(rowParsed(int, Address)),
+//            this, SLOT(onParseRow(int, Address)));
 
-    connect(_thread, SIGNAL(finished()),
-            _parser, SLOT(deleteLater()));
-    connect(_thread, SIGNAL(finished()),
-            _csvWorker, SLOT(deleteLater()));
+//    connect(_thread, SIGNAL(finished()),
+//            _parser, SLOT(deleteLater()));
+//    connect(_thread, SIGNAL(finished()),
+//            _csvWorker, SLOT(deleteLater()));
     _thread->start();
 
     emit workingWithOpenBase();
@@ -122,8 +122,9 @@ void Database::onParseRow(int rowNumber, Address a)
 //    Q_UNUSED(addr);
 //    qDebug() << "Database onParseRow" << rowNumber /*<< addr.toDebug()*/;
     _countParsedRows++;
-    _mapSet[ENAME].insert(a.getEname());
-    _mapSet[CITY].insert(a.getCity());
+    _mapSet[TYPE_OF_STREET].insert(a.getTypeOfStreet());
+    _mapSet[TYPE_OF_CITY1].insert(a.getTypeOfCity1());
+    _mapSet[CITY1].insert(a.getCity1());
     _mapSet[DISTRICT].insert(a.getDistrict());
     _mapSet[FSUBJ].insert(a.getFsubj());
     _mapSet[STREET].insert(a.getStreet());
@@ -142,9 +143,9 @@ void Database::onFinishCsvWorker()
     _thread->wait();
     QString mes;
     mes+="Count rows:"+QString::number(_countParsedRows)+"\r\n";
-    mes+="Count city:"+QString::number(_mapSet[CITY].size())+"\r\n";
+//    mes+="Count city:"+QString::number(_mapSet[CITY].size())+"\r\n";
     mes+="Count district:"+QString::number(_mapSet[DISTRICT].size())+"\r\n";
-    mes+="Count ename:"+QString::number(_mapSet[ENAME].size())+"\r\n";
+//    mes+="Count ename:"+QString::number(_mapSet[ENAME].size())+"\r\n";
     mes+="Count federal subject:"+QString::number(_mapSet[FSUBJ].size())+"\r\n";
     mes+="Count street:"+QString::number(_mapSet[STREET].size())+"\r\n";
     emit messageReady(mes);
@@ -220,9 +221,9 @@ void Database::createTable()
             .arg(MapColumnNames[KORP])
             .arg(MapColumnNames[BUILD])
             .arg(MapColumnNames[BUILD_ID])
-            .arg(MapColumnNames[ENAME])
+//            .arg(MapColumnNames[ENAME])
             .arg(MapColumnNames[ADDITIONAL])
-            .arg(MapColumnNames[CITY])
+//            .arg(MapColumnNames[CITY])
             .arg(MapColumnNames[DISTRICT])
             .arg(MapColumnNames[FSUBJ])
             .arg(MapColumnNames[RAW_ADDR]);
@@ -257,9 +258,9 @@ void Database::insertAddress(int row, const Address &a)
             .arg(MapColumnNames[KORP])
             .arg(MapColumnNames[BUILD])
             .arg(MapColumnNames[BUILD_ID])
-            .arg(MapColumnNames[ENAME])
+//            .arg(MapColumnNames[ENAME])
             .arg(MapColumnNames[ADDITIONAL])
-            .arg(MapColumnNames[CITY])
+//            .arg(MapColumnNames[CITY])
             .arg(MapColumnNames[DISTRICT])
             .arg(MapColumnNames[FSUBJ])
             .arg(MapColumnNames[RAW_ADDR])
@@ -269,17 +270,17 @@ void Database::insertAddress(int row, const Address &a)
             .arg(a.getKorp())
             .arg(a.getBuild())
             .arg(QString::number(a.getBuildId()))
-            .arg(a.getEname())
+//            .arg(a.getEname())
             .arg(a.getAdditional())
-            .arg(a.getCity())
+//            .arg(a.getCity())
             .arg(a.getDistrict())
             .arg(a.getFsubj())
             .arg(a.getRawAddress().join(';'));
     if (!query.exec(str))
     {
-        toDebug("Unable to make insert opeation:"
-                +a.toDebug(RAW).join(';')
-                +":\r\n"+query.lastError().text());
+        toDebug("Unable to make insert opeation:");
+//                +a.toDebug(RAW).join(';')
+//                +":\r\n"+query.lastError().text());
     }
 //    else
 //        toDebug("Success make insert opeation");
@@ -313,7 +314,7 @@ void Database::selectAddress(Address &a)
                     "  AND KORP = '%5';")
                     .arg(a.getStreet())
                     .arg(a.getTypeOfStreet())
-                    .arg(a.getCity())
+//                    .arg(a.getCity())
                     .arg(a.getBuild())
                     .arg(a.getKorp()))) {
         qDebug() << "Unable to execute query - exiting"

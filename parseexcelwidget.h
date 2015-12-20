@@ -27,7 +27,6 @@ private slots:
     void on_lineEditDistrict_returnPressed();
     void on_lineEditCity_returnPressed();
     void on_lineEditAdditional_returnPressed();
-    void on_lineEditEname_returnPressed();
     void on_lineEditStreet_returnPressed();
     void on_lineEditBuild_returnPressed();
     void on_lineEditKorp_returnPressed();

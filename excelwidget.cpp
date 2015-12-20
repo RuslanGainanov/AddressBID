@@ -96,7 +96,11 @@ void ExcelWidget::search()
         a.setStreet(row.at(addrPos.value(STREET)));
         a.setBuild(row.at(addrPos.value(BUILD)));
         a.setKorp(row.at(addrPos.value(KORP)));
-        a.setCity(row.at(addrPos.value(CITY)));
+        a.setLitera(row.at(addrPos.value(LITERA)));
+        a.setTypeOfCity1(row.at(addrPos.value(TYPE_OF_CITY1)));
+        a.setTypeOfCity2(row.at(addrPos.value(TYPE_OF_CITY2)));
+        a.setCity2(row.at(addrPos.value(CITY2)));
+        a.setCity1(row.at(addrPos.value(CITY1)));
         a.setStreetId(row.at(addrPosOrig.value(STREET_ID)));
         a.setBuildId(row.at(addrPosOrig.value(BUILD_ID)));
         //TODO add other columns
@@ -573,23 +577,36 @@ void ExcelWidget::onRowParsed(QString sheet, int nRow, Address a)
     nCol = _mapPHead.value(sheet).value(DISTRICT);
     tm->setData(tm->index(nRow, nCol), a.getDistrict());
 
-    nCol = _mapPHead.value(sheet).value(CITY);
-    tm->setData(tm->index(nRow, nCol), a.getCity());
+    nCol = _mapPHead.value(sheet).value(TYPE_OF_CITY1);
+    tm->setData(tm->index(nRow, nCol), a.getTypeOfCity1());
+
+    nCol = _mapPHead.value(sheet).value(CITY1);
+    tm->setData(tm->index(nRow, nCol), a.getCity1());
 
     nCol = _mapPHead.value(sheet).value(ADDITIONAL);
     tm->setData(tm->index(nRow, nCol), a.getAdditional());
 
+    nCol = _mapPHead.value(sheet).value(TYPE_OF_STREET);
+    tm->setData(tm->index(nRow, nCol), a.getTypeOfStreet());
+
     nCol = _mapPHead.value(sheet).value(STREET);
     tm->setData(tm->index(nRow, nCol), a.getStreet());
 
-    nCol = _mapPHead.value(sheet).value(ENAME);
-    tm->setData(tm->index(nRow, nCol), a.getEname());
+    nCol = _mapPHead.value(sheet).value(TYPE_OF_CITY2);
+    tm->setData(tm->index(nRow, nCol), a.getTypeOfCity2());
+
+    nCol = _mapPHead.value(sheet).value(CITY2);
+    tm->setData(tm->index(nRow, nCol), a.getCity2());
 
     nCol = _mapPHead.value(sheet).value(BUILD);
     tm->setData(tm->index(nRow, nCol), a.getBuild());
 
     nCol = _mapPHead.value(sheet).value(KORP);
     tm->setData(tm->index(nRow, nCol), a.getKorp());
+
+    nCol = _mapPHead.value(sheet).value(LITERA);
+    tm->setData(tm->index(nRow, nCol), a.getLitera());
+
     emit rowParsed(sheet, nRow);
     if(_countParsedRow[sheet]>=_countRow[sheet])
         emit parserFinished();

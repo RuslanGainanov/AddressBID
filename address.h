@@ -1,14 +1,22 @@
 #ifndef ADDRESS_H
 #define ADDRESS_H
 
-#include "defines.h"
+#include <QString>
+#include <QStringList>
+
+enum TypeOfData
+{
+    RAW = 1,
+    PARSED = 2
+};
+
 
 class Address
 {
 public:
     Address();
     Address(const Address &a);
-    void setStreet(const QString s);
+    void setStreet(const QString &s);
     QString getStreet() const;
 
     void setStreetId(const QString sid);
@@ -25,14 +33,11 @@ public:
     void setBuildId(const quint64 bid);
     quint64 getBuildId() const;
 
-    void setEname(const QString e);
-    QString getEname() const;
-
     void setAdditional(const QString a);
     QString getAdditional() const;
 
-    void setCity(const QString c);
-    QString getCity() const;
+    void setCity1(const QString c);
+    QString getCity1() const;
 
     void setCity2(const QString c);
     QString getCity2() const;
@@ -56,12 +61,16 @@ public:
     QString getFsubj() const;
 
     QString toString(TypeOfData t=RAW) const;
-    QStringList toDebug(TypeOfData t=RAW) const;
+//    QStringList toDebug(TypeOfData t=RAW) const;
     bool isEmpty() const;
     void clear();
 
+    void setRawAddress(const QString &str);
     void setRawAddress(const QStringList &row);
     QStringList getRawAddress() const;
+
+    void setCorrect(const bool c);
+    bool isCorrect() const;
 
 private:
     QStringList _rawAddress;///< строка адреса как она есть
@@ -70,7 +79,7 @@ private:
     QString _korp;          ///< корпус
     QString _build;         ///< дом
     quint64 _buildId;       ///< id дома
-    QString _ename;         ///< element name (элементарное имя) (ул., пр., ш., бул. и пр.)
+//    QString _ename;         ///< element name (элементарное имя) (ул., пр., ш., бул. и пр.)
     QString _additional;    ///< допольнительная информация
 
     QString _typeOfStreet;
@@ -78,9 +87,10 @@ private:
     QString _typeOfCity2;
     QString _city2;         ///< город2
     QString _litera;        ///< литера
-    QString _city;          ///< город1
+    QString _city1;         ///< город1
     QString _district;      ///< район
     QString _fsubj;         ///< federal subject (федеральный субъект) (название области, края, республики и пр.)
+    bool    _isCorrect;     ///< флаг устанавливается в 1, если адрес был распарсен
 };
 
 #endif // ADDRESS_H

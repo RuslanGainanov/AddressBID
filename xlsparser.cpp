@@ -93,26 +93,32 @@ void XlsParser::onReadRow(const QString &sheet,
     str = str.toLower();
 
     //работаем с CITY
-    if(_mapHead[sheet].contains(CITY))
+    if(_mapHead[sheet].contains(CITY1))
     {
-        str = row.at(_mapHead[sheet].value(CITY));
+        str = row.at(_mapHead[sheet].value(CITY1));
         str = str.trimmed();
         str = str.toLower();
 
         //с городом
-        ptrn = "((?:(?:^)|(?:[.,;()])\\s*)"
-               "(?:(?:(?:город|гор\\.*|г\\.*)\\s+([\\w\\d\\s-]+))|"
-               "(?:([\\w\\d\\s-]+)\\s+(?:город|гор\\.*|г\\.*)))\\s*)"
-               "(?:(?:[,;()])|(?:$))";
+        //учитывает только г. но запись с двух сторон возможна
+//        ptrn = "((?:(?:^)|(?:[.,;()])\\s*)"
+//               "(?:(?:(?:(город|гор\\.*|г\\.*)\\s+)*([\\w\\d\\s-]+))|"
+//               "(?:([\\w\\d\\s-]+)(?:\\s+(город|гор\\.*|г\\.*))*)\\s*)"
+//               "(?:(?:[,;()])|(?:$))";
+
+        //запись название города только после типа города
+        ptrn = "(село|деревня|дер\\.*|поселок|пос\\.*|станция|ст\\.*|[сдп]\\.*|город|гор\\.*|г\\.*|ж\\/д_рзд\\.|рп\\.|ж\\/д_ст\\.|высел\\.|х\\.*|казарма\\.*|м\\.|жилрайон\\.*|нп\\.*|снт\\.*|дп\\.*|снт\\.*|пст\\.|п\\/ст\\.|пгт\\.|п\\/гт\\.|тер\\.*|массив\\.*)\\s+([\\w\\d\\s-]+)(?:([,;]|$)|[()])";
+
+        //возможна запись имени города без указания типа
+        //забирает первое слово до разделителя!
+//        ptrn = "(?:(село|деревня|дер\\.*|поселок|пос\\.*|станция|ст\\.*|[сдп]\\.*|город|гор\\.*|г\\.*|ж\\/д_рзд\\.|рп\\.|ж\\/д_ст\\.|высел\\.|х\\.*|казарма\\.*|м\\.|жилрайон\\.*|нп\\.*|снт\\.*|дп\\.*|снт\\.*|пст\\.|п\\/ст\\.|пгт\\.|п\\/гт\\.|тер\\.*|массив\\.*)\\s+)*([\\w\\d\\s-]+)(?:([,;]|$)|[()])";
         if(parseObject(str,
                        resList,
                        ptrn))
         {
-            str.remove(resList.at(1));
-            if(!resList.at(2).isEmpty())
-                a.setCity(resList.at(2));
-            else if(!resList.at(3).isEmpty())
-                a.setCity(resList.at(3));
+            str.remove(resList.at(1)+resList.at(2)+resList.at(3));
+            a.setTypeOfCity1(resList.at(1));
+            a.setCity1(resList.at(2));
         }
     }
 
@@ -154,54 +160,63 @@ void XlsParser::onReadRow(const QString &sheet,
                 a.setDistrict(resList.at(3));
         }
         //с городом
-        ptrn = "((?:^|[.,;()]\\s*)"
-               "(?:(?:(?:город|гор\\.*|г\\.*)\\s+([\\w\\d\\s-]+))|"
-               "(?:([\\w\\d\\s-]+)\\s+(?:город|гор\\.*|г\\.*))))"
-               "(?:[.,;()]|$)";
+//        ptrn = "((?:^|[.,;()]\\s*)"
+//               "(?:(?:(?:город|гор\\.*|г\\.*)\\s+([\\w\\d\\s-]+))|"
+//               "(?:([\\w\\d\\s-]+)\\s+(?:город|гор\\.*|г\\.*))))"
+//               "(?:[.,;()]|$)";
+        ptrn = "(село|деревня|дер\\.*|поселок|пос\\.*|станция|ст\\.*|[сдп]\\.*|город|гор\\.*|г\\.*|ж\\/д_рзд\\.|рп\\.|ж\\/д_ст\\.|высел\\.|х\\.*|казарма\\.*|м\\.|жилрайон\\.*|нп\\.*|снт\\.*|дп\\.*|снт\\.*|пст\\.|п\\/ст\\.|пгт\\.|п\\/гт\\.|тер\\.*|массив\\.*)\\s+([\\w\\d\\s-]+)(?:([,;]|$)|[()])";
+
         if(parseObject(str,
                        resList,
                        ptrn))
         {
-            str.remove(resList.at(1));
-            if(!resList.at(2).isEmpty())
-                a.setCity(resList.at(2));
-            else if(!resList.at(3).isEmpty())
-                a.setCity(resList.at(3));
+//            str.remove(resList.at(1));
+//            if(!resList.at(2).isEmpty())
+//                a.setCity(resList.at(2));
+//            else if(!resList.at(3).isEmpty())
+//                a.setCity(resList.at(3));
+
+            str.remove(resList.at(1)+resList.at(2)+resList.at(3));
+            a.setTypeOfCity1(resList.at(1));
+            a.setCity1(resList.at(2));
         }
-        //с селом, деревней поселком
-        ptrn = "((?:^|[.,;()]\\s*)"
-               "(?:(?:(?:село|деревня|дер\\.*|поселок|пос\\.*|станция|ст\\.*|[сдп]\\.*)\\s+([\\w\\d\\s-]+))|"
-               "(?:([\\w\\d\\s-]+)\\s+(?:село|деревня|дер\\.*|поселок|пос\\.*|станция|ст\\.*|[сдп]\\.*))))"
-               "(?:[.,;()]|$)";
-        if(parseObject(str,
-                       resList,
-                       ptrn))
-        {
-            str.remove(resList.at(1));
-            if(!resList.at(2).isEmpty())
-                a.setAdditional(resList.at(2));
-            else if(!resList.at(3).isEmpty())
-                a.setAdditional(resList.at(3));
-        }
+
+//        //с селом, деревней поселком
+//        ptrn = "((?:^|[.,;()]\\s*)"
+//               "(?:(?:(?:село|деревня|дер\\.*|поселок|пос\\.*|станция|ст\\.*|[сдп]\\.*)\\s+([\\w\\d\\s-]+))|"
+//               "(?:([\\w\\d\\s-]+)\\s+(?:село|деревня|дер\\.*|поселок|пос\\.*|станция|ст\\.*|[сдп]\\.*))))"
+//               "(?:[.,;()]|$)";
+//        if(parseObject(str,
+//                       resList,
+//                       ptrn))
+//        {
+//            str.remove(resList.at(1));
+//            if(!resList.at(2).isEmpty())
+//                a.setAdditional(resList.at(2));
+//            else if(!resList.at(3).isEmpty())
+//                a.setAdditional(resList.at(3));
+//        }
+
         //с улицей, пр-том, и пр.
-        ptrn = "((?:(?:^)|(?:[.,;()])\\s*)"
+        ptrn = "((?:[.,;()]*\\s*)"
                "(?:(?:(улица|ул\\.*|шоссе|ш\\.*|аллея|ал\\.*|бульвар|б-р|линия|лин\\.*|набережная|наб\\.*|парк|переулок|пер\\.*|площадь|пл\\.*|проспект|пр-кт|пр\\.*|сад|сквер|строение|стр\\.*|участок|уч-к|квартал|берег|кв-л|километр|км|кольцо|проезд|переезд|въезд|заезд|дорога|дор\\.*|платформа|платф\\.*|площадка|пл-ка\\.*|полустанок|полуст\\.*|проулок|просека|тракт|тупик|туп\\.*|просёлок)\\s+([\\w\\d\\s-.]+))|"
                "(?:([\\w\\d\\s-.]+)\\s+(улица|ул\\.*|шоссе|ш\\.*|аллея|ал\\.*|бульвар|б-р|линия|лин\\.*|набережная|наб\\.*|парк|переулок|пер\\.*|площадь|пл\\.*|проспект|пр-кт|пр\\.*|сад|сквер|строение|стр\\.*|участок|уч-к|квартал|берег|кв-л|километр|км|кольцо|проезд|переезд|въезд|заезд|дорога|дор\\.*|платформа|платф\\.*|площадка|пл-ка\\.*|полустанок|полуст\\.*|проулок|просека|тракт|тупик|туп\\.*|просёлок)))\\s*)"
-               "(?:(?:[,;()])|(?:$))";
+               "(?:([,;]|$)|[()])";
         if(parseObject(str,
                        resList,
                        ptrn))
         {
             str.remove(resList.at(1));
             if(!resList.at(2).isEmpty())
-                a.setEname(resList.at(2));
+                a.setTypeOfStreet(resList.at(2));
             else if(!resList.at(5).isEmpty())
-                a.setEname(resList.at(5));
+                a.setTypeOfStreet(resList.at(5));
             if(!resList.at(3).isEmpty())
                 a.setStreet(resList.at(3));
             else if(!resList.at(4).isEmpty())
                 a.setStreet(resList.at(4));
         }
+
         //работа со скобками
         int n1=str.indexOf('(');
         if (n1>0 && (str.indexOf(')',n1)>0))
@@ -217,8 +232,25 @@ void XlsParser::onReadRow(const QString &sheet,
         //если в этом же столбце находится номер дома и корпус
         if(_isOneColumn)
         {
-            a.setBuild("B1");
-            a.setKorp("K1");
+            //дом, корпус и литера
+            ptrn = "(?:[.,;]*\\s*)(д\\.*|дом\\.*|ая\\.*|а\\\\я\\.*|а/я\\.*)\\s*([0-9Х][-\\\/0-9]*)([а-я]*)\\s*,*\\s*(?:(к\\.*|корп\\.*)\\s*(\\d*)-*(\\w*))*\\s*,*\\s*(?:(л\\.*|лит\\.*|литера\\.*)\\s*(\\d*)-*(\\w*))*\\s*([а-я]*)";
+            if(parseObject(str,
+                           resList,
+                           ptrn))
+            {
+                str.remove(resList.at(0));
+                a.setBuild(resList.at(2));
+                QString k;
+                if(!resList.at(5).isEmpty())
+                    k=resList.at(5);
+                else
+                    k=resList.at(8);
+                QString l;
+                l=resList.at(3)+resList.at(10)+resList.at(6)+
+                        resList.at(10)+resList.at(9);
+                a.setKorp(k);
+                a.setLitera(l);
+            }
         }
     } // конец работы с STR
 
@@ -229,14 +261,52 @@ void XlsParser::onReadRow(const QString &sheet,
         if(_mapHead[sheet].contains(BUILD))
         {
             QString str = row.at(_mapHead[sheet].value(BUILD));
-            a.setBuild(str);
+            str = str.trimmed();
+            str = str.toLower();
+            //дом
+            ptrn = "(?:[.,;]*\\s*)(д\\.*|дом\\.*|ая\\.*|а\\\\я\\.*|а/я\\.*)*\\s*([0-9Х][-\\\/0-9]*)([а-я]*)\\s*,*\\s*(?:(к\\.*|корп\\.*)\\s*(\\d*)-*(\\w*))*\\s*,*\\s*(?:(л\\.*|лит\\.*|литера\\.*)\\s*(\\d*)-*(\\w*))*\\s*([а-я]*)";
+            if(parseObject(str,
+                           resList,
+                           ptrn))
+            {
+                str.remove(resList.at(0));
+                a.setBuild(resList.at(2));
+                QString k;
+                if(!resList.at(5).isEmpty())
+                    k=resList.at(5);
+                else
+                    k=resList.at(8);
+                QString l;
+                l=resList.at(3)+resList.at(10)+resList.at(6)+
+                        resList.at(10)+resList.at(9);
+                a.setKorp(k);
+                a.setLitera(l);
+            }
         }//end work with B
 
         //работаем с K
         if(_mapHead[sheet].contains(KORP))
         {
             QString str = row.at(_mapHead[sheet].value(KORP));
-            a.setKorp(str);
+            str = str.trimmed();
+            str = str.toLower();
+            //корпус и литера
+            ptrn = "\\s*(?:(к\\.*|корп\\.*)*\\s*(\\d*)-*(\\w*))*\\s*,*\\s*(?:(л\\.*|лит\\.*|литера\\.*)\\s*(\\d*)-*(\\w*))*\\s*([а-я]*)";
+            if(parseObject(str,
+                           resList,
+                           ptrn))
+            {
+                str.remove(resList.at(0));
+                QString k;
+                if(!resList.at(2).isEmpty())
+                    k=resList.at(2);
+                else
+                    k=resList.at(5);
+                QString l;
+                l=resList.at(3)+resList.at(6);
+                a.setKorp(k);
+                a.setLitera(l);
+            }
         }//end work with K
     }
     //парсинг строки окончен

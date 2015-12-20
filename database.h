@@ -49,7 +49,7 @@ public slots:
 
 private:
     CsvWorker *_csvWorker;
-    Parser *_parser;
+//    Parser *_parser;
     QThread *_thread;
     QMap< AddressElements, QSet<QString> > _mapSet;
     QSqlDatabase _db;
