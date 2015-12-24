@@ -10,11 +10,11 @@ DatabaseWidget::DatabaseWidget(QWidget *parent) :
 
     _ui->_progressBarReaded->hide();
 
-    if(QFile("Base_2.db").exists())
+    if(QFile("Base1.db").exists())
         _ui->_pushButtonLoadOld->setEnabled(true);
     else
         _ui->_pushButtonLoadOld->setEnabled(false);
-    _db->setBaseName("Base_2.db");
+    _db->setBaseName("Base1.db");
 
     connect(_db, SIGNAL(countRows(int)),
             this, SLOT(onCountRow(int)));

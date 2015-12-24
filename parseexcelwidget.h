@@ -18,6 +18,7 @@ public:
 
 signals:
     void dataChanged(QString sheet, int nRow, MapAEValue row);
+    void rowRemoved(QString sheet, int nRow);
 
 public slots:
     void onCurrentRowChanged(QString sheet, int nRow, MapAEValue data);
@@ -35,6 +36,9 @@ private slots:
 
 private slots:
     void saveData();
+    void clearData();
+
+    void on__pushButtonRemove_clicked();
 
 private:
     Ui::ParseExcelWidget *ui;

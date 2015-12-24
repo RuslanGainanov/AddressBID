@@ -37,9 +37,8 @@ void ParseExcelWidget::onCurrentRowChanged(QString sheet,
     ui->lineEditFSubj->setText(str);
     str=data.value(ADDITIONAL, QString());
     ui->lineEditAdditional->setText(str);
-    //TODO:
-//    str=data.value(LITER, QString());
-//    ui->lineEditLiter->setText(str);
+    str=data.value(LITERA, QString());
+    ui->lineEditLiter->setText(str);
 }
 
 void ParseExcelWidget::on_lineEditFSubj_returnPressed()
@@ -99,4 +98,24 @@ void ParseExcelWidget::saveData()
     _data[CITY1]=ui->lineEditCity->text();
     _data[LITERA]=ui->lineEditLiter->text();
     emit dataChanged(_sheet, _nRow, _data);
+}
+
+void ParseExcelWidget::clearData()
+{
+    ui->lineEditTypeOfStreet->clear();
+    ui->lineEditDistrict->clear();
+    ui->lineEditStreet->clear();
+    ui->lineEditBuild->clear();
+    ui->lineEditKorp->clear();
+    ui->lineEditCity->clear();
+    ui->lineEditFSubj->clear();
+    ui->lineEditAdditional->clear();
+    ui->lineEditLiter->clear();
+}
+
+
+void ParseExcelWidget::on__pushButtonRemove_clicked()
+{
+    emit rowRemoved(_sheet, _nRow);
+    clearData();
 }

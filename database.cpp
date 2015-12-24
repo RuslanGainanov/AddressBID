@@ -30,7 +30,7 @@ void Database::setBaseName(QString name)
 void Database::openOldBase()
 {
     createConnection();
-    openTableToModel();
+//    openTableToModel();
     emit countRows(_model->rowCount());
     emit baseOpened();
 }

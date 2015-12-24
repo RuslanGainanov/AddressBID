@@ -91,6 +91,8 @@ private:
     QString _district;      ///< район
     QString _fsubj;         ///< federal subject (федеральный субъект) (название области, края, республики и пр.)
     bool    _isCorrect;     ///< флаг устанавливается в 1, если адрес был распарсен
+
+    QString trim(QString s);
 };
 
 #endif // ADDRESS_H

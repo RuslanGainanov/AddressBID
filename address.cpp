@@ -63,7 +63,7 @@ QString Address::getStreet() const
 
 void Address::setKorp(const QString k)
 {
-    _korp=k;
+    _korp=trim(k);
 }
 
 QString Address::getKorp() const
@@ -73,7 +73,7 @@ QString Address::getKorp() const
 
 void Address::setBuild(const QString b)
 {
-    _build=b;
+    _build=trim(b);
 }
 
 void Address::setBuildId(const QString bid)
@@ -185,7 +185,7 @@ QString Address::getTypeOfStreet() const
 
 void Address::setLitera(const QString l)
 {
-    _litera=l;
+    _litera=trim(l);
 }
 
 QString Address::getLitera() const
@@ -339,4 +339,10 @@ void Address::setCorrect(const bool c)
 bool Address::isCorrect() const
 {
     return _isCorrect;
+}
+
+
+QString Address::trim(QString s)
+{
+    return s.trimmed();
 }

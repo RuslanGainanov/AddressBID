@@ -29,7 +29,7 @@ typedef QList< Address > ListAddress;
 
 #define HIDE_PARSED_COLUMNS 1
 
-const int MAX_OPEN_IN_ROWS=0;
+const int MAX_OPEN_IN_ROWS=10;
 const QString FoundedColor = "#33FF66";
 const QString NotFoundedColor = "#FFA07A";
 
@@ -120,8 +120,14 @@ private slots:
     void onProcessOfSearchFinished();
 
     void onProcessOfOpenFinished();//после того окончили с открытием excel документа
+    void onRemoveRow(QString sheet, int nRow);
+    void onCurrentRowChanged();
     void onCurrentRowChanged(QString sheet, int nRow, QStringList row);
     void onParsedDataChanged(QString sheet, int nRow, MapAEValue row);
+
+    void on__lineEditNewAddr_returnPressed();
+    void on_pushButton_clicked();
+    void onAddNewAddr(QString addr);
 
 private:
     Ui::ExcelWidget             *_ui;

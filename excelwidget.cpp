@@ -16,15 +16,20 @@ ExcelWidget::ExcelWidget(QWidget *parent) :
                      this, SLOT(onProcessOfOpenFinished()));
     QObject::connect(&_futureWatcherS, SIGNAL(finished()),
                      this, SLOT(onProcessOfSearchFinished()));
-//    _dialog.hide();
+
+    _ui->_lineEditFilename->hide();
 
     connect(this, SIGNAL(parserFinished()),
             this, SLOT(onFinishParser()));
 
+    connect(_ui->_parseWidget, SIGNAL(rowRemoved(QString,int)),
+            this, SLOT(onRemoveRow(QString,int)));
     connect(_ui->_parseWidget, SIGNAL(dataChanged(QString,int,MapAEValue)),
             this, SLOT(onParsedDataChanged(QString,int,MapAEValue)));
     connect(this, SIGNAL(currentRowChanged(QString,int,MapAEValue)),
             _ui->_parseWidget, SLOT(onCurrentRowChanged(QString,int,MapAEValue)));
+
+    parse();
 }
 
 ExcelWidget::~ExcelWidget()
@@ -314,7 +319,9 @@ void ExcelWidget::onProcessOfOpenFinished()
             if(result.canConvert< ExcelDocument >())
             {
                 ExcelDocument data = result.value<ExcelDocument>();
-                runThreadParsing();
+//                runThreadParsing();
+                disconnect(_parser, SIGNAL(rowParsed(QString,int,Address)),
+                        this, SLOT(onCurrentRowChanged()));
                 foreach (QString sheetName, data.keys()) {
                     _data.insert(sheetName, new TableModel(sheetName));
                     _views.insert(sheetName, new TableView(_ui->_tabWidget));
@@ -354,9 +361,39 @@ void ExcelWidget::onProcessOfOpenFinished()
     emit finished();
 }
 
+void ExcelWidget::onRemoveRow(QString sheet, int nRow)
+{
+    qDebug() << "ExcelWidget onRemoveRow" << sheet << nRow;
+    TableModel *tm = _data.value(sheet, 0);
+    assert(tm);
+    if(nRow>=0 && nRow<tm->rowCount())
+        qDebug() << tm->removeRow(nRow);
+    else
+        qDebug() << false;
+}
+
+void ExcelWidget::onCurrentRowChanged()
+{
+    QString sheet = _ui->_tabWidget->tabText(_ui->_tabWidget->currentIndex());
+    if(_data.isEmpty())
+        return;
+    TableModel *tm = _data.value(sheet, 0);
+    assert(tm);
+    ItemSelectionModel *ism = _selections.value(sheet, 0);
+    int nRow = ism->selectedIndexes().first().row();
+    QStringList row = tm->getRow(nRow);
+
+    onCurrentRowChanged(sheet, nRow, row);
+}
+
 void ExcelWidget::onCurrentRowChanged(QString sheet, int nRow,
                                       QStringList row)
 {
+//    qDebug() << "ExcelWidget onCurrentRowChanged"
+//             << this->thread()->currentThreadId()
+//             << nRow
+//             << row;
+
     MapAEValue data;
     foreach (AddressElements ae, MapColumnParsedNames.keys()) {
         QString param = row.value(
@@ -566,7 +603,7 @@ void ExcelWidget::onRowParsed(QString sheet, int nRow, Address a)
 //    emit toDebug(objectName(),
 //                 "ExcelWidget::onRowParsed "
 //                 +sheet+" row:"
-//                 +QString::number(nRow)+"\n"/*+a.toString(PARSED)*/
+//                 +QString::number(nRow)+"\n"+a.toString(PARSED)
 //                 );
     TableModel *tm=_data.value(sheet, 0);
     assert(tm);
@@ -647,4 +684,42 @@ void ExcelWidget::onNotFoundMandatoryColumn(QString sheet, AddressElements ae, Q
     if (n == QMessageBox::Ok) {
         // Do it!
     }
+}
+
+void ExcelWidget::on__lineEditNewAddr_returnPressed()
+{
+    onAddNewAddr(_ui->_lineEditNewAddr->text());
+    _ui->_lineEditNewAddr->clear();
+}
+
+void ExcelWidget::on_pushButton_clicked()
+{
+    onAddNewAddr(_ui->_lineEditNewAddr->text());
+    _ui->_lineEditNewAddr->clear();
+}
+
+void ExcelWidget::onAddNewAddr(QString addr)
+{
+//    qDebug() << "ExcelWidget onAddNewAddr" << this->thread()->currentThreadId();
+    QString sheet = _ui->_tabWidget->tabText(_ui->_tabWidget->currentIndex());
+    if(_data.isEmpty())
+        return;
+    if(!_mapHead.value(sheet).contains(STREET))
+        return;
+    TableModel *tm = _data.value(sheet, 0);
+    assert(tm);
+    int nCol = _mapHead.value(sheet).value(STREET);
+    int nRow = tm->rowCount();
+    tm->insertRow(nRow);
+    tm->setData(tm->index(nRow, nCol),
+                    QVariant::fromValue(addr));
+    QStringList row;
+    row = tm->getRow(nRow);
+    emit isOneColumn(false);
+    emit rowReaded(sheet, nRow, row);
+    TableView *tv = _views.value(sheet, 0);
+    tv->selectRow(nRow);
+    tv->scrollTo(tm->index(nRow, nCol));
+    connect(_parser, SIGNAL(rowParsed(QString,int,Address)),
+            this, SLOT(onCurrentRowChanged()), Qt::UniqueConnection);
 }
