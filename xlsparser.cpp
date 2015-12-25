@@ -80,17 +80,15 @@ void XlsParser::onReadRow(const QString &sheet,
                           const int &rowNumber,
                           const QStringList &row)
 {
-//    qDebug() << "XlsParser onReadRow" << sheet << rowNumber
-//             /*<< row */<< this->thread()->currentThreadId() ;
+    qDebug() << "XlsParser onReadRow" << sheet << rowNumber
+             /*<< row */<< this->thread()->currentThreadId() ;
 
     Address a;
 //    a.setRawAddress(row);
     //парсинг строки начат
-    QString str = row.at(_mapHead[sheet].value(STREET));
+    QString str;
     QStringList resList;
     QString ptrn;
-    str = str.trimmed();
-    str = str.toLower();
 
     //работаем с CITY
     if(_mapHead[sheet].contains(CITY1))
@@ -168,7 +166,7 @@ void XlsParser::onReadRow(const QString &sheet,
 //               "(?:(?:(?:город|гор\\.*|г\\.*)\\s+([\\w\\d\\s-]+))|"
 //               "(?:([\\w\\d\\s-]+)\\s+(?:город|гор\\.*|г\\.*))))"
 //               "(?:[.,;()]|$)";
-        ptrn = "(село|деревня|дер\\.*|поселок|пос\\.*|станция|ст\\.*|[сдп]\\.*|город|гор\\.*|г\\.*|ж\\/д_рзд\\.|рп\\.|ж\\/д_ст\\.|высел\\.|х\\.*|казарма\\.*|м\\.|жилрайон\\.*|нп\\.*|снт\\.*|дп\\.*|снт\\.*|пст\\.|п\\/ст\\.|пгт\\.|п\\/гт\\.|тер\\.*|массив\\.*)\\s+([\\w\\d\\s-]+)(?:([,;]|$)|[()])";
+        ptrn = "(село|деревня|дер\\.*|поселок|пос\\.*|станция|ст\\.*|[сдп]\\.*|город|гор\\.*|г\\.*|ж\\/д_рзд\\.|рп\\.|ж\\/д_ст\\.|высел\\.|х\\.*|казарма\\.*|м\\.|жилрайон\\.*|нп\\.*|снт\\.*|дп\\.*|снт\\.*|пст\\.|п\\/ст\\.|пгт\\.|п\\/гт\\.|тер\\.*|массив\\.*)(\\s+[\\w\\d\\s.-]+)(?:([.,;]|$)|[()])";
 
         if(parseObject(str,
                        resList,
@@ -239,7 +237,7 @@ void XlsParser::onReadRow(const QString &sheet,
 //        {
 //            qDebug() << "isOneColumn";
             //дом, корпус и литера
-            ptrn = "(?:[.,;]*\\s*)(д\\.*|дом\\.*|ая\\.*|а\\\\я\\.*|а/я\\.*)\\s*([0-9Х][-\\\\/0-9]*)([а-я]*)\\s*,*\\s*(?:(к\\.*|корп\\.*)\\s*(\\d*)-*(\\w*))*\\s*,*\\s*(?:(л\\.*|лит\\.*|литера\\.*)\\s*(\\d*)-*(\\w*))*\\s*([а-я]*)";
+            ptrn = "(?:[.,;]*\\s*)(д\\.*|дом\\.*|ая\\.*|а\\\\я\\.*|а/я\\.*)\\s*([0-9Х][-\\\\/0-9]*)([а-я]*)\\s*,*\\s*(?:(к\\.*|корп\\.*)\\s*(\\d*)-*(\\w*))*\\s*,*\\s*(?:(л\\.*|лит\\.*|литера\\.*)\\s*(\\d*)-*(\\w*))*\\s*(?:(?:кв\\.*)|([а-я]*))";
             if(parseObject(str,
                            resList,
                            ptrn))
@@ -259,7 +257,7 @@ void XlsParser::onReadRow(const QString &sheet,
 //            }
         }
     } // конец работы с STR
-
+/*
     //если номер дома и корпус находятся в другом столбце
     if(!_isOneColumn && a.getBuild().isEmpty()
                           && a.getKorp().isEmpty()
@@ -317,9 +315,12 @@ void XlsParser::onReadRow(const QString &sheet,
                 a.setLitera(l);
             }
         }//end work with K
-    }
+    }//если номер дома и корпус находятся в другом столбце
+    */
     //парсинг строки окончен
 
+    qDebug().noquote() << " XlsParser::" << str << a.toString(PARSED);
+    assert(0);
     emit rowParsed(sheet, rowNumber, a); //парсинг строки окончен
 //    return a;
 }

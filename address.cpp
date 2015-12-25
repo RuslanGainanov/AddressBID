@@ -2,7 +2,8 @@
 
 Address::Address():
     _streetId(0),
-    _buildId(0)
+    _buildId(0),
+    _typeFSubj(INCORRECT_SUBJ)
 {
 //    qDebug() << "Address constructor";
 }
@@ -20,25 +21,17 @@ Address::Address(const Address &a)
     setTypeOfCity1(a.getTypeOfCity1());
     setTypeOfStreet(a.getTypeOfStreet());
     setLitera(a.getLitera());
+    setTypeOfFSubj(a.getTypeOfFSubj());
     setFsubj(a.getFsubj());
     setDistrict(a.getDistrict());
     setKorp(a.getKorp());
-//    setEname(a.getEname());
     setRawAddress(a.getRawAddress());
 }
 
 void Address::setStreet(const QString &s)
 {
-    _street=s;
-    //работа со скобками
-    int n1=_street.indexOf('(');
-    if (n1>0 && (_street.indexOf(')',n1)>0))
-    {
-        int n2=_street.indexOf(')', n1);
-        int n3=n2-n1;
-        _additional+=_street.mid(n1+1, n3-1);
-        _street.remove(n1, n3+1);
-    }
+    _street=toLower(trim(s));
+    workWithBranches(_street);
 }
 
 void Address::setStreetId(const QString sid)
@@ -63,7 +56,7 @@ QString Address::getStreet() const
 
 void Address::setKorp(const QString k)
 {
-    _korp=trim(k);
+    _korp=toLower(trim(k));
 }
 
 QString Address::getKorp() const
@@ -73,7 +66,7 @@ QString Address::getKorp() const
 
 void Address::setBuild(const QString b)
 {
-    _build=trim(b);
+    _build=b;
 }
 
 void Address::setBuildId(const QString bid)
@@ -108,7 +101,7 @@ QString Address::getBuild() const
 
 void Address::setAdditional(const QString a)
 {
-    _additional=a;
+    _additional=toLower(trim(a));
 }
 
 QString Address::getAdditional() const
@@ -118,16 +111,8 @@ QString Address::getAdditional() const
 
 void Address::setCity1(const QString c)
 {
-    _city1=c;
-    //работа со скобками
-    int n1=_city1.indexOf('(');
-    if (n1>0 && (_city1.indexOf(')',n1)>0))
-    {
-        int n2=_city1.indexOf(')', n1);
-        int n3=n2-n1;
-        _additional+=_city1.mid(n1+1, n3-1);
-        _city1.remove(n1, n3+1);
-    }
+    _city1=toLower(trim(c));
+    workWithBranches(_city1);
 }
 
 QString Address::getCity1() const
@@ -137,16 +122,8 @@ QString Address::getCity1() const
 
 void Address::setCity2(const QString c)
 {
-    _city2=c;
-    //работа со скобками
-    int n1=_city2.indexOf('(');
-    if (n1>0 && (_city2.indexOf(')',n1)>0))
-    {
-        int n2=_city2.indexOf(')', n1);
-        int n3=n2-n1;
-        _additional+=_city2.mid(n1+1, n3-1);
-        _city2.remove(n1, n3+1);
-    }
+    _city2=toLower(trim(c));
+    workWithBranches(_city2);
 }
 
 QString Address::getCity2() const
@@ -156,7 +133,7 @@ QString Address::getCity2() const
 
 void Address::setTypeOfCity1(const QString t)
 {
-    _typeOfCity1=t;
+    _typeOfCity1=toLower(trim(t));
 }
 
 QString Address::getTypeOfCity1() const
@@ -165,7 +142,7 @@ QString Address::getTypeOfCity1() const
 }
 void Address::setTypeOfCity2(const QString t)
 {
-    _typeOfCity2=t;
+    _typeOfCity2=toLower(trim(t));
 }
 
 QString Address::getTypeOfCity2() const
@@ -175,7 +152,7 @@ QString Address::getTypeOfCity2() const
 
 void Address::setTypeOfStreet(const QString t)
 {
-    _typeOfStreet=t;
+    _typeOfStreet=toLower(trim(t));
 }
 
 QString Address::getTypeOfStreet() const
@@ -185,7 +162,7 @@ QString Address::getTypeOfStreet() const
 
 void Address::setLitera(const QString l)
 {
-    _litera=trim(l);
+    _litera=toLower(trim(l));
 }
 
 QString Address::getLitera() const
@@ -195,7 +172,7 @@ QString Address::getLitera() const
 
 void Address::setDistrict(const QString d)
 {
-    _district=d;
+    _district=toLower(trim(d));
 }
 
 QString Address::getDistrict() const
@@ -203,9 +180,37 @@ QString Address::getDistrict() const
     return _district;
 }
 
+
+void Address::setTypeOfFSubj(const QString t)
+{
+    QString s = toLower(trim(t));
+//    qDebug().noquote() << "setTypeOfFSubj:" << QString("[%1] -> [%2]").arg(t).arg(s);
+    QMap<QString, TypeOfFederalSubject>::const_iterator i = MapStringFSubj.find(s);
+    if (i != MapStringFSubj.end() && i.key() == s) {
+        _typeFSubj=i.value();
+    }
+    else
+        _typeFSubj=INCORRECT_SUBJ;
+}
+
+void Address::setTypeOfFSubj(const TypeOfFederalSubject t)
+{
+    _typeFSubj=t;
+}
+
+TypeOfFederalSubject Address::getTypeOfFSubj() const
+{
+    return _typeFSubj;
+}
+
+QString Address::getTypeOfFSubjInString() const
+{
+    return MapFSubjString.value(_typeFSubj, "");
+}
+
 void Address::setFsubj(const QString f)
 {
-    _fsubj=f;
+    _fsubj=toLower(trim(f));
 }
 
 QString Address::getFsubj() const
@@ -227,6 +232,7 @@ QString Address::toString(TypeOfData t) const
         {
             res += "StreetID: " + QString::number(getStreetId()) + "\n";
             res += "BuildID: " + QString::number(getBuildId()) + "\n";
+            res += "Type of Federal Subj: " + getTypeOfFSubjInString() + "\n";
             res += "Federal subj: " + getFsubj() + "\n";
             res += "District: " + getDistrict() + "\n";
             res += "Type of City1: " + getTypeOfCity1() + "\n";
@@ -341,8 +347,26 @@ bool Address::isCorrect() const
     return _isCorrect;
 }
 
-
-QString Address::trim(QString s)
+QString Address::trim(QString str) const
 {
-    return s.trimmed();
+    str.remove(QRegExp("^\\s*[\\.,;()]*"));
+    str.remove(QRegExp("[\\.,;()]*\\s*$"));
+    return str;
+}
+
+QString Address::toLower(QString str) const
+{
+    return str.toLower();
+}
+
+void Address::workWithBranches(QString &s)
+{
+    int n1=s.indexOf('(');
+    if (n1>0 && (s.indexOf(')',n1)>0))
+    {
+        int n2=s.indexOf(')', n1);
+        int n3=n2-n1;
+        _additional+=s.mid(n1+1, n3-1);
+        s.remove(n1, n3+1);
+    }
 }

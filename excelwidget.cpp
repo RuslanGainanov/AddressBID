@@ -462,7 +462,7 @@ void ExcelWidget::runThreadParsing()
     }
     _parser = new XlsParser;
     _thread = new QThread;
-    _parser->moveToThread(_thread);
+//    _parser->moveToThread(_thread);
     connect(this, SIGNAL(rowReaded(QString,int,QStringList)),
             _parser, SLOT(onReadRow(QString,int,QStringList)));
     connect(this, SIGNAL(headReaded(QString,MapAddressElementPosition)),
@@ -484,6 +484,10 @@ void ExcelWidget::runThreadParsing()
 
 void ExcelWidget::onRowRead(const QString &sheet, const int &nRow, QStringList &row)
 {
+//    emit toDebug(objectName(),
+//                 QString("onRowRead \"%1\" \"%2\"")
+//                 .arg(sheet)
+//                 .arg(row.join(";")));
     TableModel *tm = _data[sheet];
     tm->insertRow(tm->rowCount());
     for(int col=0; col<row.size(); col++)
@@ -600,11 +604,11 @@ void ExcelWidget::onHideColumn(const QString &sheet, int column)
 
 void ExcelWidget::onRowParsed(QString sheet, int nRow, Address a)
 {
-//    emit toDebug(objectName(),
-//                 "ExcelWidget::onRowParsed "
-//                 +sheet+" row:"
-//                 +QString::number(nRow)+"\n"+a.toString(PARSED)
-//                 );
+    emit toDebug(objectName(),
+                 "ExcelWidget::onRowParsed "
+                 +sheet+" row:"
+                 +QString::number(nRow)+"\n"+a.toString(PARSED)
+                 );
     TableModel *tm=_data.value(sheet, 0);
     assert(tm);
     int nCol=0;

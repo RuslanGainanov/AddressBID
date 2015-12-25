@@ -38,7 +38,7 @@ MainWindow::MainWindow(QWidget *parent) :
              _excel, SLOT(close()) );
 
 //        _dbw->openExisting();
-    _ui->_debugWidget->hide();
+//    _ui->_debugWidget->hide();
     _ui->_pushButtonOpenBase->hide();
     _ui->_pushButtonDeleteRows->hide();
     _ui->_pushButtonCheckRows->hide();

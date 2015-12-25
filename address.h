@@ -3,6 +3,7 @@
 
 #include <QString>
 #include <QStringList>
+#include "defines.h"
 
 enum TypeOfData
 {
@@ -57,6 +58,11 @@ public:
     void setDistrict(const QString d);
     QString getDistrict() const;
 
+    void setTypeOfFSubj(const QString t);
+    void setTypeOfFSubj(const TypeOfFederalSubject t);
+    TypeOfFederalSubject getTypeOfFSubj() const;
+    QString getTypeOfFSubjInString() const;
+
     void setFsubj(const QString f);
     QString getFsubj() const;
 
@@ -79,7 +85,6 @@ private:
     QString _korp;          ///< корпус
     QString _build;         ///< дом
     quint64 _buildId;       ///< id дома
-//    QString _ename;         ///< element name (элементарное имя) (ул., пр., ш., бул. и пр.)
     QString _additional;    ///< допольнительная информация
 
     QString _typeOfStreet;
@@ -89,10 +94,13 @@ private:
     QString _litera;        ///< литера
     QString _city1;         ///< город1
     QString _district;      ///< район
+    TypeOfFederalSubject _typeFSubj;
     QString _fsubj;         ///< federal subject (федеральный субъект) (название области, края, республики и пр.)
     bool    _isCorrect;     ///< флаг устанавливается в 1, если адрес был распарсен
 
-    QString trim(QString s);
+    QString trim(QString str) const;
+    QString toLower(QString str) const;
+    void workWithBranches(QString &s); //работа со скобками
 };
 
 #endif // ADDRESS_H
