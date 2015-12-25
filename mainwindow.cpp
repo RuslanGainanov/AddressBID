@@ -14,7 +14,6 @@ MainWindow::MainWindow(QWidget *parent) :
     id = qRegisterMetaType< ListAddress >("ListAddress");
     Q_UNUSED(id);
     _dbw = new DatabaseWidget;
-    _dbw->openExisting();
     _excel = _ui->_excelWidget;
 
     connect(_ui->_actionOpenBase, SIGNAL(triggered()),
@@ -38,6 +37,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect( this, SIGNAL(windowClosed()),
              _excel, SLOT(close()) );
 
+//        _dbw->openExisting();
     _ui->_debugWidget->hide();
     _ui->_pushButtonOpenBase->hide();
     _ui->_pushButtonDeleteRows->hide();
