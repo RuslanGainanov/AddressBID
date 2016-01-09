@@ -2,11 +2,11 @@
 #define DATABASE_H
 
 #include <QObject>
-#include "csvworker.h"
-#include "defines.h"
-#include "parser.h"
-#include "address.h"
 #include <QtSql>
+#include "address.h"
+#include "defines.h"
+
+const int CountTogetherInsertQuery=1000;
 
 typedef QList< Address > ListAddress;
 
@@ -17,6 +17,13 @@ public:
     explicit Database(QObject *parent = 0);
     ~Database();
     QSqlTableModel *getModel();
+    void removeConnection();
+    void createConnection();
+    void dropTable();
+    void createTable();
+    void updateTableModel();
+    void setBaseName(QString name);
+    QString baseName();
 
 signals:
     void headReaded(QStringList head);
@@ -28,41 +35,28 @@ signals:
     void workingWithOpenBase();
     void baseOpened();
 
-    void toDebug(QString);
-    void messageReady(QString);
+    void toDebug(QString,QString);
 
 public slots:
     void openBase(QString filename);
-    void openOldBase();
+    void removeBase(QString filename);
 
     ListAddress search(QString sheetName, ListAddress addr);
 
-    void setBaseName(QString name);
+    void insertListAddressWithCheck(ListAddress &la);
+    void insertAddressWithCheck(Address &a);
     void clear();
 
-    void onReadRow(int rowNumber, QStringList row);
-    void onParseRow(int rowNumber, Address addr);
-    void onReadRows(int rows);
-    void onCountRows(int count);
-    void onFinishParser();
-    void onFinishCsvWorker();
-
 private:
-    CsvWorker *_csvWorker;
-//    Parser *_parser;
     QThread *_thread;
-    QMap< AddressElements, QSet<QString> > _mapSet;
-    QSqlDatabase _db;
+    QSqlTableModel *_model;
+//    QSqlDatabase _db;
     QString _baseName;
     bool _connected;
-    int _countParsedRows;
-    QSqlTableModel *_model;
+    ListAddress _addrs;
+    QSet< quint64 > _bids;
 
     void openTableToModel();
-    void createConnection();
-    void createTable();
-    void dropTable();
-    void insertAddress(int row, const Address &a);
     void selectAddress(Address &a);
 };
 

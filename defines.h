@@ -14,6 +14,9 @@
 #include <QTextStream>
 #include <assert.h>
 
+const QString TableName = "base1";
+const QString DefaultBaseName = "base1.db";
+
 const int MAX_OPEN_ROWS=0;
 //const int MAX_OPEN_IN_ROWS=0; //moved in ExcelWidget
 

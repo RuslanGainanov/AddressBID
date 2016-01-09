@@ -67,16 +67,19 @@ public:
     QString getFsubj() const;
 
     QString toString(TypeOfData t=RAW) const;
-//    QStringList toDebug(TypeOfData t=RAW) const;
+    QString toCsv() const;
+    QString toInsertSqlQuery() const;
     bool isEmpty() const;
     void clear();
 
     void setRawAddress(const QString &str);
     void setRawAddress(const QStringList &row);
     QStringList getRawAddress() const;
+    QString getRawAddressString() const;
 
     void setCorrect(const bool c);
     bool isCorrect() const;
+
 
 private:
     QStringList _rawAddress;///< строка адреса как она есть
@@ -87,16 +90,16 @@ private:
     quint64 _buildId;       ///< id дома
     QString _additional;    ///< допольнительная информация
 
-    QString _typeOfStreet;
-    QString _typeOfCity1;
-    QString _typeOfCity2;
+    QString _typeOfStreet;  ///< тип улицы (ул., пр-кт., бул., ш. и пр.) (без точки на конце)
+    QString _typeOfCity1;   ///< тип города1 (д., п., г., нп. и пр.) (без точки на конце)
+    QString _typeOfCity2;   ///< тип города2 (д., п., г., нп. и пр.) (без точки на конце)
     QString _city2;         ///< город2
     QString _litera;        ///< литера
     QString _city1;         ///< город1
     QString _district;      ///< район
-    TypeOfFederalSubject _typeFSubj;
-    QString _fsubj;         ///< federal subject (федеральный субъект) (название области, края, республики и пр.)
-    bool    _isCorrect;     ///< флаг устанавливается в 1, если адрес был распарсен
+    TypeOfFederalSubject _typeFSubj; ///< тип федерального субъекта РФ (область, край, республика, АО, АОбл и пр.)
+    QString _fsubj;         ///< federal subject (название федерального субъекта)
+    bool    _isCorrect;     ///< флаг устанавливается в 1, если адрес был успешно распарсен
 
     QString trim(QString str) const;
     QString toLower(QString str) const;

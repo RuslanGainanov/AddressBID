@@ -26,6 +26,7 @@ Address::Address(const Address &a)
     setDistrict(a.getDistrict());
     setKorp(a.getKorp());
     setRawAddress(a.getRawAddress());
+    setCorrect(a.isCorrect());
 }
 
 void Address::setStreet(const QString &s)
@@ -89,16 +90,6 @@ QString Address::getBuild() const
     return _build;
 }
 
-//void Address::setEname(const QString e)
-//{
-//    _ename=e;
-//}
-
-//QString Address::getEname() const
-//{
-//    return _ename;
-//}
-
 void Address::setAdditional(const QString a)
 {
     _additional=toLower(trim(a));
@@ -112,7 +103,7 @@ QString Address::getAdditional() const
 void Address::setCity1(const QString c)
 {
     _city1=toLower(trim(c));
-    workWithBranches(_city1);
+//    workWithBranches(_city1);
 }
 
 QString Address::getCity1() const
@@ -123,7 +114,7 @@ QString Address::getCity1() const
 void Address::setCity2(const QString c)
 {
     _city2=toLower(trim(c));
-    workWithBranches(_city2);
+//    workWithBranches(_city2);
 }
 
 QString Address::getCity2() const
@@ -218,10 +209,72 @@ QString Address::getFsubj() const
     return _fsubj;
 }
 
+QString Address::toInsertSqlQuery() const
+{
+    QString strF =
+          "INSERT INTO  %1 (BUILD_ID, BUILD, STREET_ID, STREET, "
+          "TYPE_OF_STREET, KORP, LITERA, CORRECT, CITY1, "
+          "TYPE_OF_CITY1, TYPE_OF_CITY2, CITY2, FSUBJ, DISTRICT, "
+          "ADDITIONAL, RAW, TYPE_OF_FSUBJ) "
+          "VALUES('%2', '%3', '%4', '%5', '%6', "
+          "'%7', '%8', '%9', '%10', '%11', '%12', '%13', "
+          "'%14', '%15', '%16', '%17', '%18'); ";
+
+    QString str =
+            strF
+            .arg(TableName)
+            .arg(QString::number(getBuildId()))
+            .arg(getBuild())
+            .arg(QString::number(getStreetId()))
+            .arg(getStreet())
+            .arg(getTypeOfStreet())
+            .arg(getKorp())
+            .arg(getLitera())
+            .arg(QString(isCorrect()?"1":"0"))
+            .arg(getCity1())
+            .arg(getTypeOfCity1())
+            .arg(getTypeOfCity2())
+            .arg(getCity2())
+            .arg(getFsubj())
+            .arg(getDistrict())
+            .arg(getAdditional())
+            .arg(getRawAddress().join("\";\"").insert(0,'\"').append('\"'))
+            .arg(getTypeOfFSubjInString());
+    return str;
+}
+
+QString Address::toCsv() const
+{
+    QString res;
+    if(!isEmpty())
+    {
+        res += "\""+ QString::number(getStreetId()) + "\";\"";
+        res += QString::number(getBuildId()) + "\";\"";
+        res += getRawAddress().join(';') + "\";\"";
+        res += getTypeOfFSubjInString() + "\";\"";
+        res += getFsubj() + "\";\"";
+        res += getDistrict() + "\";\"";
+        res += getTypeOfCity1() + "\";\"";
+        res += getCity1() + "\";\"";
+        res += getTypeOfCity2() + "\";\"";
+        res += getCity2() + "\";\"";
+        res += getTypeOfStreet() + "\";\"";
+        res += getStreet() + "\";\"";
+        res += getBuild() + "\";\"";
+        res += getKorp() + "\";\"";
+        res += getLitera() + "\";\"";
+        res += QString(isCorrect()?"1":"0") + "\"";
+    }
+    else
+    {
+        res += "Is empty\n";
+    }
+    return res;
+}
 
 QString Address::toString(TypeOfData t) const
 {
-    QString res("*** Address: ***\n");
+    QString res;
     if(!isEmpty())
     {
         if(t==RAW)
@@ -230,6 +283,7 @@ QString Address::toString(TypeOfData t) const
         }
         else if(t==PARSED)
         {
+            res +="*** Address: ***\n";
             res += "StreetID: " + QString::number(getStreetId()) + "\n";
             res += "BuildID: " + QString::number(getBuildId()) + "\n";
             res += "Type of Federal Subj: " + getTypeOfFSubjInString() + "\n";
@@ -249,34 +303,10 @@ QString Address::toString(TypeOfData t) const
     }
     else
     {
-        res + "Is empty\n";
+        res += "Is empty\n";
     }
     return res;
 }
-
-//QStringList Address::toDebug(TypeOfData t) const
-//{
-//    QStringList list;
-//    list << "*** Address: ***";
-//    if(!isEmpty())
-//    {
-//        if(t==RAW)
-//        {
-//            list << getRawAddress();
-//        }
-//        else if(t==PARSED)
-//        {
-//            list << "Street" << getStreet() << "\n";
-//            list << "Korpus" << getKorp() << "\n";
-//            list << "Build" << getBuild() << "\n";
-//        }
-//    }
-//    else
-//    {
-//        list << "is empty\n";
-//    }
-//    return list;
-//}
 
 void Address::clear()
 {
@@ -284,7 +314,6 @@ void Address::clear()
     _street.clear();
     _korp.clear();
     _build.clear();
-//    _ename.clear();
     _additional.clear();
     _city1.clear();
     _city2.clear();
@@ -302,7 +331,6 @@ bool Address::isEmpty() const
             getStreet().isEmpty() &&
             getBuild().isEmpty() &&
             getKorp().isEmpty() &&
-//            getEname().isEmpty() &&
             getAdditional().isEmpty() &&
             getCity1().isEmpty() &&
             getDistrict().isEmpty() &&
@@ -330,6 +358,11 @@ void Address::setRawAddress(const QString &str)
 void Address::setRawAddress(const QStringList &row)
 {
     _rawAddress=row;
+}
+
+QString Address::getRawAddressString() const
+{
+    return _rawAddress.join("\";\"").insert(0,'\"').append('\"');
 }
 
 QStringList Address::getRawAddress() const

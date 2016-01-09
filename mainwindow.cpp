@@ -21,8 +21,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(_ui->_actionOpenFile, SIGNAL(triggered()),
             this, SLOT(onExcelOpenTriggered()));
 
-    connect(_dbw, SIGNAL(toDebug(QString)),
-            _ui->_debugWidget, SLOT(add(QString)));
+    connect(_dbw, SIGNAL(toDebug(QString,QString)),
+            _ui->_debugWidget, SLOT(add(QString,QString)));
     connect(_excel, SIGNAL(toDebug(QString,QString)),
             _ui->_debugWidget, SLOT(add(QString,QString)));
 
@@ -38,6 +38,7 @@ MainWindow::MainWindow(QWidget *parent) :
              _excel, SLOT(close()) );
 
 //        _dbw->openExisting();
+        _dbw->show();
 //    _ui->_debugWidget->hide();
     _ui->_pushButtonOpenBase->hide();
     _ui->_pushButtonDeleteRows->hide();
