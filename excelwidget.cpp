@@ -6,21 +6,47 @@ ExcelWidget::ExcelWidget(QWidget *parent) :
     _ui(new Ui::ExcelWidget),
     _parser(nullptr),
     _thread(nullptr),
-    _db(nullptr),
+//    _db(nullptr),
     _delegateFounded(new SimpleDelegate(QBrush(QColor(FoundedColor)))),
     _delegateNotFounded(new SimpleDelegate(QBrush(QColor(NotFoundedColor))))
 {
     _ui->setupUi(this);
 
-    QObject::connect(&_futureWatcher, SIGNAL(finished()),
-                     this, SLOT(onProcessOfOpenFinished()));
-    QObject::connect(&_futureWatcherS, SIGNAL(finished()),
-                     this, SLOT(onProcessOfSearchFinished()));
+    //excel.cpp
+    _parser = new XlsParser;
+    _thread = new QThread;
+    _logFile.setFileName(LogFileName);
+    _logFile.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate);
+    _logStream.setDevice(&_logFile);
 
+//    _parser->moveToThread(_thread);
+    connect(this, SIGNAL(rowReaded(QString,int,QStringList)),
+            _parser, SLOT(onReadRow(QString,int,QStringList)));
+    connect(this, SIGNAL(headReaded(QString,MapAddressElementPosition)),
+            _parser, SLOT(onReadHead(QString,MapAddressElementPosition)));
+    connect(_parser, SIGNAL(rowParsed(QString,int,Address)),
+            this, SLOT(onRowParsed(QString,int,Address)));
+    connect(_thread, SIGNAL(finished()),
+            _parser, SLOT(deleteLater()));
+    connect(_thread, SIGNAL(finished()),
+            _thread, SLOT(deleteLater()));
+    _thread->start();
+
+    connect(&_futureWatcher, SIGNAL(finished()),
+            this, SLOT(onProcessOfOpenFinished()));
+
+//    connect(this, SIGNAL(toDebug(QString,QString)),
+//            this, SLOT(onDebug(QString,QString)));
+
+    connect(this, SIGNAL(toFile(QString,QString)), SLOT(onFile(QString,QString)));
+
+    emit toDebug("test","test");
+
+    //old
     _ui->_lineEditFilename->hide();
 
-    connect(this, SIGNAL(parserFinished()),
-            this, SLOT(onFinishParser()));
+//    connect(this, SIGNAL(parserFinished()),
+//            this, SLOT(onFinishParser()));
 
     connect(_ui->_parseWidget, SIGNAL(rowRemoved(QString,int)),
             this, SLOT(onRemoveRow(QString,int)));
@@ -29,7 +55,7 @@ ExcelWidget::ExcelWidget(QWidget *parent) :
     connect(this, SIGNAL(currentRowChanged(QString,int,MapAEValue)),
             _ui->_parseWidget, SLOT(onCurrentRowChanged(QString,int,MapAEValue)));
 
-    parse();
+//    parse();
 }
 
 ExcelWidget::~ExcelWidget()
@@ -42,6 +68,15 @@ ExcelWidget::~ExcelWidget()
         delete _parser;
     delete _delegateFounded;
     delete _delegateNotFounded;
+    _thread->quit();
+    _thread->wait();
+    closeLog();
+}
+
+void ExcelWidget::closeLog()
+{
+    if(_logFile.isOpen())
+        _logFile.close();
 }
 
 void ExcelWidget::open()
@@ -50,77 +85,53 @@ void ExcelWidget::open()
             QFileDialog::getOpenFileName(this,
                                          trUtf8("Укажите исходный файл"),
                                          "",
-                                         tr("Excel (*.xls *.xlsx)"));
+                                         tr("Excel (*.xls *.xlsx *.csv)"));
     if(str.isEmpty())
         return;
     _ui->_lineEditFilename->setText(str);
     runThreadOpen(str);
 }
 
-void ExcelWidget::parse()
+QVariant ExcelWidget::openCsvFile(QString filename, int maxCountRows)
 {
-    runThreadParsing();
-}
-
-void ExcelWidget::search()
-{
-    qDebug() << "ExcelWidget search" << this->thread()->currentThreadId();
-    assert(_db);
-    if(_data.isEmpty())
-    {return;}
-
-    QString sheetName = _ui->_tabWidget->tabText(_ui->_tabWidget->currentIndex());
-    _searchingSheetName=sheetName;
-
-    QProgressDialog *dialog = new QProgressDialog;
-    dialog->setWindowTitle(trUtf8("Ищем..."));
-    dialog->setLabelText(trUtf8("Производится поиск строк из вкладки \"%1\". Ожидайте ...")
-                         .arg(sheetName));
-    dialog->setCancelButtonText(trUtf8("Отмена"));
-
-//    QObject::connect(&_futureWatcherS, SIGNAL(finished()),
-//                     this, SLOT(onProcessOfSearchFinished()));
-    QObject::connect(dialog, SIGNAL(canceled()),
-                     &_futureWatcherS, SLOT(cancel()));
-    QObject::connect(&_futureWatcherS, SIGNAL(progressRangeChanged(int,int)),
-                     dialog, SLOT(setRange(int,int)));
-    QObject::connect(&_futureWatcherS, SIGNAL(progressValueChanged(int)),
-                     dialog, SLOT(setValue(int)));
-    QObject::connect(&_futureWatcherS, SIGNAL(finished()),
-                     dialog, SLOT(deleteLater()));
-
-    TableModel *tm = _data.value(sheetName, 0);
-    assert(tm);
-    ExcelSheet es = tm->getExcelSheet();
-    ListAddress listAddr;
-    MapAddressElementPosition addrPos = _mapPHead.value(sheetName);
-    MapAddressElementPosition addrPosOrig = _mapHead.value(sheetName);
-    foreach (QStringList row, es) {
-        Address a;
-        a.setTypeOfStreet(row.at(addrPos.value(TYPE_OF_STREET)));
-        a.setStreet(row.at(addrPos.value(STREET)));
-        a.setBuild(row.at(addrPos.value(BUILD)));
-        a.setKorp(row.at(addrPos.value(KORP)));
-        a.setLitera(row.at(addrPos.value(LITERA)));
-        a.setTypeOfCity1(row.at(addrPos.value(TYPE_OF_CITY1)));
-        a.setTypeOfCity2(row.at(addrPos.value(TYPE_OF_CITY2)));
-        a.setCity2(row.at(addrPos.value(CITY2)));
-        a.setCity1(row.at(addrPos.value(CITY1)));
-        a.setStreetId(row.at(addrPosOrig.value(STREET_ID)));
-        a.setBuildId(row.at(addrPosOrig.value(BUILD_ID)));
-        //TODO add other columns
-        listAddr.append(a);
+//    QString currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
+//    qDebug() << "openCsvFile BEGIN"
+//             << QThread::currentThread()->currentThreadId()
+//             << currTime;
+    QStringList data;
+    QFile file1(filename);
+    if (!file1.open(QIODevice::ReadOnly))
+    {
+        qDebug().noquote() << "Ошибка открытия для чтения";
+        return data;
     }
+    QTextStream in(&file1);
+    QTextCodec *defaultTextCodec = QTextCodec::codecForName("Windows-1251");
+    if (defaultTextCodec)
+      in.setCodec(defaultTextCodec);
+    int nRow=0;
+    while (!in.atEnd())
+    {
+        QString line = in.readLine();
+        if(!line.isEmpty())
+        {
+//            if(nRow==0)
+//            {
+//                qDebug().noquote() << "H:" << line;
+//            }
+            data.append(line);
+            nRow++;
+        }
+        //оставливаем обработку если получено нужное количество строк
+        if(maxCountRows>0 && nRow >= maxCountRows)
+            break;
+    }
+    file1.close();
 
-    QFuture<ListAddress> f1 = QtConcurrent::run(_db,
-                                             &Database::search,
-                                             sheetName,
-                                             listAddr);
-    // Start the computation.
-    _futureWatcherS.setFuture(f1);
-    dialog->exec();
-
-    emit searching();
+//    qDebug() << "openCsvFile END"
+//             << QThread::currentThread()->currentThreadId()
+//             << QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
+    return QVariant::fromValue(data);
 }
 
 QVariant ExcelWidget::openExcelFile(QString filename, int maxCountRows)
@@ -263,6 +274,105 @@ QVariant ExcelWidget::openExcelFile(QString filename, int maxCountRows)
     return QVariant::fromValue(data);
 }
 
+void ExcelWidget::parse()
+{
+    qDebug() << "!!!!" << "parse";
+//    runThreadParsing();
+}
+
+void ExcelWidget::search()
+{
+    QString currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
+    qDebug() << "ExcelWidget search BEGIN"
+             << currTime
+             << this->thread()->currentThreadId();
+
+//    qDebug() << "ExcelWidget search" << this->thread()->currentThreadId();
+//    assert(_db);
+    if(_data.isEmpty())
+        return;
+    if(_data2.isEmpty())
+    {
+        return;
+    }
+
+    QString sheetName =
+            _ui->_tabWidget->tabText(
+                _ui->_tabWidget->currentIndex()
+                );
+    _searchingSheetName=sheetName;
+    if(_data2.contains(_searchingSheetName))
+    {
+        for(int i=0; i<_data2[sheetName].size(); i++)
+        {
+            if(!_data2[sheetName].at(i).isEmpty())
+                emit findRowInBase(sheetName, i, _data2[sheetName].at(i));
+//            if(i%200==0)
+                emit toDebug(objectName(), QString("Обработано строк %1").arg(QString::number(i+1)));
+        }
+    }
+    else
+    {
+        emit toDebug(objectName(),
+                     "_data2 not contains "+_searchingSheetName);
+    }
+
+    //old !!!!
+//    QProgressDialog *dialog = new QProgressDialog;
+//    dialog->setWindowTitle(trUtf8("Ищем..."));
+//    dialog->setLabelText(trUtf8("Производится поиск строк из вкладки \"%1\". Ожидайте ...")
+//                         .arg(sheetName));
+//    dialog->setCancelButtonText(trUtf8("Отмена"));
+
+////    QObject::connect(&_futureWatcherS, SIGNAL(finished()),
+////                     this, SLOT(onProcessOfSearchFinished()));
+//    QObject::connect(dialog, SIGNAL(canceled()),
+//                     &_futureWatcherS, SLOT(cancel()));
+//    QObject::connect(&_futureWatcherS, SIGNAL(progressRangeChanged(int,int)),
+//                     dialog, SLOT(setRange(int,int)));
+//    QObject::connect(&_futureWatcherS, SIGNAL(progressValueChanged(int)),
+//                     dialog, SLOT(setValue(int)));
+//    QObject::connect(&_futureWatcherS, SIGNAL(finished()),
+//                     dialog, SLOT(deleteLater()));
+
+//    TableModel *tm = _data.value(sheetName, 0);
+//    assert(tm);
+//    ExcelSheet es = tm->getExcelSheet();
+//    ListAddress listAddr;
+//    MapAddressElementPosition addrPos = _mapPHead.value(sheetName);
+//    MapAddressElementPosition addrPosOrig = _mapHead.value(sheetName);
+//    foreach (QStringList row, es) {
+//        Address a;
+//        a.setTypeOfStreet(row.at(addrPos.value(TYPE_OF_STREET)));
+//        a.setStreet(row.at(addrPos.value(STREET)));
+//        a.setBuild(row.at(addrPos.value(BUILD)));
+//        a.setKorp(row.at(addrPos.value(KORP)));
+//        a.setLitera(row.at(addrPos.value(LITERA)));
+//        a.setTypeOfCity1(row.at(addrPos.value(TYPE_OF_CITY1)));
+//        a.setTypeOfCity2(row.at(addrPos.value(TYPE_OF_CITY2)));
+//        a.setCity2(row.at(addrPos.value(CITY2)));
+//        a.setCity1(row.at(addrPos.value(CITY1)));
+//        a.setStreetId(row.at(addrPosOrig.value(STREET_ID)));
+//        a.setBuildId(row.at(addrPosOrig.value(BUILD_ID)));
+//        //TODO add other columns
+//        listAddr.append(a);
+//    }
+
+//    QFuture<ListAddress> f1 = QtConcurrent::run(_db,
+//                                             &Database::search,
+//                                             sheetName,
+//                                             listAddr);
+//    // Start the computation.
+//    _futureWatcherS.setFuture(f1);
+//    dialog->exec();
+
+    emit searching();
+    currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
+    qDebug() << "ExcelWidget search END"
+             << currTime
+             << this->thread()->currentThreadId();
+}
+
 void ExcelWidget::onProcessOfSearchFinished()
 {
     QString currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
@@ -314,14 +424,17 @@ void ExcelWidget::onProcessOfOpenFinished()
             && !_futureWatcher.isCanceled())
     {
         QVariant result = _futureWatcher.future().result();
+        emit toDebug(objectName(), "onProcessOfOpenFinished finish");
         if(result.isValid())
         {
+            emit toDebug(objectName(), "onProcessOfOpenFinished valid");
             if(result.canConvert< ExcelDocument >())
             {
+                emit toDebug(objectName(), "onProcessOfOpenFinished canconvert");
                 ExcelDocument data = result.value<ExcelDocument>();
 //                runThreadParsing();
-                disconnect(_parser, SIGNAL(rowParsed(QString,int,Address)),
-                        this, SLOT(onCurrentRowChanged()));
+//                disconnect(_parser, SIGNAL(rowParsed(QString,int,Address)),
+//                        this, SLOT(onCurrentRowChanged()));
                 foreach (QString sheetName, data.keys()) {
                     _data.insert(sheetName, new TableModel(sheetName));
                     _views.insert(sheetName, new TableView(_ui->_tabWidget));
@@ -352,6 +465,33 @@ void ExcelWidget::onProcessOfOpenFinished()
                 emit toDebug(objectName(), error);
                 emit errorOccured(objectName(), -1, error);
             }
+            else if(result.canConvert< QStringList >())
+            {
+                emit toDebug("excel", "canconvert QStringList");
+                QStringList data = result.value<QStringList>();
+                QString sheetName = "csv";
+                _data.insert(sheetName, new TableModel(sheetName));
+                _views.insert(sheetName, new TableView(_ui->_tabWidget));
+                _views[sheetName]->setModel(_data[sheetName]);
+                _selections.insert(sheetName, new ItemSelectionModel(_data[sheetName], this));
+                _views[sheetName]->setSelectionModel(_selections[sheetName]);
+                connect(_selections[sheetName], SIGNAL(currentRowChanged(QModelIndex,QModelIndex)),
+                        _data[sheetName], SLOT(onCurrentRowChanged(QModelIndex,QModelIndex)));
+                connect(_data[sheetName], SIGNAL(currentRowChanged(QString,int,QStringList)),
+                        this, SLOT(onCurrentRowChanged(QString,int,QStringList)));
+                _countRow.insert(sheetName, data.size());
+                _countParsedRow.insert(sheetName, 0);
+                int nRow=0;
+                foreach (QString line, data) {
+                    QStringList row = line.split(';');
+                    if(nRow==0)
+                        onHeadRead(sheetName, row);
+                    else
+                        onRowRead(sheetName, nRow-1, row);
+                    nRow++;
+                }
+                onSheetRead(sheetName);
+            }
         }
     }
     currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
@@ -359,6 +499,32 @@ void ExcelWidget::onProcessOfOpenFinished()
              << currTime
              << this->thread()->currentThreadId();
     emit finished();
+}
+
+void ExcelWidget::onFounedAddress(QString sheetName, int nRow, Address addr)
+{
+    _data2[sheetName][nRow]=addr;
+    emit toDebug("", QString::number(nRow)+";"+addr.toCsv());
+    _views[sheetName]->setItemDelegateForRow(nRow, _delegateFounded);
+    int colSid = _mapHead[sheetName].value(STREET_ID);
+    int colBid = _mapHead[sheetName].value(BUILD_ID);
+    TableModel *tm = _data[sheetName];
+    assert(tm);
+    tm->setData(tm->index(nRow, colSid),
+                addr.getStreetId());
+    tm->setData(tm->index(nRow, colBid),
+                addr.getBuildId());
+//    emit toFile("", QString::number(nRow+1)+";"+addr.toCsv()+"\n");
+}
+
+void ExcelWidget::onNotFounedAddress(QString sheetName, int nRow, Address addr)
+{
+//    _data2[sheetName][nRow]=addr;
+    Q_UNUSED(sheetName);
+    Q_UNUSED(addr);
+    emit toDebug("", QString::number(nRow)+";!NOT_FOUND!");
+//    emit toFile("", QString::number(nRow+1)+";!NOT_FOUND!"+"\n");
+    _views[sheetName]->setItemDelegateForRow(nRow, _delegateNotFounded);
 }
 
 void ExcelWidget::onRemoveRow(QString sheet, int nRow)
@@ -439,10 +605,17 @@ void ExcelWidget::runThreadOpen(QString openFilename)
     QObject::connect(&_futureWatcher, SIGNAL(finished()),
                      dialog, SLOT(deleteLater()));
 
-    QFuture<QVariant> f1 = QtConcurrent::run(this,
-                                             &ExcelWidget::openExcelFile,
-                                             openFilename,
-                                             MAX_OPEN_IN_ROWS);
+    QFuture<QVariant> f1;
+    if(openFilename.contains(".csv"))
+        f1 = QtConcurrent::run(this,
+                               &ExcelWidget::openCsvFile,
+                               openFilename,
+                               MAX_OPEN_IN_ROWS);
+    else
+        f1 = QtConcurrent::run(this,
+                               &ExcelWidget::openExcelFile,
+                               openFilename,
+                               MAX_OPEN_IN_ROWS);
     // Start the computation.
     _futureWatcher.setFuture(f1);
     dialog->exec();
@@ -496,6 +669,12 @@ void ExcelWidget::onRowRead(const QString &sheet, const int &nRow, QStringList &
     emit rowReaded(sheet, nRow, row);
 }
 
+void ExcelWidget::onFile(QString objName, QString mes)
+{
+    Q_UNUSED(objName);
+    _logStream << mes;
+}
+
 void ExcelWidget::onHeadRead(const QString &sheet, QStringList &head)
 {
     emit toDebug(objectName(),
@@ -532,8 +711,8 @@ void ExcelWidget::onHeadRead(const QString &sheet, QStringList &head)
     {
         emit isOneColumn(false);
     }
-    else if(!head.contains(MapColumnNames[ BUILD ])
-            && !head.contains(MapColumnNames[ KORP ]))
+    else /*if(!head.contains(MapColumnNames[ BUILD ])
+            && !head.contains(MapColumnNames[ KORP ]))*/
     {
         emit isOneColumn(true);
     }
@@ -604,11 +783,12 @@ void ExcelWidget::onHideColumn(const QString &sheet, int column)
 
 void ExcelWidget::onRowParsed(QString sheet, int nRow, Address a)
 {
-    emit toDebug(objectName(),
-                 "ExcelWidget::onRowParsed "
-                 +sheet+" row:"
-                 +QString::number(nRow)+"\n"+a.toString(PARSED)
-                 );
+//    emit toDebug(objectName(),
+//                 "ExcelWidget::onRowParsed "
+//                 +sheet+" row:"
+//                 +QString::number(nRow)+"\n"+a.toString(PARSED)
+//                 );
+    _data2[sheet].insert(nRow, a); //excel
     TableModel *tm=_data.value(sheet, 0);
     assert(tm);
     int nCol=0;
@@ -649,8 +829,8 @@ void ExcelWidget::onRowParsed(QString sheet, int nRow, Address a)
     tm->setData(tm->index(nRow, nCol), a.getLitera());
 
     emit rowParsed(sheet, nRow);
-    if(_countParsedRow[sheet]>=_countRow[sheet])
-        emit parserFinished();
+//    if(_countParsedRow[sheet]>=_countRow[sheet])
+//        emit parserFinished();
 }
 
 void ExcelWidget::onSheetParsed(QString sheet)

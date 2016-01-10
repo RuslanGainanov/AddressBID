@@ -60,7 +60,7 @@ private:
     QFutureWatcher<void>            _futureWatcherParser;
     ListAddress                     _addrs;
     QString                         _csvFileName;
-//    QString                         _dbFileName;
+    QThread                         _thread;
 
     void connectModelWithView(QSqlTableModel *model);
 //    void parsingAddress(Address &a);

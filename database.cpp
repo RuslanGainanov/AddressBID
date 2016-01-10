@@ -29,16 +29,16 @@ QString Database::baseName()
     return _baseName;
 }
 
-ListAddress Database::search(QString sheetName, ListAddress addr)
-{
-    qDebug() << "Database::search" << this->thread()->currentThreadId()
-             << sheetName << addr.size();
-    for(int i=0; i<addr.size(); i++)
-    {
-        selectAddress(addr[i]);
-    }
-    return addr;
-}
+//ListAddress Database::search(QString sheetName, ListAddress addr)
+//{
+//    qDebug() << "Database::search" << this->thread()->currentThreadId()
+//             << sheetName << addr.size();
+//    for(int i=0; i<addr.size(); i++)
+//    {
+//        selectAddress(addr[i]);
+//    }
+//    return addr;
+//}
 
 void Database::removeBase(QString filename)
 {
@@ -89,7 +89,7 @@ void Database::openTableToModel()
 {
     if(_model!=nullptr)
         delete _model;
-    _model = new QSqlTableModel(this);
+    _model = new QSqlTableModel;
     _model->setTable(TableName);
     _model->setEditStrategy(QSqlTableModel::OnManualSubmit);
     _model->select();
@@ -206,14 +206,14 @@ void Database::insertListAddressWithCheck(ListAddress &la)
 
 void Database::insertAddressWithCheck(Address &a)
 {
-    if(_bids.contains(a.getBuildId()))
-    {
-        emit toDebug(objectName(),
-                "Database already contains this entry (BID):\r\n"
-                +QString::number(a.getBuildId()));
-        return;
-    }
-    _bids.insert(a.getBuildId());
+//    if(_bids.contains(a.getBuildId()))
+//    {
+//        emit toDebug(objectName(),
+//                "Database already contains this entry (BID):\r\n"
+//                +QString::number(a.getBuildId()));
+//        return;
+//    }
+//    _bids.insert(a.getBuildId());
     QSqlQuery query;
     if (!query.exec(a.toInsertSqlQuery()))
     {
@@ -224,36 +224,41 @@ void Database::insertAddressWithCheck(Address &a)
     }
 }
 
-void Database::selectAddress(Address &a)
+void Database::selectAddress(QString sheet, int nRow, Address a)
 {
-    int n = qrand();
-    if(a.getBuildId()!=0 && a.getStreetId()!=0)
-        return;
-    if(           n%5==0
-               || n%5==1
-               || n%5==2
-               || n%5==3
-               /*|| n%5==4*/ )
-    {
-        a.setBuildId( 100000+qrand()%100000 );
-        a.setStreetId( 100000+qrand()%100000 );
-        return;
-    }
-    return;
-
+    QString str = QString("SELECT STREET_ID, BUILD_ID, RAW "
+                          "FROM %1 "
+                          "WHERE TYPE_OF_FSUBJ = '%2' "
+                          "  AND FSUBJ = '%3' "
+                          "  AND DISTRICT = '%4' "
+                          "  AND TYPE_OF_CITY1 = '%5' "
+                          "  AND CITY1 = '%6' "
+                          "  AND TYPE_OF_CITY2 = '%7' "
+                          "  AND CITY2 = '%8'"
+                          "  AND TYPE_OF_STREET = '%9' "
+                          "  AND STREET = '%10' "
+                          "  AND BUILD = '%11' "
+                          "  AND KORP = '%12' "
+                          "  AND LITERA = '%13' "
+                          "  AND CORRECT = '1'; "
+                          )
+                  .arg(TableName)
+                  .arg(a.getTypeOfFSubjInString())
+                  .arg(a.getFsubj())
+                  .arg(a.getDistrict())
+                  .arg(a.getTypeOfCity1())
+                  .arg(a.getCity1())
+                  .arg(a.getTypeOfCity2())
+                  .arg(a.getCity2())
+                  .arg(a.getTypeOfStreet())
+                  .arg(a.getStreet())
+                  .arg(a.getBuild())
+                  .arg(a.getKorp())
+                  .arg(a.getLitera());
+    qDebug().noquote() << "Database::selectAddress" << str;
     QSqlQuery query;
-    if (!query.exec(QString("SELECT STREET_ID, BUILD_ID "
-                    "FROM %6"
-                    "WHERE STREET = '%1'"
-                    "  AND TYPE_OF_STREET = '%2'"
-                    "  AND CITY1 = '%3'"
-                    "  AND BUILD = '%4'"
-                    "  AND KORP = '%5';")
-                    .arg(a.getStreet())
-                    .arg(a.getTypeOfStreet())
-                    .arg(a.getCity1())
-                    .arg(a.getBuild())
-                    .arg(a.getKorp()))) {
+    if (!query.exec(str))
+    {
         qDebug() << "Unable to execute query - exiting"
                  << endl
                  << query.lastError().text();
@@ -262,11 +267,61 @@ void Database::selectAddress(Address &a)
 
     //Reading of the data
     QSqlRecord rec     = query.record();
+    bool isExists=false;
     while (query.next()) {
+        isExists=true;
+        a.setRawAddress( query.value(rec.indexOf("RAW")).toString() );
         a.setBuildId( query.value(rec.indexOf("BUILD_ID")).toULongLong() );
         a.setStreetId( query.value(rec.indexOf("STREET_ID")).toULongLong() );
+        emit addressFounded(sheet, nRow, a);
     }
+    if(!isExists)
+        emit addressNotFounded(sheet, nRow, a);
 }
+
+//void Database::selectAddress(Address &a)
+//{
+//    int n = qrand();
+//    if(a.getBuildId()!=0 && a.getStreetId()!=0)
+//        return;
+//    if(           n%5==0
+//               || n%5==1
+//               || n%5==2
+//               || n%5==3
+//               /*|| n%5==4*/ )
+//    {
+//        a.setBuildId( 100000+qrand()%100000 );
+//        a.setStreetId( 100000+qrand()%100000 );
+//        return;
+//    }
+//    return;
+
+//    QSqlQuery query;
+//    if (!query.exec(QString("SELECT STREET_ID, BUILD_ID "
+//                    "FROM %6"
+//                    "WHERE STREET = '%1'"
+//                    "  AND TYPE_OF_STREET = '%2'"
+//                    "  AND CITY1 = '%3'"
+//                    "  AND BUILD = '%4'"
+//                    "  AND KORP = '%5';")
+//                    .arg(a.getStreet())
+//                    .arg(a.getTypeOfStreet())
+//                    .arg(a.getCity1())
+//                    .arg(a.getBuild())
+//                    .arg(a.getKorp()))) {
+//        qDebug() << "Unable to execute query - exiting"
+//                 << endl
+//                 << query.lastError().text();
+//        return;
+//    }
+
+//    //Reading of the data
+//    QSqlRecord rec     = query.record();
+//    while (query.next()) {
+//        a.setBuildId( query.value(rec.indexOf("BUILD_ID")).toULongLong() );
+//        a.setStreetId( query.value(rec.indexOf("STREET_ID")).toULongLong() );
+//    }
+//}
 
 void Database::dropTable()
 {

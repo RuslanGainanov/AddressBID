@@ -32,6 +32,7 @@ typedef QList< Address > ListAddress;
 const int MAX_OPEN_IN_ROWS=10;
 const QString FoundedColor = "#33FF66";
 const QString NotFoundedColor = "#FFA07A";
+const QString LogFileName = "Log1.csv";
 
 class SimpleDelegate : public QStyledItemDelegate {
 public:
@@ -71,15 +72,17 @@ class ExcelWidget : public QWidget
 public:
     explicit ExcelWidget(QWidget *parent = 0);
     ~ExcelWidget();
-    void setDatabase(Database *db)
-    {
-        _db=db;
-    }
+//    void setDatabase(Database *db)
+//    {
+//        _db=db;
+//    }
 
 public slots:
     void open();
     void parse();
     void search();
+//    void runThreadOpenCsv(QString openFilename);
+    void closeLog();
 
 signals:
     void headReaded(QString sheet, MapAddressElementPosition head);
@@ -87,7 +90,7 @@ signals:
     void countRows(QString sheet, int count);
     void sheetsReaded(QStringList sheets);
     void isOneColumn(bool);
-    void parserFinished();
+//    void parserFinished();
 
 //    void headParsed(QString sheet, MapAddressElementPosition head);
     void rowParsed(QString sheet, int row);
@@ -99,6 +102,10 @@ signals:
     void searching();
 
     void toDebug(QString objName, QString mes);
+    void toFile(QString objName, QString mes);
+
+    void findRowInBase(QString sheetName, int nRow, Address addr);
+
     void messageReady(QString);
     void errorOccured(QString nameObject, int code, QString errorDesc);
 
@@ -118,6 +125,9 @@ private slots:
     void onNotFoundMandatoryColumn(QString sheet, AddressElements ae, QString colName);
 
     void onProcessOfSearchFinished();
+    void onFile(QString objName, QString mes);
+    void onFounedAddress(QString sheetName, int nRow, Address addr);
+    void onNotFounedAddress(QString sheetName, int nRow, Address addr);
 
     void onProcessOfOpenFinished();//после того окончили с открытием excel документа
     void onRemoveRow(QString sheet, int nRow);
@@ -144,14 +154,20 @@ private:
     QThread *_thread;
     QHash<QString, int> _countParsedRow;
     QHash<QString, int> _countRow;
-    Database *_db;
+//    Database *_db;
     QString _searchingSheetName;
     SimpleDelegate *_delegateFounded;
     SimpleDelegate *_delegateNotFounded;
-
-    void runThreadOpen(QString openFilename);
+    QMap<QString, ListAddress > _data2;
+//    ExcelDocument _data;
+//    QThread *_thread;
+    QFile _logFile;
+    QTextStream _logStream;
     QVariant openExcelFile(QString filename, int maxCount);
+    QVariant openCsvFile(QString filename, int maxCountRows);
+
     void runThreadParsing();
+    void runThreadOpen(QString openFilename);
 };
 
 #endif // EXCELWIDGET_H

@@ -36,28 +36,28 @@ signals:
     void baseOpened();
 
     void toDebug(QString,QString);
+    void addressFounded(QString sheet, int nRow, Address a);
+    void addressNotFounded(QString sheet, int nRow, Address a);
 
 public slots:
     void openBase(QString filename);
     void removeBase(QString filename);
 
-    ListAddress search(QString sheetName, ListAddress addr);
+//    ListAddress search(QString sheetName, ListAddress addr);
+    void selectAddress(QString sheet, int nRow, Address a);
 
     void insertListAddressWithCheck(ListAddress &la);
     void insertAddressWithCheck(Address &a);
     void clear();
 
 private:
-    QThread *_thread;
     QSqlTableModel *_model;
-//    QSqlDatabase _db;
     QString _baseName;
     bool _connected;
-    ListAddress _addrs;
-    QSet< quint64 > _bids;
+//    QSet< quint64 > _bids;
 
     void openTableToModel();
-    void selectAddress(Address &a);
+//    void selectAddress(Address &a);
 };
 
 #endif // DATABASE_H

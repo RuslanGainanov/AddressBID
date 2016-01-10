@@ -14,6 +14,7 @@ MainWindow::MainWindow(QWidget *parent) :
     id = qRegisterMetaType< ListAddress >("ListAddress");
     Q_UNUSED(id);
     _dbw = new DatabaseWidget;
+    Database *db = _dbw->getDatabase();
     _excel = _ui->_excelWidget;
 
     connect(_ui->_actionOpenBase, SIGNAL(triggered()),
@@ -37,8 +38,15 @@ MainWindow::MainWindow(QWidget *parent) :
     connect( this, SIGNAL(windowClosed()),
              _excel, SLOT(close()) );
 
+    connect(_excel, SIGNAL(findRowInBase(QString,int,Address)),
+            db, SLOT(selectAddress(QString,int,Address)));
+    connect(db, SIGNAL(addressFounded(QString,int,Address)),
+            _excel, SLOT(onFounedAddress(QString,int,Address)));
+    connect(db, SIGNAL(addressNotFounded(QString,int,Address)),
+            _excel, SLOT(onNotFounedAddress(QString,int,Address)));
+
 //        _dbw->openExisting();
-        _dbw->show();
+//        _dbw->show();
 //    _ui->_debugWidget->hide();
     _ui->_pushButtonOpenBase->hide();
     _ui->_pushButtonDeleteRows->hide();
@@ -88,8 +96,8 @@ void MainWindow::on__pushButtonOpenBase_clicked()
 
 void MainWindow::on__pushButtonSearch_clicked()
 {
-    Database *db=_dbw->getDatabase();
-    _excel->setDatabase(db);
+//    Database *db=_dbw->getDatabase();
+//    _excel->setDatabase(db);
     _excel->search();
 }
 

@@ -7,11 +7,13 @@ DatabaseWidget::DatabaseWidget(QWidget *parent) :
     _csvFileName(DefaultBaseName)
 {
     _ui->setupUi(this);
-    _db = new Database(this);
+    _db = new Database;
+    _db->moveToThread(&_thread);
+    _thread.start();
 
     _ui->_progressBarReaded->hide();
 
-//    openExisting();
+    openExisting();
 
     connect(_db, SIGNAL(countRows(int)),
             this, SLOT(onCountRow(int)));
@@ -32,12 +34,14 @@ DatabaseWidget::DatabaseWidget(QWidget *parent) :
             this, SLOT(onProcessOfOpenFinished()));
     connect(&_futureWatcherParser, SIGNAL(finished()),
             this, SLOT(onProcessOfParsingFinished()));
-    _ui->_pushButtonLoadOld->hide();
+//    _ui->_pushButtonLoadOld->hide();
 }
 
 DatabaseWidget::~DatabaseWidget()
 {
     delete _ui;
+    _thread.quit();
+    _thread.wait();
     delete _db;
 }
 
@@ -258,7 +262,24 @@ void DatabaseWidget::open()
 
 void DatabaseWidget::openExisting()
 {
-    _db->openBase("Base1.db");
+    QStringList files = QDir::current().entryList(QStringList("*.db"), QDir::Files);
+    emit toDebug(objectName(), "databases:"+files.join(" "));
+    if(files.size()>1)
+    {
+        QString fname =
+                QFileDialog::getOpenFileName(this, trUtf8("Укажите файл базы данных"),
+                                             "",
+                                             tr("SQLite (*.db)"));
+        if(fname.isEmpty())
+            return;
+        _db->openBase(fname);
+    }
+    else
+    {
+        QString fname = files.first();
+        _db->openBase(fname);
+    }
+
 }
 
 void DatabaseWidget::clear()

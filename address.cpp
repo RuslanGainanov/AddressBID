@@ -67,7 +67,7 @@ QString Address::getKorp() const
 
 void Address::setBuild(const QString b)
 {
-    _build=b;
+    _build=toLower(trim(b));
 }
 
 void Address::setBuildId(const QString bid)
@@ -260,6 +260,7 @@ QString Address::toCsv() const
         res += getCity2() + "\";\"";
         res += getTypeOfStreet() + "\";\"";
         res += getStreet() + "\";\"";
+        res += getAdditional() + "\";\"";
         res += getBuild() + "\";\"";
         res += getKorp() + "\";\"";
         res += getLitera() + "\";\"";
@@ -295,6 +296,7 @@ QString Address::toString(TypeOfData t) const
             res += "City2: " + getCity2() + "\n";
             res += "Type of Street: " + getTypeOfStreet() + "\n";
             res += "Street: " + getStreet() + "\n";
+            res += "Additional: " + getAdditional() + "\n";
             res += "Build: " + getBuild() + "\n";
             res += "Korpus: " + getKorp() + "\n";
             res += "Litera: " + getLitera() + "\n";
@@ -382,8 +384,8 @@ bool Address::isCorrect() const
 
 QString Address::trim(QString str) const
 {
-    str.remove(QRegExp("^\\s*[\\.,;()]*"));
-    str.remove(QRegExp("[\\.,;()]*\\s*$"));
+    str.remove(QRegExp("^\\s*[\\.,\\\\;()-/]*"));
+    str.remove(QRegExp("[\\.,\\\\;()-/]*\\s*$"));
     return str;
 }
 

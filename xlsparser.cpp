@@ -2,7 +2,6 @@
 
 XlsParser::XlsParser(QObject *parent) :
     QObject(parent)
-  , _data(nullptr)
   , _error(false)
   , _isOneColumn(false)
 {
@@ -12,54 +11,6 @@ XlsParser::XlsParser(QObject *parent) :
 XlsParser::~XlsParser()
 {
     qDebug() << "XlsParser destructor" << this->thread()->currentThreadId();
-}
-
-void XlsParser::setTableOfData(QMap<QString, TableModel *> *data)
-{
-    _data=data;
-}
-
-void XlsParser::process()
-{
-//    qDebug() << "XlsParser process" << this->thread()->currentThreadId();
-//    QStringList sheets = _data->keys();
-//    foreach (QString sheet, sheets) {
-//        TableModel *tm=(*_data)[sheet];
-//        QStringList head = tm->getHeader();
-//        qDebug() << "XlsParser getHeader" << head;
-//        onReadHead(sheet, head);
-//        qDebug() << "XlsParser getHeader after" << head;
-//        qDebug() << "XlsParser getHeader mapHead" << _mapHead.value(sheet).values();
-//        if(!_error)
-//            for(int row=0; row<tm->rowCount(); row++)
-//            {
-//                Address a = onReadRow(sheet, row, tm->getRow(row));//парсим строку
-
-//                int nCol=0;
-//                nCol = _mapPHead.value(sheet).value(FSUBJ);//получаем номер столбца
-//                tm->setData(tm->index(row, nCol), a.getFsubj());//заносим в ячейку распарсенный элемент
-
-//                nCol = _mapPHead.value(sheet).value(DISTRICT);
-//                tm->setData(tm->index(row, nCol), a.getDistrict());
-
-//                nCol = _mapPHead.value(sheet).value(CITY);
-//                tm->setData(tm->index(row, nCol), a.getCity());
-
-//                nCol = _mapPHead.value(sheet).value(ADDITIONAL);
-//                tm->setData(tm->index(row, nCol), a.getAdditional());
-
-//                nCol = _mapPHead.value(sheet).value(STREET);
-//                tm->setData(tm->index(row, nCol), a.getStreet());
-
-//                nCol = _mapPHead.value(sheet).value(BUILD);
-//                tm->setData(tm->index(row, nCol), a.getBuild());
-
-//                nCol = _mapPHead.value(sheet).value(KORP);
-//                tm->setData(tm->index(row, nCol), a.getKorp());
-//            }
-//        emit sheetParsed(sheet);
-//    }
-//    emit finished();
 }
 
 void XlsParser::onReadHead(const QString sheet,
@@ -80,8 +31,8 @@ void XlsParser::onReadRow(const QString &sheet,
                           const int &rowNumber,
                           const QStringList &row)
 {
-    qDebug() << "XlsParser onReadRow" << sheet << rowNumber
-             /*<< row */<< this->thread()->currentThreadId() ;
+//    qDebug() << "XlsParser onReadRow" << sheet << rowNumber
+//             /*<< row */<< this->thread()->currentThreadId() ;
 
     Address a;
 //    a.setRawAddress(row);
@@ -132,10 +83,11 @@ void XlsParser::onReadRow(const QString &sheet,
 //               "(?:(?:([\\w\\d\\s-]+)\\s+(?:республика|респ\\.*|область|обл\\.*|край|ао|aобл\\.*))|"
 //               "(?:(?республика|респ\\.*|ао|aобл\\.*)\\s+([\\w\\d\\s-]+))))"
 //               "(?:[.,;()]|$)";
-        ptrn = "((?:^|[.,;()]\\s*)"
-               "(?:(?:([\\w\\d\\s-]+)\\s+(?:республика|респ\\.*|область|обл\\.*|край|ао|aобл\\.*))|"
-               "(?:(?:республика|респ\\.*|ао|aобл\\.*)\\s+([\\w\\d\\s-]+))))"
-               "(?:[.,;()]|$)";
+//        ptrn = "((?:^|[.,;()]\\s*)"
+//               "(?:(?:([\\w\\d\\s-]+)\\s+(?:республика|респ\\.*|область|обл\\.*|край|ао|aобл\\.*))|"
+//               "(?:(?:республика|респ\\.*|ао|aобл\\.*)\\s+([\\w\\d\\s-]+))))"
+//               "(?:[.,;()]|$)";
+        ptrn="((?:^|[.,;()]\\s*)(?:(?:([\\w\\d\\s-]+)\\s+(республика|респ\\.*|область|обл\\.*|край|ао|aобл\\.*))|(?:(республика|респ\\.*|ао|aобл\\.*)\\s+([\\w\\d\\s-]+))))(?:[.,;()]|$)";
         if(parseObject(str,
                        resList,
                        ptrn))
@@ -143,8 +95,12 @@ void XlsParser::onReadRow(const QString &sheet,
             str.remove(resList.at(1));
             if(!resList.at(2).isEmpty())
                 a.setFsubj(resList.at(2));
-            else if(!resList.at(3).isEmpty())
-                a.setFsubj(resList.at(3));
+            else if(!resList.at(5).isEmpty())
+                a.setFsubj(resList.at(5));
+            if(!resList.at(3).isEmpty())
+                a.setTypeOfFSubj(resList.at(3));
+            else if(!resList.at(4).isEmpty())
+                a.setTypeOfFSubj(resList.at(4));
         }
         //с районом
         ptrn = "((?:^|[.,;()]\\s*)"
@@ -166,8 +122,9 @@ void XlsParser::onReadRow(const QString &sheet,
 //               "(?:(?:(?:город|гор\\.*|г\\.*)\\s+([\\w\\d\\s-]+))|"
 //               "(?:([\\w\\d\\s-]+)\\s+(?:город|гор\\.*|г\\.*))))"
 //               "(?:[.,;()]|$)";
-        ptrn = "(село|деревня|дер\\.*|поселок|пос\\.*|станция|ст\\.*|[сдп]\\.*|город|гор\\.*|г\\.*|ж\\/д_рзд\\.|рп\\.|ж\\/д_ст\\.|высел\\.|х\\.*|казарма\\.*|м\\.|жилрайон\\.*|нп\\.*|снт\\.*|дп\\.*|снт\\.*|пст\\.|п\\/ст\\.|пгт\\.|п\\/гт\\.|тер\\.*|массив\\.*)(\\s+[\\w\\d\\s.-]+)(?:([.,;]|$)|[()])";
-
+//        ptrn = "(село|деревня|дер\\.*|поселок|пос\\.*|станция|ст\\.*|[сдп]\\.*|город|гор\\.*|г\\.*|ж\\/д_рзд\\.|рп\\.|ж\\/д_ст\\.|высел\\.|х\\.*|казарма\\.*|м\\.|жилрайон\\.*|нп\\.*|снт\\.*|дп\\.*|снт\\.*|пст\\.|п\\/ст\\.|пгт\\.|п\\/гт\\.|тер\\.*|массив\\.*)(\\s+[\\w\\d\\s.-]+)(?:([.,;]|$)|[()])";
+        //учитывает пропуск вначале и дом от деревни (по следующей цифре за "д.")
+        ptrn="\\b(село|деревня|дер\\.*|поселок|пос\\.*|станция|ст\\.*|(?:[сдп]\\.*(?!\\s*\\d+))|город|гор\\.*|г\\.*|ж\\/д_рзд\\.|рп\\.|ж\\/д_ст\\.|высел\\.|х\\.*|казарма\\.*|м\\.|жилрайон\\.*|нп\\.*|снт\\.*|дп\\.*|снт\\.*|пст\\.|п\\/ст\\.|пгт\\.|п\\/гт\\.|тер\\.*|массив\\.*)(\\s+[\\w\\d\\s.-]+)(?:([.,;]|$)|[()])";
         if(parseObject(str,
                        resList,
                        ptrn))
@@ -183,21 +140,23 @@ void XlsParser::onReadRow(const QString &sheet,
             a.setCity1(resList.at(2));
         }
 
-//        //с селом, деревней поселком
-//        ptrn = "((?:^|[.,;()]\\s*)"
-//               "(?:(?:(?:село|деревня|дер\\.*|поселок|пос\\.*|станция|ст\\.*|[сдп]\\.*)\\s+([\\w\\d\\s-]+))|"
-//               "(?:([\\w\\d\\s-]+)\\s+(?:село|деревня|дер\\.*|поселок|пос\\.*|станция|ст\\.*|[сдп]\\.*))))"
-//               "(?:[.,;()]|$)";
-//        if(parseObject(str,
-//                       resList,
-//                       ptrn))
-//        {
+//        ptrn = "(село|деревня|дер\\.*|поселок|пос\\.*|станция|ст\\.*|[сдп]\\.*|город|гор\\.*|г\\.*|ж\\/д_рзд\\.|рп\\.|ж\\/д_ст\\.|высел\\.|х\\.*|казарма\\.*|м\\.|жилрайон\\.*|нп\\.*|снт\\.*|дп\\.*|снт\\.*|пст\\.|п\\/ст\\.|пгт\\.|п\\/гт\\.|тер\\.*|массив\\.*)(\\s+[\\w\\d\\s.-]+)(?:([.,;]|$)|[()])";
+        //учитывает пропуск вначале и дом от деревни (по следующей цифре за "д.")
+        ptrn="\\b(село|деревня|дер\\.*|поселок|пос\\.*|станция|ст\\.*|(?:[сдп]\\.*(?!\\s*\\d+))|город|гор\\.*|г\\.*|ж\\/д_рзд\\.|рп\\.|ж\\/д_ст\\.|высел\\.|х\\.*|казарма\\.*|м\\.|жилрайон\\.*|нп\\.*|снт\\.*|дп\\.*|снт\\.*|пст\\.|п\\/ст\\.|пгт\\.|п\\/гт\\.|тер\\.*|массив\\.*)(\\s+[\\w\\d\\s.-]+)(?:([.,;]|$)|[()])";
+        if(parseObject(str,
+                       resList,
+                       ptrn))
+        {
 //            str.remove(resList.at(1));
 //            if(!resList.at(2).isEmpty())
-//                a.setAdditional(resList.at(2));
+//                a.setCity(resList.at(2));
 //            else if(!resList.at(3).isEmpty())
-//                a.setAdditional(resList.at(3));
-//        }
+//                a.setCity(resList.at(3));
+
+            str.remove(resList.at(1)+resList.at(2)+resList.at(3));
+            a.setTypeOfCity2(resList.at(1));
+            a.setCity2(resList.at(2));
+        }
 
         //с улицей, пр-том, и пр.
         ptrn = "((?:[.,;()]*\\s*)"
@@ -319,8 +278,8 @@ void XlsParser::onReadRow(const QString &sheet,
     */
     //парсинг строки окончен
 
-    qDebug().noquote() << " XlsParser::" << str << a.toString(PARSED);
-    assert(0);
+//    qDebug().noquote() << " XlsParser::" << str << a.toString(PARSED);
+//    assert(0);
     emit rowParsed(sheet, rowNumber, a); //парсинг строки окончен
 //    return a;
 }
