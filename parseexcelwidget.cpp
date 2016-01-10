@@ -6,11 +6,36 @@ ParseExcelWidget::ParseExcelWidget(QWidget *parent) :
     ui(new Ui::ParseExcelWidget)
 {
     ui->setupUi(this);
+    hideCity2();
 }
 
 ParseExcelWidget::~ParseExcelWidget()
 {
     delete ui;
+}
+
+void ParseExcelWidget::showCity2()
+{
+    if(_city2Hided)
+    {
+        ui->pushButtonShowCity2->setVisible(false);
+        ui->labelCity2->setVisible(true);
+        ui->lineEditCity2->setVisible(true);
+        ui->lineEditTypeOfCity2->setVisible(true);
+    }
+    _city2Hided=false;
+}
+
+void ParseExcelWidget::hideCity2()
+{
+    if(!_city2Hided)
+    {
+        ui->pushButtonShowCity2->setVisible(true);
+        ui->labelCity2->hide();
+        ui->lineEditCity2->hide();
+        ui->lineEditTypeOfCity2->hide();
+    }
+    _city2Hided=true;
 }
 
 void ParseExcelWidget::onCurrentRowChanged(QString sheet,
@@ -22,15 +47,12 @@ void ParseExcelWidget::onCurrentRowChanged(QString sheet,
     _data=data;
     QString str;
     str=data.value(TYPE_OF_FSUBJ, QString());
+//    ui->comboBoxTypeFSubj->setCurrentText(str);
     int index = ui->comboBoxTypeFSubj->findText(str, Qt::MatchExactly);
     if(index != -1)
         ui->comboBoxTypeFSubj->setCurrentIndex(index);
     else
-    {
         ui->comboBoxTypeFSubj->setCurrentIndex(0);
-    }
-    str=data.value(TYPE_OF_CITY1, QString());
-    ui->lineEditTypeOfCity->setText(str);
     str=data.value(TYPE_OF_STREET, QString());
     ui->lineEditTypeOfStreet->setText(str);
     str=data.value(DISTRICT, QString());
@@ -41,8 +63,18 @@ void ParseExcelWidget::onCurrentRowChanged(QString sheet,
     ui->lineEditBuild->setText(str);
     str=data.value(KORP, QString());
     ui->lineEditKorp->setText(str);
+    str=data.value(TYPE_OF_CITY1, QString());
+    ui->lineEditTypeOfCity->setText(str);
     str=data.value(CITY1, QString());
     ui->lineEditCity->setText(str);
+    str=data.value(TYPE_OF_CITY2, QString());
+    ui->lineEditTypeOfCity2->setText(str);
+    str=data.value(CITY2, QString());
+    ui->lineEditCity2->setText(str);
+    if(!str.isEmpty())
+        showCity2();
+    else
+        hideCity2();
     str=data.value(FSUBJ, QString());
     ui->lineEditFSubj->setText(str);
     str=data.value(ADDITIONAL, QString());
@@ -141,7 +173,6 @@ void ParseExcelWidget::clearData()
     ui->lineEditLiter->clear();
 }
 
-
 void ParseExcelWidget::on__pushButtonRemove_clicked()
 {
     emit rowRemoved(_sheet, _nRow);
@@ -149,3 +180,7 @@ void ParseExcelWidget::on__pushButtonRemove_clicked()
 }
 
 
+void ParseExcelWidget::on_pushButtonShowCity2_clicked()
+{
+    showCity2();
+}

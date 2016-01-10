@@ -574,6 +574,17 @@ void ExcelWidget::onCurrentRowChanged(QString sheet, int nRow,
 void ExcelWidget::onParsedDataChanged(QString sheet, int nRow,
                                       MapAEValue row)
 {
+
+    _views[sheet]->setItemDelegateForRow(nRow, _views[sheet]->itemDelegate());
+//    _views[sheet]->
+    int colSid = _mapHead[sheet].value(STREET_ID);
+    int colBid = _mapHead[sheet].value(BUILD_ID);
+    TableModel *tm = _data[sheet];
+    assert(tm);
+    tm->setData(tm->index(nRow, colSid),
+                "");
+    tm->setData(tm->index(nRow, colBid),
+                "");
     foreach (AddressElements ae, row.keys()) {
         TableModel *tm=_data[sheet];
         assert(tm);

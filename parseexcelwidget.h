@@ -35,19 +35,24 @@ private slots:
     void on_lineEditLiter_returnPressed();
     void on_pushButtonSave_clicked();
     void on__pushButtonRemove_clicked();
+    void on_comboBoxTypeFSubj_activated(int index);
 
 private slots:
     void saveData();
     void clearData();
 
-    void on_comboBoxTypeFSubj_activated(int index);
-    void on_comboBoxTypeFSubj_currentIndexChanged(int index);
+
+    void on_pushButtonShowCity2_clicked();
 
 private:
     Ui::ParseExcelWidget *ui;
     QString _sheet;
     int _nRow;
     MapAEValue _data;
+    bool _city2Hided; //второй город скрыт
+
+    void hideCity2();
+    void showCity2();
 };
 
 #endif // PARSEEXCELWIDGET_H
