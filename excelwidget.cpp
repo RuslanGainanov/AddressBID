@@ -795,6 +795,9 @@ void ExcelWidget::onRowParsed(QString sheet, int nRow, Address a)
     nCol = _mapPHead.value(sheet).value(FSUBJ);//получаем номер столбца
     tm->setData(tm->index(nRow, nCol), a.getFsubj());//заносим в ячейку распарсенный элемент
 
+    nCol = _mapPHead.value(sheet).value(TYPE_OF_FSUBJ);
+    tm->setData(tm->index(nRow, nCol), a.getTypeOfFSubjInString());
+
     nCol = _mapPHead.value(sheet).value(DISTRICT);
     tm->setData(tm->index(nRow, nCol), a.getDistrict());
 

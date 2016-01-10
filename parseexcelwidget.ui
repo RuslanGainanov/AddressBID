@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>300</width>
-    <height>235</height>
+    <height>251</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -26,71 +26,13 @@
    <string>Form</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="0">
-    <widget class="QLabel" name="labelFsubj">
-     <property name="text">
-      <string>Федеральный субъект</string>
-     </property>
-    </widget>
-   </item>
    <item row="3" column="1">
     <widget class="QLineEdit" name="lineEditAdditional"/>
    </item>
-   <item row="1" column="0">
-    <widget class="QLabel" name="label">
+   <item row="4" column="0">
+    <widget class="QLabel" name="label_4">
      <property name="text">
-      <string>Район</string>
-     </property>
-    </widget>
-   </item>
-   <item row="6" column="1">
-    <widget class="QLineEdit" name="lineEditKorp"/>
-   </item>
-   <item row="5" column="0">
-    <widget class="QLabel" name="label_5">
-     <property name="text">
-      <string>Дом</string>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="0">
-    <widget class="QLabel" name="label_2">
-     <property name="text">
-      <string>Город</string>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="1">
-    <widget class="QLineEdit" name="lineEditFSubj"/>
-   </item>
-   <item row="1" column="1">
-    <widget class="QLineEdit" name="lineEditDistrict"/>
-   </item>
-   <item row="6" column="0">
-    <widget class="QLabel" name="label_6">
-     <property name="text">
-      <string>Корпус</string>
-     </property>
-    </widget>
-   </item>
-   <item row="7" column="0">
-    <widget class="QLabel" name="label_8">
-     <property name="text">
-      <string>Литера</string>
-     </property>
-    </widget>
-   </item>
-   <item row="8" column="0">
-    <widget class="QPushButton" name="_pushButtonRemove">
-     <property name="text">
-      <string>Удалить</string>
-     </property>
-    </widget>
-   </item>
-   <item row="3" column="0">
-    <widget class="QLabel" name="label_7">
-     <property name="text">
-      <string>Дополнительно</string>
+      <string>Название улицы</string>
      </property>
     </widget>
    </item>
@@ -118,28 +60,158 @@
      </item>
     </layout>
    </item>
-   <item row="4" column="0">
-    <widget class="QLabel" name="label_4">
+   <item row="3" column="0">
+    <widget class="QLabel" name="label_7">
      <property name="text">
-      <string>Название улицы</string>
+      <string>Дополнительно</string>
      </property>
     </widget>
    </item>
-   <item row="8" column="1">
-    <widget class="QPushButton" name="pushButtonSave">
+   <item row="1" column="1">
+    <widget class="QLineEdit" name="lineEditDistrict"/>
+   </item>
+   <item row="5" column="0">
+    <widget class="QLabel" name="label_5">
      <property name="text">
-      <string>Сохранить</string>
+      <string>Дом</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="0">
+    <widget class="QLabel" name="labelFsubj">
+     <property name="text">
+      <string>Федеральный субъект</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>Район</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QLabel" name="label_2">
+     <property name="text">
+      <string>Город</string>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="0">
+    <widget class="QLabel" name="label_8">
+     <property name="text">
+      <string>Литера</string>
      </property>
     </widget>
    </item>
    <item row="7" column="1">
     <widget class="QLineEdit" name="lineEditLiter"/>
    </item>
-   <item row="2" column="1">
-    <widget class="QLineEdit" name="lineEditCity"/>
+   <item row="9" column="1">
+    <widget class="QPushButton" name="pushButtonSave">
+     <property name="text">
+      <string>Сохранить</string>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="0">
+    <widget class="QLabel" name="label_6">
+     <property name="text">
+      <string>Корпус</string>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="1">
+    <widget class="QLineEdit" name="lineEditKorp"/>
    </item>
    <item row="5" column="1">
     <widget class="QLineEdit" name="lineEditBuild"/>
+   </item>
+   <item row="9" column="0">
+    <widget class="QPushButton" name="_pushButtonRemove">
+     <property name="text">
+      <string>Удалить</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="1">
+    <layout class="QHBoxLayout" name="horizontalLayoutFSubj">
+     <item>
+      <widget class="QComboBox" name="comboBoxTypeFSubj">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <item>
+        <property name="text">
+         <string/>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>респ</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>край</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>обл</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>аобл</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>ао</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="lineEditFSubj">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="2" column="1">
+    <layout class="QHBoxLayout" name="horizontalLayout_3">
+     <item>
+      <widget class="QLineEdit" name="lineEditTypeOfCity">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="lineEditCity">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </item>
   </layout>
  </widget>

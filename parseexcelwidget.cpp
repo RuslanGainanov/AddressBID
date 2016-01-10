@@ -21,6 +21,16 @@ void ParseExcelWidget::onCurrentRowChanged(QString sheet,
     _nRow=nRow;
     _data=data;
     QString str;
+    str=data.value(TYPE_OF_FSUBJ, QString());
+    int index = ui->comboBoxTypeFSubj->findText(str, Qt::MatchExactly);
+    if(index != -1)
+        ui->comboBoxTypeFSubj->setCurrentIndex(index);
+    else
+    {
+        ui->comboBoxTypeFSubj->setCurrentIndex(0);
+    }
+    str=data.value(TYPE_OF_CITY1, QString());
+    ui->lineEditTypeOfCity->setText(str);
     str=data.value(TYPE_OF_STREET, QString());
     ui->lineEditTypeOfStreet->setText(str);
     str=data.value(DISTRICT, QString());
@@ -86,8 +96,24 @@ void ParseExcelWidget::on_pushButtonSave_clicked()
     saveData();
 }
 
+void ParseExcelWidget::on_comboBoxTypeFSubj_activated(int index)
+{
+    Q_UNUSED(index);
+    saveData();
+}
+
+void ParseExcelWidget::on_lineEditTypeOfCity_returnPressed()
+{
+    saveData();
+}
+
 void ParseExcelWidget::saveData()
 {
+    if(ui->comboBoxTypeFSubj->currentText().isEmpty())
+        _data[TYPE_OF_FSUBJ]=MapFSubjString[INCORRECT_SUBJ];
+    else
+        _data[TYPE_OF_FSUBJ]=ui->comboBoxTypeFSubj->currentText();
+    _data[TYPE_OF_CITY1]=ui->lineEditTypeOfCity->text();
     _data[TYPE_OF_STREET]=ui->lineEditTypeOfStreet->text();
     _data[DISTRICT]=ui->lineEditDistrict->text();
     _data[STREET]=ui->lineEditStreet->text();
@@ -102,6 +128,8 @@ void ParseExcelWidget::saveData()
 
 void ParseExcelWidget::clearData()
 {
+    ui->comboBoxTypeFSubj->setCurrentIndex(0);
+    ui->lineEditTypeOfCity->clear();
     ui->lineEditTypeOfStreet->clear();
     ui->lineEditDistrict->clear();
     ui->lineEditStreet->clear();
@@ -119,3 +147,5 @@ void ParseExcelWidget::on__pushButtonRemove_clicked()
     emit rowRemoved(_sheet, _nRow);
     clearData();
 }
+
+

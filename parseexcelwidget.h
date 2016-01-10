@@ -26,6 +26,7 @@ public slots:
 private slots:
     void on_lineEditFSubj_returnPressed();
     void on_lineEditDistrict_returnPressed();
+    void on_lineEditTypeOfCity_returnPressed();
     void on_lineEditCity_returnPressed();
     void on_lineEditAdditional_returnPressed();
     void on_lineEditStreet_returnPressed();
@@ -33,12 +34,14 @@ private slots:
     void on_lineEditKorp_returnPressed();
     void on_lineEditLiter_returnPressed();
     void on_pushButtonSave_clicked();
+    void on__pushButtonRemove_clicked();
 
 private slots:
     void saveData();
     void clearData();
 
-    void on__pushButtonRemove_clicked();
+    void on_comboBoxTypeFSubj_activated(int index);
+    void on_comboBoxTypeFSubj_currentIndexChanged(int index);
 
 private:
     Ui::ParseExcelWidget *ui;
