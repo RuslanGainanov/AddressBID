@@ -90,7 +90,6 @@ signals:
     void countRows(QString sheet, int count);
     void sheetsReaded(QStringList sheets);
     void isOneColumn(bool);
-//    void parserFinished();
 
 //    void headParsed(QString sheet, MapAddressElementPosition head);
     void rowParsed(QString sheet, int row);
@@ -133,6 +132,7 @@ private slots:
     void onRemoveRow(QString sheet, int nRow);
     void onCurrentRowChanged();
     void onCurrentRowChanged(QString sheet, int nRow, QStringList row);
+    void onTableDataChanged(QModelIndex topLeft, QModelIndex bottomRight, QVector<int> roles);
     void onParsedDataChanged(QString sheet, int nRow, MapAEValue row);
 
     void on__lineEditNewAddr_returnPressed();
@@ -154,6 +154,7 @@ private:
     QThread *_thread;
     QHash<QString, int> _countParsedRow;
     QHash<QString, int> _countRow;
+    QHash<QString, int> _editedRow; //редактируемая пользователем строка
 //    Database *_db;
     QString _searchingSheetName;
     SimpleDelegate *_delegateFounded;

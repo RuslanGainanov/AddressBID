@@ -305,7 +305,9 @@ void ExcelWidget::search()
     {
         for(int i=0; i<_data2[sheetName].size(); i++)
         {
-            if(!_data2[sheetName].at(i).isEmpty())
+            if(!_data2[sheetName].at(i).isEmpty()
+                    && _data2[sheetName].at(i).getBuildId()==0
+                   /* && _data2[sheetName].at(i).getStreetId()==0*/)
                 emit findRowInBase(sheetName, i, _data2[sheetName].at(i));
 //            if(i%200==0)
                 emit toDebug(objectName(), QString("Обработано строк %1").arg(QString::number(i+1)));
@@ -445,6 +447,8 @@ void ExcelWidget::onProcessOfOpenFinished()
                             _data[sheetName], SLOT(onCurrentRowChanged(QModelIndex,QModelIndex)));
                     connect(_data[sheetName], SIGNAL(currentRowChanged(QString,int,QStringList)),
                             this, SLOT(onCurrentRowChanged(QString,int,QStringList)));
+                    connect(_data[sheetName], SIGNAL(dataChanged(QModelIndex,QModelIndex,QVector<int>)),
+                            this, SLOT(onTableDataChanged(QModelIndex,QModelIndex,QVector<int>)));
                     ExcelSheet rows = data[sheetName];
                     _countRow.insert(sheetName, rows.size());
                     _countParsedRow.insert(sheetName, 0);
@@ -479,6 +483,8 @@ void ExcelWidget::onProcessOfOpenFinished()
                         _data[sheetName], SLOT(onCurrentRowChanged(QModelIndex,QModelIndex)));
                 connect(_data[sheetName], SIGNAL(currentRowChanged(QString,int,QStringList)),
                         this, SLOT(onCurrentRowChanged(QString,int,QStringList)));
+                connect(_data[sheetName], SIGNAL(dataChanged(QModelIndex,QModelIndex,QVector<int>)),
+                        this, SLOT(onTableDataChanged(QModelIndex,QModelIndex,QVector<int>)));
                 _countRow.insert(sheetName, data.size());
                 _countParsedRow.insert(sheetName, 0);
                 int nRow=0;
@@ -533,13 +539,24 @@ void ExcelWidget::onRemoveRow(QString sheet, int nRow)
     TableModel *tm = _data.value(sheet, 0);
     assert(tm);
     if(nRow>=0 && nRow<tm->rowCount())
-        qDebug() << tm->removeRow(nRow);
+    {
+        qDebug() << (tm->removeRow(nRow)? "success":"");
+        _data2[sheet].removeAt(nRow);
+        for(int i=nRow; i<tm->rowCount()-1; i++)
+        {
+            _views[sheet]->setItemDelegateForRow(
+                        i,
+                        _views[sheet]->itemDelegateForRow(i+1)
+                        );
+        }
+    }
     else
         qDebug() << false;
 }
 
 void ExcelWidget::onCurrentRowChanged()
 {
+//    qDebug() << "ExcelWidget onCurrentRowChanged";
     QString sheet = _ui->_tabWidget->tabText(_ui->_tabWidget->currentIndex());
     if(_data.isEmpty())
         return;
@@ -550,6 +567,54 @@ void ExcelWidget::onCurrentRowChanged()
     QStringList row = tm->getRow(nRow);
 
     onCurrentRowChanged(sheet, nRow, row);
+}
+
+void ExcelWidget::onTableDataChanged(QModelIndex topLeft, QModelIndex bottomRight, QVector<int> roles)
+{
+    Q_UNUSED(bottomRight);
+    Q_UNUSED(roles);
+    QModelIndex &indx(topLeft);
+    if(topLeft.isValid())
+    {
+//        emit toDebug(objectName(),
+//                     indx.data().toString()+":"
+//                     +QString::number(indx.row())+"|"+QString::number(indx.column())
+//                     );
+        const TableModel *model = qobject_cast<const TableModel *>(indx.model());
+        assert(model);
+        QString sheet(model->getName());
+        MapAddressElementPosition &map(_mapHead[sheet]);
+        if(indx.row()>=_countParsedRow[sheet])
+            return;
+        bool editAddressElement=false;
+        foreach (AddressElements ae, ListAddressElements) {
+            if(ae==STREET_ID || ae==BUILD_ID)
+                continue;
+            if(indx.column()==map.value(ae))
+                editAddressElement=true;
+        }
+        if(editAddressElement)
+        {
+            emit toDebug(objectName(),
+                         QString("Ячейка [%1, %2] отредактирована:").arg(indx.row()).arg(indx.column())
+                         +indx.data().toString());
+            _editedRow[sheet]=indx.row();
+
+            _views[sheet]->setItemDelegateForRow(indx.row(), _views[sheet]->itemDelegate());
+
+            TableModel *m = const_cast<TableModel *>(model);
+            _data2[sheet][indx.row()].setBuildId(0);
+            _data2[sheet][indx.row()].setStreetId(0);
+            int col=map.value(STREET_ID);
+            m->setData(m->index(indx.row(), col),
+                        QVariant::fromValue(QString()));
+            col=map.value(BUILD_ID);
+            m->setData(m->index(indx.row(), col),
+                        QVariant::fromValue(QString()));
+
+            emit rowReaded(sheet, indx.row(), model->getRow(indx.row()));
+        }
+    }
 }
 
 void ExcelWidget::onCurrentRowChanged(QString sheet, int nRow,
@@ -574,9 +639,7 @@ void ExcelWidget::onCurrentRowChanged(QString sheet, int nRow,
 void ExcelWidget::onParsedDataChanged(QString sheet, int nRow,
                                       MapAEValue row)
 {
-
     _views[sheet]->setItemDelegateForRow(nRow, _views[sheet]->itemDelegate());
-//    _views[sheet]->
     int colSid = _mapHead[sheet].value(STREET_ID);
     int colBid = _mapHead[sheet].value(BUILD_ID);
     TableModel *tm = _data[sheet];
@@ -585,6 +648,9 @@ void ExcelWidget::onParsedDataChanged(QString sheet, int nRow,
                 "");
     tm->setData(tm->index(nRow, colBid),
                 "");
+    _data2[sheet][nRow].setBuildId(0);
+    _data2[sheet][nRow].setStreetId(0);
+
     foreach (AddressElements ae, row.keys()) {
         TableModel *tm=_data[sheet];
         assert(tm);
@@ -677,6 +743,7 @@ void ExcelWidget::onRowRead(const QString &sheet, const int &nRow, QStringList &
     for(int col=0; col<row.size(); col++)
         tm->setData(tm->index(nRow, col),
                     QVariant::fromValue(row.at(col)));
+    _countRow[sheet]++;
     emit rowReaded(sheet, nRow, row);
 }
 
@@ -799,7 +866,6 @@ void ExcelWidget::onRowParsed(QString sheet, int nRow, Address a)
 //                 +sheet+" row:"
 //                 +QString::number(nRow)+"\n"+a.toString(PARSED)
 //                 );
-    _data2[sheet].insert(nRow, a); //excel
     TableModel *tm=_data.value(sheet, 0);
     assert(tm);
     int nCol=0;
@@ -842,15 +908,26 @@ void ExcelWidget::onRowParsed(QString sheet, int nRow, Address a)
     nCol = _mapPHead.value(sheet).value(LITERA);
     tm->setData(tm->index(nRow, nCol), a.getLitera());
 
-    emit rowParsed(sheet, nRow);
-//    if(_countParsedRow[sheet]>=_countRow[sheet])
-//        emit parserFinished();
+    if(_editedRow.contains(sheet) && _editedRow[sheet]==nRow)
+    {
+        _editedRow.remove(sheet);
+        _data2[sheet][nRow]=a; //excel
+        onCurrentRowChanged();
+    }
+    else
+    {
+        _data2[sheet].insert(nRow, a); //excel
+        _countParsedRow[sheet]++;
+        emit rowParsed(sheet, nRow);
+        if(_countParsedRow[sheet]>=_countRow[sheet])
+            emit sheetParsed(sheet);
+    }
 }
 
 void ExcelWidget::onSheetParsed(QString sheet)
 {
     emit toDebug(objectName(),
-                 "ExcelWidget::onFinishParser(QString)"+sheet
+                 "ExcelWidget::onSheetParsed(QString)"+sheet
                  );
     emit sheetParsed(sheet);
 }
@@ -872,7 +949,7 @@ void ExcelWidget::onNotFoundMandatoryColumn(QString sheet, AddressElements ae, Q
                  );
     int n = QMessageBox::critical(0,
                                   "Внимание",
-                                  QString("Невозможно найти столбец с именем \"%1\" на листе \"%2\".\n"
+                                  trUtf8("Невозможно найти столбец с именем \"%1\" на листе \"%2\".\n"
                                           "Добавьте столбец с данным именем или переименуйте один из столбцов \n"
                                           "и повторите операцию.")
                                   .arg(colName)
