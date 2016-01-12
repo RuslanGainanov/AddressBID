@@ -16,6 +16,7 @@ public:
     QString getName() const;
     QStringList getHeader() const;
     QStringList getRow(int nRow) const;
+    bool setRow(const int &nRow, const QStringList &row);
     ExcelSheet getExcelSheet() const;
     QVariant data(const QModelIndex& index,
                   int                nRole=Qt::DisplayRole) const;

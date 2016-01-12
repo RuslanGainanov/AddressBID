@@ -30,6 +30,15 @@ QStringList TableModel::getRow(int nRow) const
         return QStringList();
 }
 
+bool TableModel::setRow(const int &nRow, const QStringList &row)
+{
+    if(row.size()!=columnCount()
+            || nRow<0 || nRow>=rowCount())
+        return false;
+    m_rowList[nRow]=row;
+    return true;
+}
+
 ExcelSheet TableModel::getExcelSheet() const
 {
     return m_rowList;

@@ -30,8 +30,9 @@ typedef QList< Address > ListAddress;
 #define HIDE_PARSED_COLUMNS 1
 
 const int MAX_OPEN_IN_ROWS=10;
-const QString FoundedColor = "#33FF66";
-const QString NotFoundedColor = "#FFA07A";
+const QString FoundedColor = "#33FF66"; //цвет строки для которой найден BID в базе
+const QString NotFoundedColor = "#FFA07A"; //цвет строки для которой не найден BID в базе
+const QString RepeatFoundedColor = "#FFCC33"; //цвет строки для которой найдено >1 BID в базе
 const QString LogFileName = "Log1.csv";
 
 class SimpleDelegate : public QStyledItemDelegate {
@@ -72,16 +73,11 @@ class ExcelWidget : public QWidget
 public:
     explicit ExcelWidget(QWidget *parent = 0);
     ~ExcelWidget();
-//    void setDatabase(Database *db)
-//    {
-//        _db=db;
-//    }
 
 public slots:
     void open();
     void parse();
     void search();
-//    void runThreadOpenCsv(QString openFilename);
     void closeLog();
 
 signals:
@@ -91,7 +87,6 @@ signals:
     void sheetsReaded(QStringList sheets);
     void isOneColumn(bool);
 
-//    void headParsed(QString sheet, MapAddressElementPosition head);
     void rowParsed(QString sheet, int row);
     void sheetParsed(QString sheet);
 
@@ -118,12 +113,11 @@ private slots:
 
     //parser signal-slots
     void onRowParsed(QString sheet, int nRow, Address a);
-//    void onHeadParsed(QString sheet, MapAddressElementPosition head);
     void onSheetParsed(QString sheet);
     void onFinishParser();
     void onNotFoundMandatoryColumn(QString sheet, AddressElements ae, QString colName);
 
-    void onProcessOfSearchFinished();
+//    void onProcessOfSearchFinished();
     void onFile(QString objName, QString mes);
     void onFounedAddress(QString sheetName, int nRow, Address addr);
     void onNotFounedAddress(QString sheetName, int nRow, Address addr);
@@ -148,17 +142,18 @@ private:
     QHash<QString, int>          _sheetIndex;
     QFutureWatcher<QVariant>     _futureWatcher;
     QFutureWatcher<ListAddress>     _futureWatcherS;
-//    QProgressDialog              _dialog;
     QMap<QString, MapAddressElementPosition> _mapHead;
     QMap<QString, MapAddressElementPosition> _mapPHead;
     QThread *_thread;
     QHash<QString, int> _countParsedRow;
     QHash<QString, int> _countRow;
     QHash<QString, int> _editedRow; //редактируемая пользователем строка
-//    Database *_db;
+    QHash<QString, int> _countRepatingRow; //количество повторяющихся строк (строк для которых найдено более одного совпадения в базе)
+    QHash<QString, int> _insertedRowAfterSearch; //номер вставляемой строки при повторе
     QString _searchingSheetName;
     SimpleDelegate *_delegateFounded;
     SimpleDelegate *_delegateNotFounded;
+    SimpleDelegate *_delegateRepeatFounded;
     QMap<QString, ListAddress > _data2;
 //    ExcelDocument _data;
 //    QThread *_thread;

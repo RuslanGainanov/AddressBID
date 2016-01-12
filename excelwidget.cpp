@@ -8,7 +8,8 @@ ExcelWidget::ExcelWidget(QWidget *parent) :
     _thread(nullptr),
 //    _db(nullptr),
     _delegateFounded(new SimpleDelegate(QBrush(QColor(FoundedColor)))),
-    _delegateNotFounded(new SimpleDelegate(QBrush(QColor(NotFoundedColor))))
+    _delegateNotFounded(new SimpleDelegate(QBrush(QColor(NotFoundedColor)))),
+    _delegateRepeatFounded(new SimpleDelegate(QBrush(QColor(RepeatFoundedColor))))
 {
     _ui->setupUi(this);
 
@@ -68,6 +69,7 @@ ExcelWidget::~ExcelWidget()
         delete _parser;
     delete _delegateFounded;
     delete _delegateNotFounded;
+    delete _delegateRepeatFounded;
     _thread->quit();
     _thread->wait();
     closeLog();
@@ -375,45 +377,45 @@ void ExcelWidget::search()
              << this->thread()->currentThreadId();
 }
 
-void ExcelWidget::onProcessOfSearchFinished()
-{
-    QString currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
-    qDebug() << "ExcelWidget onProcessOfSearchFinished BEGIN"
-             << currTime
-             << this->thread()->currentThreadId();
+//void ExcelWidget::onProcessOfSearchFinished()
+//{
+//    QString currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
+//    qDebug() << "ExcelWidget onProcessOfSearchFinished BEGIN"
+//             << currTime
+//             << this->thread()->currentThreadId();
 
-    if(_futureWatcherS.isFinished()
-            && !_futureWatcherS.isCanceled())
-    {
-        ListAddress data = _futureWatcherS.future().result();
-        int row=0;
-        foreach (Address a, data) {
-//            qDebug() << "row getBid & Sid" << row << a.getBuildId() << a.getStreetId();
-            if(a.getBuildId()!=0 && a.getStreetId()!=0)
-            {
-                _views[_searchingSheetName]->setItemDelegateForRow(row, _delegateFounded);
-            }
-            else
-            {
-                _views[_searchingSheetName]->setItemDelegateForRow(row, _delegateNotFounded);
-            }
-            int colSid = _mapHead[_searchingSheetName].value(STREET_ID);
-            int colBid = _mapHead[_searchingSheetName].value(BUILD_ID);
-            TableModel *tm = _data[_searchingSheetName];
-            assert(tm);
-            tm->setData(tm->index(row, colSid),
-                        a.getStreetId());
-            tm->setData(tm->index(row, colBid),
-                        a.getBuildId());
-            row++;
-        }
-    }
+//    if(_futureWatcherS.isFinished()
+//            && !_futureWatcherS.isCanceled())
+//    {
+//        ListAddress data = _futureWatcherS.future().result();
+//        int row=0;
+//        foreach (Address a, data) {
+////            qDebug() << "row getBid & Sid" << row << a.getBuildId() << a.getStreetId();
+//            if(a.getBuildId()!=0 && a.getStreetId()!=0)
+//            {
+//                _views[_searchingSheetName]->setItemDelegateForRow(row, _delegateFounded);
+//            }
+//            else
+//            {
+//                _views[_searchingSheetName]->setItemDelegateForRow(row, _delegateNotFounded);
+//            }
+//            int colSid = _mapHead[_searchingSheetName].value(STREET_ID);
+//            int colBid = _mapHead[_searchingSheetName].value(BUILD_ID);
+//            TableModel *tm = _data[_searchingSheetName];
+//            assert(tm);
+//            tm->setData(tm->index(row, colSid),
+//                        a.getStreetId());
+//            tm->setData(tm->index(row, colBid),
+//                        a.getBuildId());
+//            row++;
+//        }
+//    }
 
-    currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
-    qDebug() << "ExcelWidget onProcessOfSearchFinished END"
-             << currTime
-             << this->thread()->currentThreadId();
-}
+//    currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
+//    qDebug() << "ExcelWidget onProcessOfSearchFinished END"
+//             << currTime
+//             << this->thread()->currentThreadId();
+//}
 
 void ExcelWidget::onProcessOfOpenFinished()
 {
@@ -452,6 +454,7 @@ void ExcelWidget::onProcessOfOpenFinished()
                     ExcelSheet rows = data[sheetName];
                     _countRow.insert(sheetName, rows.size());
                     _countParsedRow.insert(sheetName, 0);
+                    _countRepatingRow.insert(sheetName, 0);
                     int nRow=0;
                     foreach (QStringList row, rows) {
                         if(nRow==0)
@@ -509,17 +512,44 @@ void ExcelWidget::onProcessOfOpenFinished()
 
 void ExcelWidget::onFounedAddress(QString sheetName, int nRow, Address addr)
 {
-    _data2[sheetName][nRow]=addr;
-    emit toDebug("", QString::number(nRow)+";"+addr.toCsv());
-    _views[sheetName]->setItemDelegateForRow(nRow, _delegateFounded);
-    int colSid = _mapHead[sheetName].value(STREET_ID);
+    emit toDebug(objectName(),
+                 QString::number(nRow)+";"+addr.toCsv());
+    nRow+=_countRepatingRow[sheetName];
+    int colSid = _mapHead[sheetName].value(STREET_ID); //номер столбца содержащего STREET_ID
     int colBid = _mapHead[sheetName].value(BUILD_ID);
-    TableModel *tm = _data[sheetName];
-    assert(tm);
-    tm->setData(tm->index(nRow, colSid),
-                addr.getStreetId());
-    tm->setData(tm->index(nRow, colBid),
-                addr.getBuildId());
+    if(_data2[sheetName].value(nRow).getBuildId()==0)
+    {
+        //значит данный адрес ранее не был найден (повторы отсутсвуют)
+        _data2[sheetName][nRow]=addr;
+        _views[sheetName]->setItemDelegateForRow(nRow, _delegateFounded);
+
+        TableModel *tm = _data[sheetName];
+        assert(tm);
+        tm->setData(tm->index(nRow, colSid),
+                    addr.getStreetId());
+        tm->setData(tm->index(nRow, colBid),
+                    addr.getBuildId());
+    }
+    else
+    {
+        _countRepatingRow[sheetName]++;
+        nRow++;
+        _data2[sheetName].insert(nRow,addr);
+        _insertedRowAfterSearch[sheetName]=nRow;
+        _views[sheetName]->setItemDelegateForRow(nRow-1, _delegateRepeatFounded);
+        _views[sheetName]->setItemDelegateForRow(nRow, _delegateRepeatFounded);
+        TableModel *tm = _data[sheetName];
+        assert(tm);
+        tm->insertRow(nRow);
+        qDebug() << "setRow: " << nRow << tm->getRow(nRow-1) << ":" << tm->setRow(nRow, tm->getRow(nRow-1));
+        tm->setData(tm->index(nRow, colSid),
+                    addr.getStreetId());
+        tm->setData(tm->index(nRow, colBid),
+                    addr.getBuildId());
+//        int col = _mapHead[sheetName].value(STREET);
+//        tm->setData(tm->index(nRow, col),
+//                    addr.getRawAddressString());
+    }
 //    emit toFile("", QString::number(nRow+1)+";"+addr.toCsv()+"\n");
 }
 
@@ -583,6 +613,11 @@ void ExcelWidget::onTableDataChanged(QModelIndex topLeft, QModelIndex bottomRigh
         const TableModel *model = qobject_cast<const TableModel *>(indx.model());
         assert(model);
         QString sheet(model->getName());
+        if(_insertedRowAfterSearch.contains(sheet)
+                && _insertedRowAfterSearch[sheet]==indx.row())
+        {
+            return;
+        }
         MapAddressElementPosition &map(_mapHead[sheet]);
         if(indx.row()>=_countParsedRow[sheet])
             return;
@@ -911,17 +946,26 @@ void ExcelWidget::onRowParsed(QString sheet, int nRow, Address a)
     if(_editedRow.contains(sheet) && _editedRow[sheet]==nRow)
     {
         _editedRow.remove(sheet);
-        _data2[sheet][nRow]=a; //excel
+        _data2[sheet][nRow]=a;
         onCurrentRowChanged();
     }
     else
     {
-        _data2[sheet].insert(nRow, a); //excel
-        _countParsedRow[sheet]++;
-        emit rowParsed(sheet, nRow);
-        if(_countParsedRow[sheet]>=_countRow[sheet])
-            emit sheetParsed(sheet);
+        if(_insertedRowAfterSearch.contains(sheet)
+                && _insertedRowAfterSearch[sheet]==nRow)
+        {
+            _insertedRowAfterSearch.remove(sheet);
+        }
+        else
+        {
+            _data2[sheet].insert(nRow, a);
+            _countParsedRow[sheet]++;
+            emit rowParsed(sheet, nRow);
+            if(_countParsedRow[sheet]>=_countRow[sheet])
+                emit sheetParsed(sheet);
+        }
     }
+
 }
 
 void ExcelWidget::onSheetParsed(QString sheet)
