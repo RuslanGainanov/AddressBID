@@ -40,9 +40,9 @@ DatabaseWidget::DatabaseWidget(QWidget *parent) :
 DatabaseWidget::~DatabaseWidget()
 {
     delete _ui;
+    delete _db;
     _thread.quit();
     _thread.wait();
-    delete _db;
 }
 
 void DatabaseWidget::readCsvBase(QString openFilename)
@@ -285,6 +285,11 @@ void DatabaseWidget::openExisting()
 void DatabaseWidget::clear()
 {
 
+}
+
+void DatabaseWidget::waitSearch()
+{
+    _thread.start();
 }
 
 void DatabaseWidget::viewInfo()

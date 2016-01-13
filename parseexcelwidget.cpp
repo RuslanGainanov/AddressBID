@@ -81,6 +81,10 @@ void ParseExcelWidget::onCurrentRowChanged(QString sheet,
     ui->lineEditAdditional->setText(str);
     str=data.value(LITERA, QString());
     ui->lineEditLiter->setText(str);
+    str=data.value(RAW_ADDR, QString());
+    if(str.isEmpty())
+        str="Адрес не найден";
+    ui->lineEditDatabaseAddr->setText(str);
 }
 
 void ParseExcelWidget::on_lineEditFSubj_returnPressed()
@@ -146,6 +150,7 @@ void ParseExcelWidget::saveData()
     else
         _data[TYPE_OF_FSUBJ]=ui->comboBoxTypeFSubj->currentText();
     _data[TYPE_OF_CITY1]=ui->lineEditTypeOfCity->text();
+    _data[TYPE_OF_CITY2]=ui->lineEditTypeOfCity2->text();
     _data[TYPE_OF_STREET]=ui->lineEditTypeOfStreet->text();
     _data[DISTRICT]=ui->lineEditDistrict->text();
     _data[STREET]=ui->lineEditStreet->text();
@@ -154,6 +159,7 @@ void ParseExcelWidget::saveData()
     _data[FSUBJ]=ui->lineEditFSubj->text();
     _data[ADDITIONAL]=ui->lineEditAdditional->text();
     _data[CITY1]=ui->lineEditCity->text();
+    _data[CITY2]=ui->lineEditCity2->text();
     _data[LITERA]=ui->lineEditLiter->text();
     emit dataChanged(_sheet, _nRow, _data);
 }
@@ -162,15 +168,18 @@ void ParseExcelWidget::clearData()
 {
     ui->comboBoxTypeFSubj->setCurrentIndex(0);
     ui->lineEditTypeOfCity->clear();
+    ui->lineEditTypeOfCity2->clear();
     ui->lineEditTypeOfStreet->clear();
     ui->lineEditDistrict->clear();
     ui->lineEditStreet->clear();
     ui->lineEditBuild->clear();
     ui->lineEditKorp->clear();
     ui->lineEditCity->clear();
+    ui->lineEditCity2->clear();
     ui->lineEditFSubj->clear();
     ui->lineEditAdditional->clear();
     ui->lineEditLiter->clear();
+    ui->lineEditDatabaseAddr->setText(QString("Адрес не найден"));
 }
 
 void ParseExcelWidget::on__pushButtonRemove_clicked()

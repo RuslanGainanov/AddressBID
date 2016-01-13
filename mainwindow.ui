@@ -30,14 +30,6 @@
     </item>
     <item row="1" column="0">
      <layout class="QGridLayout" name="_gridLayoutButtons">
-      <item row="0" column="0">
-       <widget class="QPushButton" name="_pushButtonOpenBase">
-        <property name="text">
-         <string>Открыть 
-базу</string>
-        </property>
-       </widget>
-      </item>
       <item row="0" column="2">
        <widget class="QPushButton" name="_pushButtonSearch">
         <property name="text">
@@ -45,10 +37,11 @@
         </property>
        </widget>
       </item>
-      <item row="0" column="4">
-       <widget class="QPushButton" name="_pushButtonSave">
+      <item row="0" column="0">
+       <widget class="QPushButton" name="_pushButtonOpenBase">
         <property name="text">
-         <string>Сохранить</string>
+         <string>Открыть 
+базу</string>
         </property>
        </widget>
       </item>
@@ -67,14 +60,6 @@
         </property>
        </widget>
       </item>
-      <item row="0" column="5">
-       <widget class="QPushButton" name="_pushButtonDeleteRows">
-        <property name="text">
-         <string>Удалить 
-строки</string>
-        </property>
-       </widget>
-      </item>
       <item row="0" column="7">
        <spacer name="horizontalSpacer">
         <property name="orientation">
@@ -87,6 +72,20 @@
          </size>
         </property>
        </spacer>
+      </item>
+      <item row="0" column="5">
+       <widget class="QPushButton" name="_pushButtonWait">
+        <property name="text">
+         <string>Ускорить поиск</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="4">
+       <widget class="QPushButton" name="_pushButtonSave">
+        <property name="text">
+         <string>Сохранить</string>
+        </property>
+       </widget>
       </item>
      </layout>
     </item>

@@ -40,10 +40,8 @@ ExcelWidget::ExcelWidget(QWidget *parent) :
 //            this, SLOT(onDebug(QString,QString)));
 
     connect(this, SIGNAL(toFile(QString,QString)), SLOT(onFile(QString,QString)));
+    connect(this, SIGNAL(searchFinished(QString)), SLOT(onSearchFinished(QString)));
 
-    emit toDebug("test","test");
-
-    //old
     _ui->_lineEditFilename->hide();
 
 //    connect(this, SIGNAL(parserFinished()),
@@ -55,8 +53,6 @@ ExcelWidget::ExcelWidget(QWidget *parent) :
             this, SLOT(onParsedDataChanged(QString,int,MapAEValue)));
     connect(this, SIGNAL(currentRowChanged(QString,int,MapAEValue)),
             _ui->_parseWidget, SLOT(onCurrentRowChanged(QString,int,MapAEValue)));
-
-//    parse();
 }
 
 ExcelWidget::~ExcelWidget()
@@ -91,6 +87,8 @@ void ExcelWidget::open()
     if(str.isEmpty())
         return;
     _ui->_lineEditFilename->setText(str);
+    emit toDebug(objectName(),
+                 QString("Открывается файл '%1'").arg(str));
     runThreadOpen(str);
 }
 
@@ -138,10 +136,10 @@ QVariant ExcelWidget::openCsvFile(QString filename, int maxCountRows)
 
 QVariant ExcelWidget::openExcelFile(QString filename, int maxCountRows)
 {
-    QString currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
-    qDebug() << "openExcelFile BEGIN"
-             << QThread::currentThread()->currentThreadId()
-             << currTime;
+//    QString currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
+//    qDebug() << "openExcelFile BEGIN"
+//             << QThread::currentThread()->currentThreadId()
+//             << currTime;
 
     HRESULT h_result = CoInitializeEx(NULL, COINIT_MULTITHREADED);
     switch(h_result)
@@ -270,16 +268,10 @@ QVariant ExcelWidget::openExcelFile(QString filename, int maxCountRows)
     workbooks->clear();
     excel->dynamicCall("Quit()");
 
-    qDebug() << "openExcelFile END"
-             << QThread::currentThread()->currentThreadId()
-             << QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
+//    qDebug() << "openExcelFile END"
+//             << QThread::currentThread()->currentThreadId()
+//             << QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
     return QVariant::fromValue(data);
-}
-
-void ExcelWidget::parse()
-{
-    qDebug() << "!!!!" << "parse";
-//    runThreadParsing();
 }
 
 void ExcelWidget::search()
@@ -288,89 +280,38 @@ void ExcelWidget::search()
     qDebug() << "ExcelWidget search BEGIN"
              << currTime
              << this->thread()->currentThreadId();
-
-//    qDebug() << "ExcelWidget search" << this->thread()->currentThreadId();
-//    assert(_db);
     if(_data.isEmpty())
         return;
     if(_data2.isEmpty())
-    {
         return;
-    }
 
     QString sheetName =
             _ui->_tabWidget->tabText(
                 _ui->_tabWidget->currentIndex()
                 );
-    _searchingSheetName=sheetName;
-    if(_data2.contains(_searchingSheetName))
+    if(_data2.contains(sheetName))
     {
+        _countRepatingRow.remove(sheetName);
         for(int i=0; i<_data2[sheetName].size(); i++)
         {
             if(!_data2[sheetName].at(i).isEmpty()
                     && _data2[sheetName].at(i).getBuildId()==0
                    /* && _data2[sheetName].at(i).getStreetId()==0*/)
+            {
+                _searchingRows[sheetName].insert(i);
+                emit toDebug(objectName(), QString("Поиск строки %1").arg(QString::number(i)));
                 emit findRowInBase(sheetName, i, _data2[sheetName].at(i));
-//            if(i%200==0)
-                emit toDebug(objectName(), QString("Обработано строк %1").arg(QString::number(i+1)));
+            }
         }
     }
     else
     {
         emit toDebug(objectName(),
-                     "_data2 not contains "+_searchingSheetName);
+                     "_data2 not contains "+sheetName);
     }
 
-    //old !!!!
-//    QProgressDialog *dialog = new QProgressDialog;
-//    dialog->setWindowTitle(trUtf8("Ищем..."));
-//    dialog->setLabelText(trUtf8("Производится поиск строк из вкладки \"%1\". Ожидайте ...")
-//                         .arg(sheetName));
-//    dialog->setCancelButtonText(trUtf8("Отмена"));
-
-////    QObject::connect(&_futureWatcherS, SIGNAL(finished()),
-////                     this, SLOT(onProcessOfSearchFinished()));
-//    QObject::connect(dialog, SIGNAL(canceled()),
-//                     &_futureWatcherS, SLOT(cancel()));
-//    QObject::connect(&_futureWatcherS, SIGNAL(progressRangeChanged(int,int)),
-//                     dialog, SLOT(setRange(int,int)));
-//    QObject::connect(&_futureWatcherS, SIGNAL(progressValueChanged(int)),
-//                     dialog, SLOT(setValue(int)));
-//    QObject::connect(&_futureWatcherS, SIGNAL(finished()),
-//                     dialog, SLOT(deleteLater()));
-
-//    TableModel *tm = _data.value(sheetName, 0);
-//    assert(tm);
-//    ExcelSheet es = tm->getExcelSheet();
-//    ListAddress listAddr;
-//    MapAddressElementPosition addrPos = _mapPHead.value(sheetName);
-//    MapAddressElementPosition addrPosOrig = _mapHead.value(sheetName);
-//    foreach (QStringList row, es) {
-//        Address a;
-//        a.setTypeOfStreet(row.at(addrPos.value(TYPE_OF_STREET)));
-//        a.setStreet(row.at(addrPos.value(STREET)));
-//        a.setBuild(row.at(addrPos.value(BUILD)));
-//        a.setKorp(row.at(addrPos.value(KORP)));
-//        a.setLitera(row.at(addrPos.value(LITERA)));
-//        a.setTypeOfCity1(row.at(addrPos.value(TYPE_OF_CITY1)));
-//        a.setTypeOfCity2(row.at(addrPos.value(TYPE_OF_CITY2)));
-//        a.setCity2(row.at(addrPos.value(CITY2)));
-//        a.setCity1(row.at(addrPos.value(CITY1)));
-//        a.setStreetId(row.at(addrPosOrig.value(STREET_ID)));
-//        a.setBuildId(row.at(addrPosOrig.value(BUILD_ID)));
-//        //TODO add other columns
-//        listAddr.append(a);
-//    }
-
-//    QFuture<ListAddress> f1 = QtConcurrent::run(_db,
-//                                             &Database::search,
-//                                             sheetName,
-//                                             listAddr);
-//    // Start the computation.
-//    _futureWatcherS.setFuture(f1);
-//    dialog->exec();
-
-    emit searching();
+    if(!_searchingRows.value(sheetName).isEmpty())
+        emit searching(sheetName);
     currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
     qDebug() << "ExcelWidget search END"
              << currTime
@@ -490,6 +431,7 @@ void ExcelWidget::onProcessOfOpenFinished()
                         this, SLOT(onTableDataChanged(QModelIndex,QModelIndex,QVector<int>)));
                 _countRow.insert(sheetName, data.size());
                 _countParsedRow.insert(sheetName, 0);
+                _countRepatingRow.insert(sheetName, 0);
                 int nRow=0;
                 foreach (QString line, data) {
                     QStringList row = line.split(';');
@@ -513,43 +455,58 @@ void ExcelWidget::onProcessOfOpenFinished()
 void ExcelWidget::onFounedAddress(QString sheetName, int nRow, Address addr)
 {
     emit toDebug(objectName(),
-                 QString::number(nRow)+";"+addr.toCsv());
+                 QString("Найдена строка %1:").arg(nRow)+"\r\n"+addr.toCsv());
+    if(_searchingRows.contains(sheetName))
+    {
+        _searchingRows[sheetName].remove(nRow);
+        if(_searchingRows.value(sheetName).isEmpty())
+            emit searchFinished(sheetName);
+    }
+
     nRow+=_countRepatingRow[sheetName];
-    int colSid = _mapHead[sheetName].value(STREET_ID); //номер столбца содержащего STREET_ID
-    int colBid = _mapHead[sheetName].value(BUILD_ID);
+    TableModel *tm = _data[sheetName];
+    TableView *view = _views[sheetName];
+    assert(tm);
+    assert(view);
+
     if(_data2[sheetName].value(nRow).getBuildId()==0)
     {
         //значит данный адрес ранее не был найден (повторы отсутсвуют)
         _data2[sheetName][nRow]=addr;
         _views[sheetName]->setItemDelegateForRow(nRow, _delegateFounded);
-
-        TableModel *tm = _data[sheetName];
-        assert(tm);
-        tm->setData(tm->index(nRow, colSid),
-                    addr.getStreetId());
-        tm->setData(tm->index(nRow, colBid),
-                    addr.getBuildId());
     }
     else
     {
         _countRepatingRow[sheetName]++;
+        _countParsedRow[sheetName]++;
         nRow++;
         _data2[sheetName].insert(nRow,addr);
-        _insertedRowAfterSearch[sheetName]=nRow;
-        _views[sheetName]->setItemDelegateForRow(nRow-1, _delegateRepeatFounded);
-        _views[sheetName]->setItemDelegateForRow(nRow, _delegateRepeatFounded);
-        TableModel *tm = _data[sheetName];
-        assert(tm);
+//        _insertedRowAfterSearch[sheetName]=nRow;
         tm->insertRow(nRow);
-        qDebug() << "setRow: " << nRow << tm->getRow(nRow-1) << ":" << tm->setRow(nRow, tm->getRow(nRow-1));
-        tm->setData(tm->index(nRow, colSid),
-                    addr.getStreetId());
-        tm->setData(tm->index(nRow, colBid),
-                    addr.getBuildId());
-//        int col = _mapHead[sheetName].value(STREET);
-//        tm->setData(tm->index(nRow, col),
-//                    addr.getRawAddressString());
+        tm->setRow(nRow, tm->getRow(nRow-1));
+        view->setItemDelegateForRow(nRow-1, _delegateRepeatFounded); //меняем цвет у предыдушей строки для которой найден повтор
+        for(int i=tm->rowCount()-1; i>nRow; i--)
+        {
+            QAbstractItemDelegate *pastDelegate=view->itemDelegateForRow(i-1);
+            if(pastDelegate)
+                view->setItemDelegateForRow(i, pastDelegate);
+            else
+                view->setItemDelegateForRow(i, view->itemDelegate());
+        }
+        _views[sheetName]->setItemDelegateForRow(nRow, _delegateRepeatFounded);
     }
+    tm->setData(tm->index(nRow, _mapHead[sheetName].value(STREET_ID)),
+                addr.getStreetId());
+    tm->setData(tm->index(nRow, _mapHead[sheetName].value(BUILD_ID)),
+                addr.getBuildId());
+    tm->setData(tm->index(nRow, _mapPHead[sheetName].value(RAW_ADDR)),
+                addr.getRawAddressStringWithoutID());
+
+//    if(nRow==tm->rowCount()-1)
+//    {
+//        emit searchFinished(sheetName);
+//    }
+
 //    emit toFile("", QString::number(nRow+1)+";"+addr.toCsv()+"\n");
 }
 
@@ -559,8 +516,18 @@ void ExcelWidget::onNotFounedAddress(QString sheetName, int nRow, Address addr)
     Q_UNUSED(sheetName);
     Q_UNUSED(addr);
     emit toDebug("", QString::number(nRow)+";!NOT_FOUND!");
-//    emit toFile("", QString::number(nRow+1)+";!NOT_FOUND!"+"\n");
     _views[sheetName]->setItemDelegateForRow(nRow, _delegateNotFounded);
+    if(_searchingRows.contains(sheetName))
+    {
+        _searchingRows[sheetName].remove(nRow);
+        if(_searchingRows.value(sheetName).isEmpty())
+            emit searchFinished(sheetName);
+    }
+//    if(nRow==_data[sheetName]->rowCount()-1)
+//    {
+//        emit searchFinished(sheetName);
+//    }
+//    emit toFile("", QString::number(nRow+1)+";!NOT_FOUND!"+"\n");
 }
 
 void ExcelWidget::onRemoveRow(QString sheet, int nRow)
@@ -584,21 +551,6 @@ void ExcelWidget::onRemoveRow(QString sheet, int nRow)
         qDebug() << false;
 }
 
-void ExcelWidget::onCurrentRowChanged()
-{
-//    qDebug() << "ExcelWidget onCurrentRowChanged";
-    QString sheet = _ui->_tabWidget->tabText(_ui->_tabWidget->currentIndex());
-    if(_data.isEmpty())
-        return;
-    TableModel *tm = _data.value(sheet, 0);
-    assert(tm);
-    ItemSelectionModel *ism = _selections.value(sheet, 0);
-    int nRow = ism->selectedIndexes().first().row();
-    QStringList row = tm->getRow(nRow);
-
-    onCurrentRowChanged(sheet, nRow, row);
-}
-
 void ExcelWidget::onTableDataChanged(QModelIndex topLeft, QModelIndex bottomRight, QVector<int> roles)
 {
     Q_UNUSED(bottomRight);
@@ -613,20 +565,23 @@ void ExcelWidget::onTableDataChanged(QModelIndex topLeft, QModelIndex bottomRigh
         const TableModel *model = qobject_cast<const TableModel *>(indx.model());
         assert(model);
         QString sheet(model->getName());
-        if(_insertedRowAfterSearch.contains(sheet)
-                && _insertedRowAfterSearch[sheet]==indx.row())
-        {
-            return;
-        }
+//        if(_insertedRowAfterSearch.contains(sheet)
+//                && _insertedRowAfterSearch[sheet]==indx.row())
+//        {
+//            return;
+//        }
         MapAddressElementPosition &map(_mapHead[sheet]);
         if(indx.row()>=_countParsedRow[sheet])
             return;
         bool editAddressElement=false;
         foreach (AddressElements ae, ListAddressElements) {
-            if(ae==STREET_ID || ae==BUILD_ID)
+            if(ae==STREET_ID || ae==BUILD_ID /*|| ae==RAW_ADDR*/)
                 continue;
-            if(indx.column()==map.value(ae))
+            if(indx.column()==map.value(ae, -1))
+            {
                 editAddressElement=true;
+                break;
+            }
         }
         if(editAddressElement)
         {
@@ -646,10 +601,29 @@ void ExcelWidget::onTableDataChanged(QModelIndex topLeft, QModelIndex bottomRigh
             col=map.value(BUILD_ID);
             m->setData(m->index(indx.row(), col),
                         QVariant::fromValue(QString()));
+            col=_mapPHead[sheet].value(RAW_ADDR);
+            m->setData(m->index(indx.row(), col),
+                        QVariant::fromValue(QString()));
 
             emit rowReaded(sheet, indx.row(), model->getRow(indx.row()));
         }
     }
+}
+
+
+void ExcelWidget::onCurrentRowChanged()
+{
+//    qDebug() << "ExcelWidget onCurrentRowChanged";
+    QString sheet = _ui->_tabWidget->tabText(_ui->_tabWidget->currentIndex());
+    if(_data.isEmpty())
+        return;
+    TableModel *tm = _data.value(sheet, 0);
+    assert(tm);
+    ItemSelectionModel *ism = _selections.value(sheet, 0);
+    int nRow = ism->selectedIndexes().first().row();
+    QStringList row = tm->getRow(nRow);
+
+    onCurrentRowChanged(sheet, nRow, row);
 }
 
 void ExcelWidget::onCurrentRowChanged(QString sheet, int nRow,
@@ -699,7 +673,7 @@ void ExcelWidget::onParsedDataChanged(QString sheet, int nRow,
 
 void ExcelWidget::runThreadOpen(QString openFilename)
 {
-    qDebug() << "ExcelWidget runThreadOpen" << this->thread()->currentThreadId();
+//    qDebug() << "ExcelWidget runThreadOpen" << this->thread()->currentThreadId();
 
     QString name = QFileInfo(openFilename).fileName();
 
@@ -735,37 +709,37 @@ void ExcelWidget::runThreadOpen(QString openFilename)
     emit working();
 }
 
-void ExcelWidget::runThreadParsing()
-{    
-    if(_parser)
-        delete _parser;
-    if(_thread)
-    {
-        _thread->quit();
-        _thread->wait();
-        delete _thread;
-    }
-    _parser = new XlsParser;
-    _thread = new QThread;
-//    _parser->moveToThread(_thread);
-    connect(this, SIGNAL(rowReaded(QString,int,QStringList)),
-            _parser, SLOT(onReadRow(QString,int,QStringList)));
-    connect(this, SIGNAL(headReaded(QString,MapAddressElementPosition)),
-            _parser, SLOT(onReadHead(QString,MapAddressElementPosition)));
-    connect(this, SIGNAL(isOneColumn(bool)),
-            _parser, SLOT(onIsOneColumn(bool)));
-    connect(_parser, SIGNAL(rowParsed(QString,int,Address)),
-            this, SLOT(onRowParsed(QString,int,Address)));
-//    connect(_parser, SIGNAL(headParsed(QString,MapAddressElementPosition)),
-//            this, SLOT(onHeadParsed(QString,MapAddressElementPosition)));
-    connect(_parser, SIGNAL(sheetParsed(QString)),
-            this, SLOT(onSheetParsed(QString)));
-    connect(_thread, SIGNAL(finished()),
-            _parser, SLOT(deleteLater()));
-    connect(_thread, SIGNAL(finished()),
-            _thread, SLOT(deleteLater()));
-    _thread->start();
-}
+//void ExcelWidget::runThreadParsing()
+//{
+//    if(_parser)
+//        delete _parser;
+//    if(_thread)
+//    {
+//        _thread->quit();
+//        _thread->wait();
+//        delete _thread;
+//    }
+//    _parser = new XlsParser;
+//    _thread = new QThread;
+////    _parser->moveToThread(_thread);
+//    connect(this, SIGNAL(rowReaded(QString,int,QStringList)),
+//            _parser, SLOT(onReadRow(QString,int,QStringList)));
+//    connect(this, SIGNAL(headReaded(QString,MapAddressElementPosition)),
+//            _parser, SLOT(onReadHead(QString,MapAddressElementPosition)));
+//    connect(this, SIGNAL(isOneColumn(bool)),
+//            _parser, SLOT(onIsOneColumn(bool)));
+//    connect(_parser, SIGNAL(rowParsed(QString,int,Address)),
+//            this, SLOT(onRowParsed(QString,int,Address)));
+////    connect(_parser, SIGNAL(headParsed(QString,MapAddressElementPosition)),
+////            this, SLOT(onHeadParsed(QString,MapAddressElementPosition)));
+//    connect(_parser, SIGNAL(sheetParsed(QString)),
+//            this, SLOT(onSheetParsed(QString)));
+//    connect(_thread, SIGNAL(finished()),
+//            _parser, SLOT(deleteLater()));
+//    connect(_thread, SIGNAL(finished()),
+//            _thread, SLOT(deleteLater()));
+//    _thread->start();
+//}
 
 void ExcelWidget::onRowRead(const QString &sheet, const int &nRow, QStringList &row)
 {
@@ -951,19 +925,19 @@ void ExcelWidget::onRowParsed(QString sheet, int nRow, Address a)
     }
     else
     {
-        if(_insertedRowAfterSearch.contains(sheet)
-                && _insertedRowAfterSearch[sheet]==nRow)
-        {
-            _insertedRowAfterSearch.remove(sheet);
-        }
-        else
-        {
+//        if(_insertedRowAfterSearch.contains(sheet)
+//                && _insertedRowAfterSearch[sheet]==nRow)
+//        {
+//            _insertedRowAfterSearch.remove(sheet);
+//        }
+//        else
+//        {
             _data2[sheet].insert(nRow, a);
             _countParsedRow[sheet]++;
             emit rowParsed(sheet, nRow);
             if(_countParsedRow[sheet]>=_countRow[sheet])
                 emit sheetParsed(sheet);
-        }
+//        }
     }
 
 }
@@ -976,12 +950,12 @@ void ExcelWidget::onSheetParsed(QString sheet)
     emit sheetParsed(sheet);
 }
 
-void ExcelWidget::onFinishParser()
+void ExcelWidget::onSearchFinished(QString sheet)
 {
     emit toDebug(objectName(),
-                 "ExcelWidget::onFinishParser()"
+                 "ExcelWidget::onSearchFinished(): "+sheet
                  );
-    _thread->quit();
+
 }
 
 void ExcelWidget::onNotFoundMandatoryColumn(QString sheet, AddressElements ae, QString colName)

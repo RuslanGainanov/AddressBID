@@ -255,7 +255,7 @@ void Database::selectAddress(QString sheet, int nRow, Address a)
                   .arg(a.getBuild())
                   .arg(a.getKorp())
                   .arg(a.getLitera());
-    qDebug().noquote() << "Database::selectAddress" << str;
+//    qDebug().noquote() << "Database::selectAddress" << str;
     QSqlQuery query;
     if (!query.exec(str))
     {

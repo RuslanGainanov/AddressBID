@@ -43,7 +43,6 @@ public slots:
     void openBase(QString filename);
     void removeBase(QString filename);
 
-//    ListAddress search(QString sheetName, ListAddress addr);
     void selectAddress(QString sheet, int nRow, Address a);
 
     void insertListAddressWithCheck(ListAddress &la);

@@ -367,6 +367,14 @@ QString Address::getRawAddressString() const
     return _rawAddress.join("\";\"").insert(0,'\"').append('\"');
 }
 
+QString Address::getRawAddressStringWithoutID() const
+{
+    QStringList raw(_rawAddress);
+    raw.removeAt(2);
+    raw.removeAt(0);
+    return raw.join("\";\"").insert(0,'\"').append('\"');
+}
+
 QStringList Address::getRawAddress() const
 {
     return _rawAddress;

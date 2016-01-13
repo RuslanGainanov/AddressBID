@@ -133,6 +133,7 @@ const QMap<AddressElements, QString> MapColumnParsedNames {
     {KORP, "!P_KORP"},
     {LITERA, "!P_LITERA"},
     {ADDITIONAL, "!P_ADDITIONAL"},
+    {RAW_ADDR, "!P_RAW_ADDR"},
 
 };
 

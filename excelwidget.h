@@ -76,7 +76,6 @@ public:
 
 public slots:
     void open();
-    void parse();
     void search();
     void closeLog();
 
@@ -93,7 +92,8 @@ signals:
     void working(); //начало чтения файла
     void finished(); //чтение файла окончено
 
-    void searching();
+    void searching(QString sheet);
+    void searchFinished(QString sheet); //поиск в базе окончен
 
     void toDebug(QString objName, QString mes);
     void toFile(QString objName, QString mes);
@@ -114,7 +114,7 @@ private slots:
     //parser signal-slots
     void onRowParsed(QString sheet, int nRow, Address a);
     void onSheetParsed(QString sheet);
-    void onFinishParser();
+    void onSearchFinished(QString sheet);
     void onNotFoundMandatoryColumn(QString sheet, AddressElements ae, QString colName);
 
 //    void onProcessOfSearchFinished();
@@ -149,8 +149,9 @@ private:
     QHash<QString, int> _countRow;
     QHash<QString, int> _editedRow; //редактируемая пользователем строка
     QHash<QString, int> _countRepatingRow; //количество повторяющихся строк (строк для которых найдено более одного совпадения в базе)
+    QHash<QString, QSet<int> > _searchingRows; //номер строк, которые ищутся в данный момент в БД
     QHash<QString, int> _insertedRowAfterSearch; //номер вставляемой строки при повторе
-    QString _searchingSheetName;
+//    QString _searchingSheetName;
     SimpleDelegate *_delegateFounded;
     SimpleDelegate *_delegateNotFounded;
     SimpleDelegate *_delegateRepeatFounded;
@@ -162,7 +163,7 @@ private:
     QVariant openExcelFile(QString filename, int maxCount);
     QVariant openCsvFile(QString filename, int maxCountRows);
 
-    void runThreadParsing();
+//    void runThreadParsing();
     void runThreadOpen(QString openFilename);
 };
 

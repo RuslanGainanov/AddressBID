@@ -17,6 +17,9 @@ MainWindow::MainWindow(QWidget *parent) :
     Database *db = _dbw->getDatabase();
     _excel = _ui->_excelWidget;
 
+    connect(this, SIGNAL(toDebug(QString,QString)),
+            _ui->_debugWidget, SLOT(add(QString,QString)));
+
     connect(_ui->_actionOpenBase, SIGNAL(triggered()),
             this, SLOT(onBaseOpenTriggered()));
     connect(_ui->_actionOpenFile, SIGNAL(triggered()),
@@ -45,11 +48,16 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(db, SIGNAL(addressNotFounded(QString,int,Address)),
             _excel, SLOT(onNotFounedAddress(QString,int,Address)));
 
+
+    connect(_excel, &ExcelWidget::searching,
+            this, &MainWindow::onStartSearching);
+    connect(_excel, &ExcelWidget::searchFinished,
+            this, &MainWindow::onFinishSearching);
+
 //        _dbw->openExisting();
 //        _dbw->show();
 //    _ui->_debugWidget->hide();
     _ui->_pushButtonOpenBase->hide();
-    _ui->_pushButtonDeleteRows->hide();
     _ui->_pushButtonCheckRows->hide();
     _ui->_progressBar->hide();
     setWindowTitle(trUtf8("RT: Обработчик тендерных заявок"));
@@ -101,6 +109,24 @@ void MainWindow::on__pushButtonSearch_clicked()
     _excel->search();
 }
 
+void MainWindow::onStartSearching(const QString &sheet)
+{
+    _ui->_pushButtonSearch->setEnabled(false);
+    QString mes=QString("Поиск в документе '%1' начат").arg(sheet);
+    _ui->statusBar->showMessage(mes, 3000);
+    emit toDebug(objectName(),
+                 mes);
+}
+
+void MainWindow::onFinishSearching(const QString &sheet)
+{
+    _ui->_pushButtonSearch->setEnabled(true);
+    QString mes=QString("Поиск в документе '%1' завершен").arg(sheet);
+    _ui->statusBar->showMessage(mes, 3000);
+    emit toDebug(objectName(),
+                 mes);
+}
+
 void MainWindow::save()
 {
     QString filter="Excel (*.csv *.xls *.xlsx)";
@@ -120,4 +146,9 @@ void MainWindow::save()
         _ui->statusBar->showMessage("Успешно сохранено", 5000);
         return;
     }
+}
+
+void MainWindow::on__pushButtonWait_clicked()
+{
+    QThread::yieldCurrentThread();
 }

@@ -76,6 +76,7 @@ public:
     void setRawAddress(const QStringList &row);
     QStringList getRawAddress() const;
     QString getRawAddressString() const;
+    QString getRawAddressStringWithoutID() const;
 
     void setCorrect(const bool c);
     bool isCorrect() const;

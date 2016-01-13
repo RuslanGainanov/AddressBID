@@ -36,6 +36,11 @@ bool TableModel::setRow(const int &nRow, const QStringList &row)
             || nRow<0 || nRow>=rowCount())
         return false;
     m_rowList[nRow]=row;
+//    for(int i=0; i<row.size(); i++)
+//    {
+//        m_rowList[nRow][i] = row.at(i);
+//        emit dataChanged(index(nRow, i), index(nRow, i));
+//    }
     return true;
 }
 
@@ -49,9 +54,12 @@ QVariant TableModel::data(const QModelIndex& index, int nRole) const
     if (!index.isValid()) {
         return QVariant();
     }
-    return (nRole == Qt::DisplayRole || nRole == Qt::EditRole)
-           ? m_rowList.at(index.row()).at(index.column())
-           : QVariant();
+    if(nRole == Qt::DisplayRole || nRole == Qt::EditRole)
+    {
+        return m_rowList.at(index.row()).at(index.column());
+    }
+    else
+        return QVariant();
 }
 
 bool TableModel::setData(const QModelIndex& index,
@@ -59,11 +67,16 @@ bool TableModel::setData(const QModelIndex& index,
              int                nRole
             )
 {
-    if (index.isValid() && nRole == Qt::EditRole) {
-        m_rowList[index.row()][index.column()] = value.toString();
-        emit dataChanged(index, index);
-        return true;
+    if (index.isValid())
+    {
+        if(nRole == Qt::EditRole)
+        {
+            m_rowList[index.row()][index.column()] = value.toString();
+            emit dataChanged(index, index);
+            return true;
+        }
     }
+
 //    qDebug() << "setData index not valid" << index.data();
     return false;
 }

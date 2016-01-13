@@ -35,6 +35,7 @@ public slots:
     void openExisting();
     void clear();
     void viewInfo();
+    void waitSearch();
 
 private slots:
     void onReadRow(int row);
