@@ -29,6 +29,8 @@ MainWindow::MainWindow(QWidget *parent) :
             _ui->_debugWidget, SLOT(add(QString,QString)));
     connect(_excel, SIGNAL(toDebug(QString,QString)),
             _ui->_debugWidget, SLOT(add(QString,QString)));
+    connect(_excel, SIGNAL(messageReady(QString)),
+            this, SLOT(onMessageReady(QString)));
 
     connect(_excel, SIGNAL(errorOccured(QString,int,QString)),
             this, SLOT(onErrorOccured(QString,int,QString)));
@@ -56,7 +58,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 //        _dbw->openExisting();
 //        _dbw->show();
-//    _ui->_debugWidget->hide();
+    _ui->_debugWidget->hide();
     _ui->_pushButtonOpenBase->hide();
     _ui->_pushButtonCheckRows->hide();
     _ui->_progressBar->hide();
@@ -90,6 +92,11 @@ void MainWindow::onErrorOccured(QString nameObject, int code, QString errorDesc)
     Q_UNUSED(nameObject);
     Q_UNUSED(code);
     _ui->statusBar->showMessage(errorDesc, 5000);
+}
+
+void MainWindow::onMessageReady(QString mes)
+{
+    _ui->statusBar->showMessage(mes, 4000);
 }
 
 void MainWindow::on__pushButtonOpen_clicked()
@@ -129,23 +136,7 @@ void MainWindow::onFinishSearching(const QString &sheet)
 
 void MainWindow::save()
 {
-    QString filter="Excel (*.csv *.xls *.xlsx)";
-    QString str =
-            QFileDialog::getSaveFileName(this,
-                                         trUtf8("Укажите куда сохранить результаты"),
-                                         "",
-                                         filter);
-
-    if(str.isEmpty())
-    {
-        _ui->statusBar->showMessage("Ошибка сохранения", 5000);
-        return;
-    }
-    else
-    {
-        _ui->statusBar->showMessage("Успешно сохранено", 5000);
-        return;
-    }
+    _excel->save();
 }
 
 void MainWindow::on__pushButtonWait_clicked()

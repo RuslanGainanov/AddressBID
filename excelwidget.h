@@ -29,7 +29,7 @@ typedef QList< Address > ListAddress;
 
 #define HIDE_PARSED_COLUMNS 1
 
-const int MAX_OPEN_IN_ROWS=10;
+const int MAX_OPEN_IN_ROWS=1000;
 const QString FoundedColor = "#33FF66"; //цвет строки для которой найден BID в базе
 const QString NotFoundedColor = "#FFA07A"; //цвет строки для которой не найден BID в базе
 const QString RepeatFoundedColor = "#FFCC33"; //цвет строки для которой найдено >1 BID в базе
@@ -73,11 +73,13 @@ class ExcelWidget : public QWidget
 public:
     explicit ExcelWidget(QWidget *parent = 0);
     ~ExcelWidget();
+    QString getCurrentTab();
 
 public slots:
     void open();
     void search();
     void closeLog();
+    bool save();
 
 signals:
     void headReaded(QString sheet, MapAddressElementPosition head);
@@ -89,11 +91,14 @@ signals:
     void rowParsed(QString sheet, int row);
     void sheetParsed(QString sheet);
 
-    void working(); //начало чтения файла
-    void finished(); //чтение файла окончено
+    void opening(); //начало чтения файла
+    void openFinished(); //чтение файла окончено
 
-    void searching(QString sheet);
+    void searching(QString sheet); //поиск начат
     void searchFinished(QString sheet); //поиск в базе окончен
+
+    void saving(QString sheet, QString file);
+    void saveFinished(QString sheet, QString file);
 
     void toDebug(QString objName, QString mes);
     void toFile(QString objName, QString mes);
@@ -163,7 +168,10 @@ private:
     QVariant openExcelFile(QString filename, int maxCount);
     QVariant openCsvFile(QString filename, int maxCountRows);
 
-//    void runThreadParsing();
+    bool saveToCsv(const QString &filename, const QString &sheet);
+    bool saveToExcel(const QString &filename, const QString &sheetName);
+
+    bool runThreadSave(const QString &filename, const QString &sheetName);
     void runThreadOpen(QString openFilename);
 };
 
