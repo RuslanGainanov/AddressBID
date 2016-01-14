@@ -39,12 +39,12 @@ private slots:
     void on__pushButtonOpen_clicked();
     void on__pushButtonOpenBase_clicked();
     void on__pushButtonSearch_clicked();
+    void on__pushButtonWait_clicked();
+    void on__pushButtonCloseTab_clicked();
 
     void save();
     void onStartSearching(const QString &sheet);
     void onFinishSearching(const QString &sheet);
-
-    void on__pushButtonWait_clicked();
 
 private:
     Ui::MainWindow *_ui;

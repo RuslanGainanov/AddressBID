@@ -79,6 +79,7 @@ public slots:
     void open();
     void search();
     void closeLog();
+    void closeTab();
     bool save();
 
 signals:
@@ -97,8 +98,8 @@ signals:
     void searching(QString sheet); //поиск начат
     void searchFinished(QString sheet); //поиск в базе окончен
 
-    void saving(QString sheet, QString file);
-    void saveFinished(QString sheet, QString file);
+    void saving(QString sheet, QString file); //сохранение начато
+    void saveFinished(QString sheet, QString file); //сохранение завершено
 
     void toDebug(QString objName, QString mes);
     void toFile(QString objName, QString mes);
@@ -144,7 +145,7 @@ private:
     QHash<QString, TableModel *> _data;
     QHash<QString, TableView *>  _views;
     QHash<QString, ItemSelectionModel *>  _selections;
-    QHash<QString, int>          _sheetIndex;
+//    QHash<QString, int>          _sheetIndex;
     QFutureWatcher<QVariant>     _futureWatcher;
     QFutureWatcher<ListAddress>     _futureWatcherS;
     QMap<QString, MapAddressElementPosition> _mapHead;
@@ -165,6 +166,7 @@ private:
 //    QThread *_thread;
     QFile _logFile;
     QTextStream _logStream;
+
     QVariant openExcelFile(QString filename, int maxCount);
     QVariant openCsvFile(QString filename, int maxCountRows);
 
@@ -173,6 +175,8 @@ private:
 
     bool runThreadSave(const QString &filename, const QString &sheetName);
     void runThreadOpen(QString openFilename);
+
+    void removeSheet(QString &sheet);
 };
 
 #endif // EXCELWIDGET_H

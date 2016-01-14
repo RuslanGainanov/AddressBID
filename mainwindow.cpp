@@ -60,7 +60,6 @@ MainWindow::MainWindow(QWidget *parent) :
 //        _dbw->show();
     _ui->_debugWidget->hide();
     _ui->_pushButtonOpenBase->hide();
-    _ui->_pushButtonCheckRows->hide();
     _ui->_progressBar->hide();
     setWindowTitle(trUtf8("RT: Обработчик тендерных заявок"));
 }
@@ -111,8 +110,6 @@ void MainWindow::on__pushButtonOpenBase_clicked()
 
 void MainWindow::on__pushButtonSearch_clicked()
 {
-//    Database *db=_dbw->getDatabase();
-//    _excel->setDatabase(db);
     _excel->search();
 }
 
@@ -142,4 +139,9 @@ void MainWindow::save()
 void MainWindow::on__pushButtonWait_clicked()
 {
     QThread::yieldCurrentThread();
+}
+
+void MainWindow::on__pushButtonCloseTab_clicked()
+{
+    _excel->closeTab();
 }

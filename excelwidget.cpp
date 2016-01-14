@@ -6,7 +6,6 @@ ExcelWidget::ExcelWidget(QWidget *parent) :
     _ui(new Ui::ExcelWidget),
     _parser(nullptr),
     _thread(nullptr),
-//    _db(nullptr),
     _delegateFounded(new SimpleDelegate(QBrush(QColor(FoundedColor)))),
     _delegateNotFounded(new SimpleDelegate(QBrush(QColor(NotFoundedColor)))),
     _delegateRepeatFounded(new SimpleDelegate(QBrush(QColor(RepeatFoundedColor))))
@@ -158,7 +157,6 @@ bool ExcelWidget::runThreadSave(const QString &filename, const QString &sheetNam
     // Start the computation.
     futureWatcher->setFuture(f1);
     dialog->exec();
-//    futureWatcher->waitForFinished();
 
     currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
     qDebug() << "ExcelWidget runThreadSave END"
@@ -366,20 +364,12 @@ QVariant ExcelWidget::openExcelFile(QString filename, int maxCountRows)
 
 void ExcelWidget::search()
 {
-    QString currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
-    qDebug() << "ExcelWidget search BEGIN"
-             << currTime
-             << this->thread()->currentThreadId();
-    if(_data.isEmpty())
-        return;
-    if(_data2.isEmpty())
-        return;
-
-    QString sheetName =
-            _ui->_tabWidget->tabText(
-                _ui->_tabWidget->currentIndex()
-                );
-    if(_data2.contains(sheetName))
+//    QString currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
+//    qDebug() << "ExcelWidget search BEGIN"
+//             << currTime
+//             << this->thread()->currentThreadId();
+    QString sheetName = getCurrentTab();
+    if(!sheetName.isEmpty() && _data2.contains(sheetName))
     {
         _countRepatingRow.remove(sheetName);
         for(int i=0; i<_data2[sheetName].size(); i++)
@@ -393,19 +383,19 @@ void ExcelWidget::search()
                 emit findRowInBase(sheetName, i, _data2[sheetName].at(i));
             }
         }
+
+        if(!_searchingRows.value(sheetName).isEmpty())
+            emit searching(sheetName);
     }
     else
     {
         emit toDebug(objectName(),
-                     "_data2 not contains "+sheetName);
+                     QString("Данные на вкладке '%1' отсутсвуют").arg(sheetName));
     }
-
-    if(!_searchingRows.value(sheetName).isEmpty())
-        emit searching(sheetName);
-    currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
-    qDebug() << "ExcelWidget search END"
-             << currTime
-             << this->thread()->currentThreadId();
+//    currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
+//    qDebug() << "ExcelWidget search END"
+//             << currTime
+//             << this->thread()->currentThreadId();
 }
 
 
@@ -871,8 +861,8 @@ void ExcelWidget::onSheetRead(const QString &sheet)
                  .arg(sheet));
     TableView *view = _views[sheet];
     assert(view);
-    int index = _ui->_tabWidget->addTab(view, sheet);
-    _sheetIndex.insert(sheet, index);
+    /*int index = */_ui->_tabWidget->addTab(view, sheet);
+//    _sheetIndex.insert(sheet, index);
 }
 
 void ExcelWidget::onHideColumn(const QString &sheet, int column)
@@ -1254,4 +1244,72 @@ bool ExcelWidget::saveToExcel(const QString &filename, const QString &sheetName)
 QString ExcelWidget::getCurrentTab()
 {
     return _ui->_tabWidget->tabText(_ui->_tabWidget->currentIndex());
+}
+
+
+void ExcelWidget::closeTab()
+{
+    QString sheet = getCurrentTab();
+    if(sheet.isEmpty())
+        return;
+    QMessageBox msgBox(QMessageBox::Question,
+                       trUtf8("Внимание"),
+                       trUtf8("Вкладка '%1' будет закрыта."
+                              "\nСохранить результаты перед закрытием?").arg(sheet));
+    QPushButton *saveButton = msgBox.addButton(trUtf8("Cохранить"),
+                                                  QMessageBox::AcceptRole);
+    QPushButton *notSaveButton = msgBox.addButton(trUtf8("Не сохранять"),
+                                                QMessageBox::DestructiveRole);
+    QPushButton *cancelButton = msgBox.addButton(trUtf8("Отмена"),
+                                                QMessageBox::RejectRole);
+    msgBox.exec();
+
+    if (msgBox.clickedButton() == saveButton) {
+        emit toDebug(objectName(),
+                     "Сохраняются результаты перед закрытием");
+        if(!save())
+            return;
+    }/* else if (msgBox.clickedButton() == notSaveButton) {
+        return;
+    } */else if (msgBox.clickedButton() == cancelButton) {
+        return;
+    }
+
+//    int n = QMessageBox::question(0,
+//                                 trUtf8("Внимание"),
+//                                 trUtf8("Вкладка '%1' будет закрыта."
+//                                 "\nСохранить результаты перед закрытием?").arg(sheet),
+//                                 QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel,
+//                                 QMessageBox::Save
+//                                 );
+//    if (n == QMessageBox::Save) {
+//        emit toDebug(objectName(),
+//                     "Сохраняются результаты перед закрытием");
+//        save();
+//    }
+//    else if(n == QMessageBox::Cancel)
+//    {
+//        return;
+//    }
+    removeSheet(sheet);
+    _ui->_tabWidget->removeTab(_ui->_tabWidget->currentIndex());
+    emit toDebug(objectName(),
+                 QString("Вкладка '%1' успешно закрыта").arg(sheet));
+    emit messageReady(QString("Вкладка '%1' успешно закрыта").arg(sheet));
+}
+
+void ExcelWidget::removeSheet(QString &sheet)
+{
+    _data.remove(sheet);
+    _views.remove(sheet);
+    _selections.remove(sheet);
+    _mapHead.remove(sheet);
+    _mapPHead.remove(sheet);
+    _countParsedRow.remove(sheet);
+    _countRow.remove(sheet);
+    _editedRow.remove(sheet);
+    _countRepatingRow.remove(sheet);
+    _searchingRows.remove(sheet);
+    _insertedRowAfterSearch.remove(sheet);
+    _data2.remove(sheet);
 }
