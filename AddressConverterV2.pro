@@ -27,6 +27,7 @@ SOURCES += main.cpp\
     xlsparser.cpp \
     tablemodel.cpp \
     parseexcelwidget.cpp \
+    helpbrowser.cpp \
     itemselectionmodel.cpp
 
 HEADERS  += mainwindow.h \
@@ -43,13 +44,32 @@ HEADERS  += mainwindow.h \
     xlsparser.h \
     tablemodel.h \
     parseexcelwidget.h \
+    helpbrowser.h \
     itemselectionmodel.h
 
 FORMS    += mainwindow.ui \
     databasewidget.ui \
     debugwidget.ui \
     excelwidget.ui \
+    helpbrowser.ui \
     parseexcelwidget.ui
+
+RESOURCES += \
+    resources.qrc
+
+OTHER_FILES += file.rc
+win32:RC_FILE += file.rc
 
 CONFIG += c++11
 QMAKE_CXXFLAGS += -std=c++11
+
+DISTFILES += \
+    doc/img/image001.png \
+    doc/img/image002.png \
+    doc/img/image003.png \
+    doc/img/image004.png \
+    doc/img/image007.png \
+    doc/img/image008.png \
+    doc/img/image009.png \
+    doc/img/image010.png \
+    README.txt

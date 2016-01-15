@@ -2,11 +2,13 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QKeyEvent>
 #include "defines.h"
 #include "databasewidget.h"
 #include "address.h"
 #include "excelwidget.h"
 #include "debugwidget.h"
+#include "HelpBrowser.h"
 
 typedef QList< Address > ListAddress;
 
@@ -28,6 +30,7 @@ signals:
 
 protected:
     void closeEvent(QCloseEvent *);
+    void keyPressEvent(QKeyEvent *pe);
 
 public slots:
     void onBaseOpenTriggered();
@@ -45,12 +48,15 @@ private slots:
     void save();
     void onStartSearching(const QString &sheet);
     void onFinishSearching(const QString &sheet);
+    void showAbout();
+    void showHelp();
 
 private:
     Ui::MainWindow *_ui;
     DatabaseWidget *_dbw;
     ExcelWidget *_excel;
     DebugWidget *_debugWidget;
+    HelpBrowser *_helpBrowser;
 };
 
 #endif // MAINWINDOW_H

@@ -11,7 +11,11 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>0</string>
+   <string>RT: Обработчик тендерных заявок</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="resources.qrc">
+    <normaloff>:/icons/direction_icon.svg</normaloff>:/icons/direction_icon.svg</iconset>
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout">
@@ -23,9 +27,7 @@
      </widget>
     </item>
     <item row="0" column="0">
-     <widget class="ExcelWidget" name="_excelWidget" native="true">
-      <zorder></zorder>
-     </widget>
+     <widget class="ExcelWidget" name="_excelWidget" native="true"/>
     </item>
     <item row="0" column="1">
      <widget class="DebugWidget" name="_debugWidget" native="true">
@@ -110,7 +112,7 @@
    </property>
    <widget class="QMenu" name="_menuFile">
     <property name="title">
-     <string>Файл</string>
+     <string>&amp;Файл</string>
     </property>
     <widget class="QMenu" name="_menuOpen">
      <property name="title">
@@ -127,19 +129,12 @@
    </widget>
    <widget class="QMenu" name="_menuHelp">
     <property name="title">
-     <string>Справка</string>
+     <string>&amp;Справка</string>
     </property>
+    <addaction name="_actionHelp"/>
     <addaction name="_actionAbout"/>
    </widget>
-   <widget class="QMenu" name="_menuEdit">
-    <property name="title">
-     <string>Правка</string>
-    </property>
-    <addaction name="action_9"/>
-    <addaction name="action_11"/>
-   </widget>
    <addaction name="_menuFile"/>
-   <addaction name="_menuEdit"/>
    <addaction name="_menuHelp"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
@@ -178,7 +173,7 @@
   </action>
   <action name="_actionAbout">
    <property name="text">
-    <string>О программе</string>
+    <string>&amp;О программе</string>
    </property>
   </action>
   <action name="action_9">
@@ -201,6 +196,11 @@
     <string>&amp;Закрыть вкладку</string>
    </property>
   </action>
+  <action name="_actionHelp">
+   <property name="text">
+    <string>&amp;Справка</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
@@ -217,7 +217,9 @@
    <container>1</container>
   </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="resources.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>_actionCloseTab</sender>

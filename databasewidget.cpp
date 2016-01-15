@@ -264,7 +264,7 @@ void DatabaseWidget::openExisting()
 {
     QStringList files = QDir::current().entryList(QStringList("*.db"), QDir::Files);
     emit toDebug(objectName(), "databases:"+files.join(" "));
-    if(files.size()>1)
+    if(files.size()>1 || files.isEmpty())
     {
         QString fname =
                 QFileDialog::getOpenFileName(this, trUtf8("Укажите файл базы данных"),

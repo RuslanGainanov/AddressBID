@@ -17,6 +17,8 @@ MainWindow::MainWindow(QWidget *parent) :
     Database *db = _dbw->getDatabase();
     _excel = _ui->_excelWidget;
 
+    _helpBrowser = new HelpBrowser(":/doc", "index.htm");
+
     connect(this, SIGNAL(toDebug(QString,QString)),
             _ui->_debugWidget, SLOT(add(QString,QString)));
 
@@ -42,6 +44,8 @@ MainWindow::MainWindow(QWidget *parent) :
              _dbw, SLOT(close()) );
     connect( this, SIGNAL(windowClosed()),
              _excel, SLOT(close()) );
+    connect( this, SIGNAL(windowClosed()),
+             _helpBrowser, SLOT(close()) );
 
     connect(_excel, SIGNAL(findRowInBase(QString,int,Address)),
             db, SLOT(selectAddress(QString,int,Address)));
@@ -61,7 +65,12 @@ MainWindow::MainWindow(QWidget *parent) :
     _ui->_debugWidget->hide();
     _ui->_pushButtonOpenBase->hide();
     _ui->_progressBar->hide();
-    setWindowTitle(trUtf8("RT: Обработчик тендерных заявок"));
+
+    connect(_ui->_actionAbout, SIGNAL(triggered(bool)),
+            this, SLOT(showAbout()));
+    connect(_ui->_actionHelp, SIGNAL(triggered(bool)),
+            this, SLOT(showHelp()));
+//    setWindowTitle(trUtf8("RT: Обработчик тендерных заявок"));
 }
 
 MainWindow::~MainWindow()
@@ -74,6 +83,35 @@ void MainWindow::closeEvent(QCloseEvent *event)
 {
     emit windowClosed();
     QWidget::closeEvent(event);
+}
+
+void MainWindow::keyPressEvent(QKeyEvent *pe)
+{
+    switch(pe->key())
+    {
+    case Qt::Key_F1:
+        showHelp();
+        break;
+    default:
+        QWidget::keyPressEvent(pe);
+        break;
+    }
+}
+
+void MainWindow::showAbout()
+{
+    QString text;
+    text.append(tr("<p><h2>Обработчик тендерных заявок</h2></p>"));
+    text.append(tr("<p><h3>Программа ищет соответвие адресов из заявки в Excel-таблице с адресами в базе данных и производит назначение STREET_ID и BUILD_ID найденным адресам.</h3></p>"));
+    text.append(tr("<p>Программу разработал <a href='http://gromr1.blogspot.ru/p/about-me.html'>Гайнанов Руслан</a>.</p>"));
+    text.append(tr("<p>Связаться с автором: <a href='mailto:ruslan.r.gainanov@gmail.com'>ruslan.r.gainanov@gmail.com</a>.</p>"));
+    text.append(tr("<p><br /><small>© Все права принадлежат компании <a href='rt.ru'>Ростелеком</a>.</small></p>"));
+    QMessageBox::about(this, tr("О программе"), text);
+}
+
+void MainWindow::showHelp()
+{
+    _helpBrowser->show();
 }
 
 void MainWindow::onBaseOpenTriggered()

@@ -15,9 +15,6 @@ ExcelWidget::ExcelWidget(QWidget *parent) :
     //excel.cpp
     _parser = new XlsParser;
     _thread = new QThread;
-    _logFile.setFileName(LogFileName);
-    _logFile.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate);
-    _logStream.setDevice(&_logFile);
 
 //    _parser->moveToThread(_thread);
     connect(this, SIGNAL(rowReaded(QString,int,QStringList)),
@@ -38,7 +35,6 @@ ExcelWidget::ExcelWidget(QWidget *parent) :
 //    connect(this, SIGNAL(toDebug(QString,QString)),
 //            this, SLOT(onDebug(QString,QString)));
 
-    connect(this, SIGNAL(toFile(QString,QString)), SLOT(onFile(QString,QString)));
     connect(this, SIGNAL(searchFinished(QString)), SLOT(onSearchFinished(QString)));
 
     _ui->_lineEditFilename->hide();
@@ -69,13 +65,6 @@ ExcelWidget::~ExcelWidget()
     delete _delegateRepeatFounded;
     _thread->quit();
     _thread->wait();
-    closeLog();
-}
-
-void ExcelWidget::closeLog()
-{
-    if(_logFile.isOpen())
-        _logFile.close();
 }
 
 bool ExcelWidget::save()
@@ -774,12 +763,6 @@ void ExcelWidget::onRowRead(const QString &sheet, const int &nRow, QStringList &
     emit rowReaded(sheet, nRow, row);
 }
 
-void ExcelWidget::onFile(QString objName, QString mes)
-{
-    Q_UNUSED(objName);
-    _logStream << mes;
-}
-
 void ExcelWidget::onHeadRead(const QString &sheet, QStringList &head)
 {
     emit toDebug(objectName(),
@@ -1258,7 +1241,7 @@ void ExcelWidget::closeTab()
                               "\nСохранить результаты перед закрытием?").arg(sheet));
     QPushButton *saveButton = msgBox.addButton(trUtf8("Cохранить"),
                                                   QMessageBox::AcceptRole);
-    QPushButton *notSaveButton = msgBox.addButton(trUtf8("Не сохранять"),
+    /*QPushButton *notSaveButton = */msgBox.addButton(trUtf8("Не сохранять"),
                                                 QMessageBox::DestructiveRole);
     QPushButton *cancelButton = msgBox.addButton(trUtf8("Отмена"),
                                                 QMessageBox::RejectRole);

@@ -29,11 +29,10 @@ typedef QList< Address > ListAddress;
 
 #define HIDE_PARSED_COLUMNS 1
 
-const int MAX_OPEN_IN_ROWS=1000;
+const int MAX_OPEN_IN_ROWS=100;
 const QString FoundedColor = "#33FF66"; //цвет строки для которой найден BID в базе
 const QString NotFoundedColor = "#FFA07A"; //цвет строки для которой не найден BID в базе
 const QString RepeatFoundedColor = "#FFCC33"; //цвет строки для которой найдено >1 BID в базе
-const QString LogFileName = "Log1.csv";
 
 class SimpleDelegate : public QStyledItemDelegate {
 public:
@@ -78,7 +77,6 @@ public:
 public slots:
     void open();
     void search();
-    void closeLog();
     void closeTab();
     bool save();
 
@@ -102,7 +100,6 @@ signals:
     void saveFinished(QString sheet, QString file); //сохранение завершено
 
     void toDebug(QString objName, QString mes);
-    void toFile(QString objName, QString mes);
 
     void findRowInBase(QString sheetName, int nRow, Address addr);
 
@@ -124,7 +121,6 @@ private slots:
     void onNotFoundMandatoryColumn(QString sheet, AddressElements ae, QString colName);
 
 //    void onProcessOfSearchFinished();
-    void onFile(QString objName, QString mes);
     void onFounedAddress(QString sheetName, int nRow, Address addr);
     void onNotFounedAddress(QString sheetName, int nRow, Address addr);
 
@@ -164,8 +160,6 @@ private:
     QMap<QString, ListAddress > _data2;
 //    ExcelDocument _data;
 //    QThread *_thread;
-    QFile _logFile;
-    QTextStream _logStream;
 
     QVariant openExcelFile(QString filename, int maxCount);
     QVariant openCsvFile(QString filename, int maxCountRows);

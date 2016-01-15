@@ -1,0 +1,15 @@
+<RCC>
+    <qresource prefix="/">
+        <file>doc/index.htm</file>
+        <file>doc/hotkeys.htm</file>
+        <file>icons/direction_icon.svg</file>
+        <file>doc/img/image001.png</file>
+        <file>doc/img/image002.png</file>
+        <file>doc/img/image003.png</file>
+        <file>doc/img/image004.png</file>
+        <file>doc/img/image007.png</file>
+        <file>doc/img/image008.png</file>
+        <file>doc/img/image009.png</file>
+        <file>doc/img/image010.png</file>
+    </qresource>
+</RCC>
