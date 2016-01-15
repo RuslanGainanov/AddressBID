@@ -3,10 +3,10 @@
 ItemSelectionModel::ItemSelectionModel(QAbstractItemModel * model, QObject * parent):
     QItemSelectionModel(model, parent)
 {
-    qDebug() << "ItemSelectionModel constructor";
+//    qDebug() << "ItemSelectionModel constructor";
 }
 
 ItemSelectionModel::~ItemSelectionModel()
 {
-    qDebug() << "ItemSelectionModel destructor";
+//    qDebug() << "ItemSelectionModel destructor";
 }

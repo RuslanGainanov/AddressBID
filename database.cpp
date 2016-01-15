@@ -62,7 +62,9 @@ void Database::removeBase(QString filename)
 
 void Database::openBase(QString filename)
 {
-    qDebug() << "Database openBase" << filename << this->thread()->currentThreadId();
+//    qDebug() << "Database openBase" << filename << this->thread()->currentThreadId();
+    emit toDebug(objectName(),
+                 QString("Открывается база данных %1").arg(filename));
     if(filename!=_baseName)
         removeConnection();
     setBaseName(filename);

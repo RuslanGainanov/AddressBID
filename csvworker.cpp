@@ -4,13 +4,13 @@ CsvWorker::CsvWorker(QObject *parent) :
     QObject(parent),
     _maxCount(0)
 {
-    qDebug() << "CsvWorker constructor" << this->thread()->currentThreadId();
+//    qDebug() << "CsvWorker constructor" << this->thread()->currentThreadId();
 }
 
 
 CsvWorker::~CsvWorker()
 {
-    qDebug() << "CsvWorker destructor" << this->thread()->currentThreadId();
+//    qDebug() << "CsvWorker destructor" << this->thread()->currentThreadId();
 }
 
 

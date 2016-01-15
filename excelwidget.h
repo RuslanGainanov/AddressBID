@@ -29,7 +29,7 @@ typedef QList< Address > ListAddress;
 
 #define HIDE_PARSED_COLUMNS 1
 
-const int MAX_OPEN_IN_ROWS=1000;
+const int MAX_OPEN_IN_ROWS=0;
 const QString FoundedColor = "#33FF66"; //цвет строки для которой найден BID в базе
 const QString NotFoundedColor = "#FFA07A"; //цвет строки для которой не найден BID в базе
 const QString RepeatFoundedColor = "#FFCC33"; //цвет строки для которой найдено >1 BID в базе

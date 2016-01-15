@@ -144,6 +144,7 @@ QString Address::getTypeOfCity2() const
 void Address::setTypeOfStreet(const QString t)
 {
     _typeOfStreet=toLower(trim(t));
+    convertToCorrectTypeOfStreet(_typeOfStreet);
 }
 
 QString Address::getTypeOfStreet() const
@@ -412,4 +413,48 @@ void Address::workWithBranches(QString &s)
         _additional+=s.mid(n1+1, n3-1);
         s.remove(n1, n3+1);
     }
+}
+
+void Address::convertToCorrectTypeOfStreet(QString &s)
+{
+//    QString s;
+    if(s.contains(QRegExp("улица|ул\\.*")))
+        s="ул";
+    else if(s.contains(QRegExp("шоссе|ш\\.*")))
+        s="ш";
+    else if(s.contains(QRegExp("проспект|пр-кт|пр\\.*")))
+        s="пр-кт";
+    else if(s.contains(QRegExp("аллея|ал\\.*")))
+        s="аллея";
+    else if(s.contains(QRegExp("бульвар|б-р")))
+        s="б-р";
+    else if(s.contains(QRegExp("линия|лин\\.*")))
+        s="линия";
+    else if(s.contains(QRegExp("набережная|наб\\.*")))
+        s="наб";
+    else if(s.contains(QRegExp("строение|стр\\.*")))
+        s="стр";
+    else if(s.contains(QRegExp("переулок|пер\\.*")))
+        s="пер";
+    else if(s.contains(QRegExp("площадь|пл\\.*")))
+        s="пл";
+    else if(s.contains(QRegExp("участок|уч-к")))
+        s="уч-к";
+    else if(s.contains(QRegExp("квартал||кв-л")))
+        s="кв-л";
+    else if(s.contains(QRegExp("километр|км")))
+        s="км";
+    else if(s.contains(QRegExp("дорога|дор\\.*")))
+        s="дор";
+    else if(s.contains(QRegExp("платформа|платф\\.*")))
+        s="платф";
+    else if(s.contains(QRegExp("площадка|пл-ка\\.*")))
+        s="пл-ка";
+    else if(s.contains(QRegExp("полустанок|полуст\\.*")))
+        s="п/ст";
+    else if(s.contains(QRegExp("тупик|туп\\.*")))
+        s="туп";
+//    else if(s.contains(QRegExp("квартал")))
+//        res="ал";
+//    return (s.isEmpty()? str: s);
 }

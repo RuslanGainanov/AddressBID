@@ -324,6 +324,7 @@ QVariant ExcelWidget::openExcelFile(QString filename, int maxCountRows)
                 if(maxCountRows>0 && row-1 >= maxCountRows)
                     break;
             }
+            sheetName+=" ["+QFileInfo(filename).baseName()+"]";
             data.insert(sheetName, excelSheet); //добавляем таблицу в документ
         }
         usedRange->clear();
@@ -359,10 +360,11 @@ void ExcelWidget::search()
         {
             if(!_data2[sheetName].at(i).isEmpty()
                     && _data2[sheetName].at(i).getBuildId()==0
-                   /* && _data2[sheetName].at(i).getStreetId()==0*/)
+                   /* && _data2[sheetName].at(i).getStreetId()==0*/
+                    /*&& _views[sheetName]->at(i).selection[sheetName]*/)
             {
                 _searchingRows[sheetName].insert(i);
-                emit toDebug(objectName(), QString("Поиск строки %1").arg(QString::number(i)));
+//                emit toDebug(objectName(), QString("Поиск строки %1").arg(QString::number(i)));
                 emit findRowInBase(sheetName, i, _data2[sheetName].at(i));
             }
         }
@@ -393,13 +395,13 @@ void ExcelWidget::onProcessOfOpenFinished()
             && !_futureWatcher.isCanceled())
     {
         QVariant result = _futureWatcher.future().result();
-        emit toDebug(objectName(), "onProcessOfOpenFinished finish");
+//        emit toDebug(objectName(), "onProcessOfOpenFinished finish");
         if(result.isValid())
         {
-            emit toDebug(objectName(), "onProcessOfOpenFinished valid");
+//            emit toDebug(objectName(), "onProcessOfOpenFinished valid");
             if(result.canConvert< ExcelDocument >())
             {
-                emit toDebug(objectName(), "onProcessOfOpenFinished canconvert");
+//                emit toDebug(objectName(), "onProcessOfOpenFinished canconvert");
                 ExcelDocument data = result.value<ExcelDocument>();
 //                runThreadParsing();
 //                disconnect(_parser, SIGNAL(rowParsed(QString,int,Address)),
@@ -439,7 +441,7 @@ void ExcelWidget::onProcessOfOpenFinished()
             }
             else if(result.canConvert< QStringList >())
             {
-                emit toDebug("excel", "canconvert QStringList");
+//                emit toDebug("excel", "canconvert QStringList");
                 QStringList data = result.value<QStringList>();
                 QString sheetName = "csv";
                 _data.insert(sheetName, new TableModel(sheetName));
@@ -480,7 +482,7 @@ void ExcelWidget::onProcessOfOpenFinished()
 void ExcelWidget::onFounedAddress(QString sheetName, int nRow, Address addr)
 {
     emit toDebug(objectName(),
-                 QString("Найдена строка %1:").arg(nRow)+"\r\n"+addr.toCsv());
+                 QString("Найдена строка %1: ").arg(nRow)+/*"\r\n"+*/addr.toCsv());
     if(_searchingRows.contains(sheetName))
     {
         _searchingRows[sheetName].remove(nRow);
@@ -526,21 +528,14 @@ void ExcelWidget::onFounedAddress(QString sheetName, int nRow, Address addr)
                 addr.getBuildId());
     tm->setData(tm->index(nRow, _mapPHead[sheetName].value(RAW_ADDR)),
                 addr.getRawAddressStringWithoutID());
-
-//    if(nRow==tm->rowCount()-1)
-//    {
-//        emit searchFinished(sheetName);
-//    }
-
-//    emit toFile("", QString::number(nRow+1)+";"+addr.toCsv()+"\n");
 }
 
 void ExcelWidget::onNotFounedAddress(QString sheetName, int nRow, Address addr)
 {
-//    _data2[sheetName][nRow]=addr;
     Q_UNUSED(sheetName);
     Q_UNUSED(addr);
-    emit toDebug("", QString::number(nRow)+";!NOT_FOUND!");
+    emit toDebug(objectName(),
+                 QString("Cтрока %1 не найдена!").arg(nRow));
     if(_searchingRows.contains(sheetName))
     {
         _searchingRows[sheetName].remove(nRow);
@@ -553,12 +548,6 @@ void ExcelWidget::onNotFounedAddress(QString sheetName, int nRow, Address addr)
     assert(tm);
     assert(view);
     view->setItemDelegateForRow(nRow, _delegateNotFounded);
-
-//    if(nRow==_data[sheetName]->rowCount()-1)
-//    {
-//        emit searchFinished(sheetName);
-//    }
-//    emit toFile("", QString::number(nRow+1)+";!NOT_FOUND!"+"\n");
 }
 
 void ExcelWidget::onRemoveRow(QString sheet, int nRow)

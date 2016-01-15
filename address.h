@@ -105,6 +105,8 @@ private:
     QString trim(QString str) const;
     QString toLower(QString str) const;
     void workWithBranches(QString &s); //работа со скобками
+    void convertToCorrectTypeOfStreet(QString &s);
+
 };
 
 #endif // ADDRESS_H

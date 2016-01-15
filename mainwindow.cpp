@@ -70,7 +70,6 @@ MainWindow::MainWindow(QWidget *parent) :
             this, SLOT(showAbout()));
     connect(_ui->_actionHelp, SIGNAL(triggered(bool)),
             this, SLOT(showHelp()));
-//    setWindowTitle(trUtf8("RT: Обработчик тендерных заявок"));
 }
 
 MainWindow::~MainWindow()
