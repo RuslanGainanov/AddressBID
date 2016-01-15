@@ -13,21 +13,20 @@ int main(int argc, char *argv[])
         canRun=false;
 #endif
 
+    MainWindow w;
+    QMessageBox msgBox(QMessageBox::Critical,
+                       QObject::trUtf8("Запуск невозможен"),
+                       QObject::trUtf8("Данная версия программы более не поддерживается.\n"
+                              "Обратитесь к разработчику для получения новой версии."),
+                       QMessageBox::Ok
+                       );
     if(canRun)
     {
-        MainWindow w;
         w.show();
     }
     else
     {
-        QMessageBox msgBox(QMessageBox::Critical,
-                           QObject::trUtf8("Запуск невозможен"),
-                           QObject::trUtf8("Данная версия программы более не поддерживается.\n"
-                                  "Обратитесь к разработчику для получения новой версии."),
-                           QMessageBox::Ok
-                           );
-        msgBox.exec();
-        return 1;
+        msgBox.show();
     }
 
     return a.exec();

@@ -1,7 +1,6 @@
 <RCC>
     <qresource prefix="/">
         <file>doc/index.htm</file>
-        <file>doc/hotkeys.htm</file>
         <file>icons/direction_icon.svg</file>
         <file>doc/img/image001.png</file>
         <file>doc/img/image002.png</file>
