@@ -18,20 +18,18 @@ signals:
     void rowParsed(QString sheet, int row, Address addr);
 
 public slots:
-//    void process();
     void onReadHead(const QString sheet,
                     MapAddressElementPosition head);
     void onReadRow(const QString &sheet,
                    const int &rowNumber,
                    const QStringList &row);
-    void onIsOneColumn(bool b);
+//    void onIsOneColumn(bool b);
 
 private:
     QMap<QString, MapAddressElementPosition> _mapHead;
-//    QMap<QString, MapAddressElementPosition> _mapPHead;
     bool _error;
-    bool _isOneColumn;
 
+    void parseAddress(QString &str, Address &a);
     bool parseObject(QString &str, QString &result, QString regPattern, int regCap);
     bool parseObject(QString &str, QStringList &result, QString regPattern);
 };

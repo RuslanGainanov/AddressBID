@@ -16,7 +16,7 @@ ExcelWidget::ExcelWidget(QWidget *parent) :
     _parser = new XlsParser;
     _thread = new QThread;
 
-//    _parser->moveToThread(_thread);
+    _parser->moveToThread(_thread);
     connect(this, SIGNAL(rowReaded(QString,int,QStringList)),
             _parser, SLOT(onReadRow(QString,int,QStringList)));
     connect(this, SIGNAL(headReaded(QString,MapAddressElementPosition)),
@@ -32,15 +32,9 @@ ExcelWidget::ExcelWidget(QWidget *parent) :
     connect(&_futureWatcher, SIGNAL(finished()),
             this, SLOT(onProcessOfOpenFinished()));
 
-//    connect(this, SIGNAL(toDebug(QString,QString)),
-//            this, SLOT(onDebug(QString,QString)));
-
     connect(this, SIGNAL(searchFinished(QString)), SLOT(onSearchFinished(QString)));
 
     _ui->_lineEditFilename->hide();
-
-//    connect(this, SIGNAL(parserFinished()),
-//            this, SLOT(onFinishParser()));
 
     connect(_ui->_parseWidget, SIGNAL(rowRemoved(QString,int)),
             this, SLOT(onRemoveRow(QString,int)));
@@ -794,16 +788,16 @@ void ExcelWidget::onHeadRead(const QString &sheet, QStringList &head)
         tm->setHeaderData(nCol, Qt::Horizontal, colname);
         head.append(colname);
     }
-    if(head.contains(MapColumnNames[ BUILD ])
-            && head.contains(MapColumnNames[ KORP ]))
-    {
-        emit isOneColumn(false);
-    }
-    else /*if(!head.contains(MapColumnNames[ BUILD ])
-            && !head.contains(MapColumnNames[ KORP ]))*/
-    {
-        emit isOneColumn(true);
-    }
+//    if(head.contains(MapColumnNames[ BUILD ])
+//            && head.contains(MapColumnNames[ KORP ]))
+//    {
+//        emit isOneColumn(false);
+//    }
+//    else /*if(!head.contains(MapColumnNames[ BUILD ])
+//            && !head.contains(MapColumnNames[ KORP ]))*/
+//    {
+//        emit isOneColumn(true);
+//    }
 
     QMap<AddressElements, QString>::const_iterator it
             = MapColumnParsedNames.begin();
@@ -1009,7 +1003,7 @@ void ExcelWidget::onAddNewAddr(QString addr)
                     QVariant::fromValue(addr));
     QStringList row;
     row = tm->getRow(nRow);
-    emit isOneColumn(false);
+//    emit isOneColumn(false);
     emit rowReaded(sheet, nRow, row);
     TableView *tv = _views.value(sheet, 0);
     tv->selectRow(nRow);
