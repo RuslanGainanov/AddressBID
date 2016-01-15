@@ -9,7 +9,7 @@ int main(int argc, char *argv[])
 
     bool canRun=true;
 #ifdef PROTECTION_ON
-    if(QDate::currentDate()>QDate(2016, 1, 1))
+    if(QDate::currentDate()>QDate(2016, 2, 20))
         canRun=false;
 #endif
 
