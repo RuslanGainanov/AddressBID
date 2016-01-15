@@ -360,11 +360,13 @@ void ExcelWidget::search()
         {
             if(!_data2[sheetName].at(i).isEmpty()
                     && _data2[sheetName].at(i).getBuildId()==0
-                   /* && _data2[sheetName].at(i).getStreetId()==0*/
-                    /*&& _views[sheetName]->at(i).selection[sheetName]*/)
+                   /* && _data2[sheetName].at(i).getStreetId()==0*/)
             {
+                QAbstractItemDelegate *delegate=_views[sheetName]->itemDelegateForRow(i);
+                if(delegate && delegate==_delegateNotFounded) //если данная строка уже искалась и не найден результат
+                    continue;
                 _searchingRows[sheetName].insert(i);
-//                emit toDebug(objectName(), QString("Поиск строки %1").arg(QString::number(i)));
+//                    emit toDebug(objectName(), QString("Поиск строки %1").arg(QString::number(i)));
                 emit findRowInBase(sheetName, i, _data2[sheetName].at(i));
             }
         }
