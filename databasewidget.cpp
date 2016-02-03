@@ -330,7 +330,6 @@ void DatabaseWidget::onCountRow(int count)
     _ui->_progressBarParsed->setMaximum(count);
 }
 
-
 void DatabaseWidget::onOpenBase()
 {
     _ui->_pushButtonOpen->setEnabled(false);

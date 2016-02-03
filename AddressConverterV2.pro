@@ -21,14 +21,12 @@ SOURCES += main.cpp\
     databasewidget.cpp \
     csvworker.cpp \
     debugwidget.cpp \
-    tabwidget.cpp \
-    tableview.cpp \
     excelwidget.cpp \
     xlsparser.cpp \
     tablemodel.cpp \
     parseexcelwidget.cpp \
     helpbrowser.cpp \
-    itemselectionmodel.cpp
+    simpledelegate.cpp
 
 HEADERS  += mainwindow.h \
     searcher.h \
@@ -38,14 +36,12 @@ HEADERS  += mainwindow.h \
     databasewidget.h \
     csvworker.h \
     debugwidget.h \
-    tabwidget.h \
-    tableview.h \
     excelwidget.h \
     xlsparser.h \
     tablemodel.h \
     parseexcelwidget.h \
     helpbrowser.h \
-    itemselectionmodel.h
+    simpledelegate.h
 
 FORMS    += mainwindow.ui \
     databasewidget.ui \

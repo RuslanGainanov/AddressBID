@@ -3,22 +3,25 @@
 
 #include <QWidget>
 #include <QFileDialog>
-#include "database.h"
-#include "defines.h"
-
 #include <QtConcurrentRun>
 #include <QtConcurrentMap>
 #include <QFutureWatcher>
 #include <QFuture>
 #include <QProgressDialog>
 #include <QMessageBox>
-#include <assert.h>
+#include "database.h"
+#include "defines.h"
 #include "csvworker.h"
 
 namespace Ui {
 class DatabaseWidget;
 }
 
+// ********************* class DatabaseWidget ********************
+/**
+ * \class DatabaseWidget
+ * \brief Класс для работы пользователя с БД
+ */
 class DatabaseWidget : public QWidget
 {
     Q_OBJECT

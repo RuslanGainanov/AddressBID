@@ -172,7 +172,6 @@ QString Address::getDistrict() const
     return _district;
 }
 
-
 void Address::setTypeOfFSubj(const QString t)
 {
     QString s = toLower(trim(t));
@@ -274,40 +273,26 @@ QString Address::toCsv() const
     return res;
 }
 
-QString Address::toString(TypeOfData t) const
+QString Address::toDebug() const
 {
     QString res;
-    if(!isEmpty())
-    {
-        if(t==RAW)
-        {
-            res += getRawAddress().join(';');
-        }
-        else if(t==PARSED)
-        {
-            res +="*** Address: ***\n";
-            res += "StreetID: " + QString::number(getStreetId()) + "\n";
-            res += "BuildID: " + QString::number(getBuildId()) + "\n";
-            res += "Type of Federal Subj: " + getTypeOfFSubjInString() + "\n";
-            res += "Federal subj: " + getFsubj() + "\n";
-            res += "District: " + getDistrict() + "\n";
-            res += "Type of City1: " + getTypeOfCity1() + "\n";
-            res += "City1: " + getCity1() + "\n";
-            res += "Type of City2: " + getTypeOfCity2() + "\n";
-            res += "City2: " + getCity2() + "\n";
-            res += "Type of Street: " + getTypeOfStreet() + "\n";
-            res += "Street: " + getStreet() + "\n";
-            res += "Additional: " + getAdditional() + "\n";
-            res += "Build: " + getBuild() + "\n";
-            res += "Korpus: " + getKorp() + "\n";
-            res += "Litera: " + getLitera() + "\n";
-            res += "Correct: " + QString(isCorrect()?"1":"0") + "\n";
-        }
-    }
-    else
-    {
-        res += "Is empty\n";
-    }
+    res +="*** Address: ***\n";
+    res += "StreetID: " + QString::number(getStreetId()) + "\n";
+    res += "BuildID: " + QString::number(getBuildId()) + "\n";
+    res += "Type of Federal Subj: " + getTypeOfFSubjInString() + "\n";
+    res += "Federal subj: " + getFsubj() + "\n";
+    res += "District: " + getDistrict() + "\n";
+    res += "Type of City1: " + getTypeOfCity1() + "\n";
+    res += "City1: " + getCity1() + "\n";
+    res += "Type of City2: " + getTypeOfCity2() + "\n";
+    res += "City2: " + getCity2() + "\n";
+    res += "Type of Street: " + getTypeOfStreet() + "\n";
+    res += "Street: " + getStreet() + "\n";
+    res += "Additional: " + getAdditional() + "\n";
+    res += "Build: " + getBuild() + "\n";
+    res += "Korpus: " + getKorp() + "\n";
+    res += "Litera: " + getLitera() + "\n";
+    res += "Correct: " + QString(isCorrect()?"1":"0") + "\n";
     return res;
 }
 
@@ -415,9 +400,8 @@ void Address::workWithBranches(QString &s)
     }
 }
 
-void Address::convertToCorrectTypeOfStreet(QString &s)
+void Address::convertToCorrectTypeOfStreet(QString &s) const
 {
-//    QString s;
     if(s.contains(QRegExp("улица|ул\\.*")))
         s="ул";
     else if(s.contains(QRegExp("шоссе|ш\\.*")))
@@ -456,5 +440,4 @@ void Address::convertToCorrectTypeOfStreet(QString &s)
         s="туп";
 //    else if(s.contains(QRegExp("квартал")))
 //        res="ал";
-//    return (s.isEmpty()? str: s);
 }

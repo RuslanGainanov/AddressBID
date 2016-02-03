@@ -18,7 +18,6 @@ const QString TableName = "base1";
 const QString DefaultBaseName = "base1.db";
 
 const int MAX_OPEN_ROWS=0;
-//const int MAX_OPEN_IN_ROWS=0; //moved in ExcelWidget
 
 const QString BaseRegPattern =
         //old <23.12.2015
@@ -28,23 +27,6 @@ const QString BaseRegPattern =
 //to lower case ONLY:
           "\"([0-9]*)\";\"( *([^ ]*)( обл\\.| ао\\.| респ\\.))*(, )*((.*) р-н)*,* *((п\\/о\\.|д\\.|ж\\/д_рзд\\.|рп\\.|ж\\/д_ст\\.|ст\\.|высел\\.|х\\.|казарма\\.|м\\.|жилрайон\\.|нп\\.|снт\\.|г\\.|дп\\.|снт\\.|п\\.|пст\\.|п\\/ст\\.|пгт\\.|п\\/гт\\.|с\\.|тер\\.|массив\\.) ([^,]*))*,* *((п\\/о\\.|д\\.|ж\\/д_рзд\\.снт\\.|г\\.|дп\\.|нп\\.|мкр\\.|жилзона\\.|снт\\.|п\\.|пст\\.|п\\/ст\\.|пгт\\.|п\\/гт\\.|с\\.|тер\\.|массив\\.)( [^,]*))*(, )*((.* )(ул\\.|пер\\.|наб\\.|ш\\.|линия\\.|казарма\\.|б-р\\.|тер\\.|уч-к\\.|пр-кт\\.|сад\\.|остров\\.|канал\\.|дор\\.|км\\.|городок\\.|тракт\\.|гск\\.|просек\\.|переезд\\.|заезд\\.|парк\\.|площадь|проезд\\.|туп\\.|м\\.|проток\\.|ст\\.|вал\\.|п\\.|спуск\\.|пл-ка\\.|д\\.|коса\\.|п\\/ст\\.|пр\\.|пл\\.|мкр\\.|аллея\\.|кв-л\\.|ж\\/д_будка\\.|х\\.|рзд\\.|тск\\.|сквер\\.|стр\\.|снт\\.|мост\\.|метро\\.))*(, )*\";\"([0-9]*)\";\"((д\\.|ая\\.|ая|нетр\\.|нетр|а\\\\я\\.|а\\\\я|а\\/я\\.|а\\/я)*(([0-9х][-\\\\\\/0-9]*)([\\\\\\/-]([а-я])*)*))*([^\"]*)\";\"(([0-9]*)([а-я]*))*\"";
 
-enum TypeOfRow
-{
-    BASE_TYPE = 1,
-    INPUT_TYPE = 2
-};
-
-//https://en.wikipedia.org/wiki/Federal_subjects_of_Russia
-enum TypeOfFederalSubject
-{
-    INCORRECT_SUBJ = -1,
-    REPUBLIC = 1,
-    KRAY = 2,
-    OBLAST = 3,
-    CITY_OF_FED_SIGN = 4,
-    AUTONOM_OBLAST = 5,
-    AUTONOM_OKRUG = 6
-};
 
 enum AddressElements
 {
@@ -135,6 +117,25 @@ const QMap<AddressElements, QString> MapColumnParsedNames {
     {ADDITIONAL, "!P_ADDITIONAL"},
     {RAW_ADDR, "!P_RAW_ADDR"},
 
+};
+
+/**
+ * \enum TypeOfFederalSubject
+ * \brief Тип федерального субъекта
+ *
+ * Список возможных типов федеральных субъектов. Описание:
+ * https://en.wikipedia.org/wiki/Federal_subjects_of_Russia
+ * Примечание: тип 'CITY_OF_FED_SIGN' не используется
+ */
+enum TypeOfFederalSubject
+{
+    INCORRECT_SUBJ = -1,    ///< Некорректный тип
+    REPUBLIC = 1,           ///< Республика
+    KRAY = 2,               ///< Край
+    OBLAST = 3,             ///< Область
+    CITY_OF_FED_SIGN = 4,   ///< Город федерального значения
+    AUTONOM_OBLAST = 5,     ///< Автономная область
+    AUTONOM_OKRUG = 6       ///< Автономный округ
 };
 
 const QMap<QString, TypeOfFederalSubject> MapStringFSubj {

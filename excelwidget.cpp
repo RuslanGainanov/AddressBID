@@ -410,9 +410,9 @@ void ExcelWidget::onProcessOfOpenFinished()
 //                        this, SLOT(onCurrentRowChanged()));
                 foreach (QString sheetName, data.keys()) {
                     _data.insert(sheetName, new TableModel(sheetName));
-                    _views.insert(sheetName, new TableView(_ui->_tabWidget));
+                    _views.insert(sheetName, new QTableView(_ui->_tabWidget));
                     _views[sheetName]->setModel(_data[sheetName]);
-                    _selections.insert(sheetName, new ItemSelectionModel(_data[sheetName], this));
+                    _selections.insert(sheetName, new QItemSelectionModel(_data[sheetName], this));
                     _views[sheetName]->setSelectionModel(_selections[sheetName]);
                     connect(_selections[sheetName], SIGNAL(currentRowChanged(QModelIndex,QModelIndex)),
                             _data[sheetName], SLOT(onCurrentRowChanged(QModelIndex,QModelIndex)));
@@ -447,9 +447,9 @@ void ExcelWidget::onProcessOfOpenFinished()
                 QStringList data = result.value<QStringList>();
                 QString sheetName = "csv";
                 _data.insert(sheetName, new TableModel(sheetName));
-                _views.insert(sheetName, new TableView(_ui->_tabWidget));
+                _views.insert(sheetName, new QTableView(_ui->_tabWidget));
                 _views[sheetName]->setModel(_data[sheetName]);
-                _selections.insert(sheetName, new ItemSelectionModel(_data[sheetName], this));
+                _selections.insert(sheetName, new QItemSelectionModel(_data[sheetName], this));
                 _views[sheetName]->setSelectionModel(_selections[sheetName]);
                 connect(_selections[sheetName], SIGNAL(currentRowChanged(QModelIndex,QModelIndex)),
                         _data[sheetName], SLOT(onCurrentRowChanged(QModelIndex,QModelIndex)));
@@ -494,7 +494,7 @@ void ExcelWidget::onFounedAddress(QString sheetName, int nRow, Address addr)
 
     nRow+=_countRepatingRow[sheetName];
     TableModel *tm = _data[sheetName];
-    TableView *view = _views[sheetName];
+    QTableView *view = _views[sheetName];
     assert(tm);
     assert(view);
 
@@ -546,7 +546,7 @@ void ExcelWidget::onNotFounedAddress(QString sheetName, int nRow, Address addr)
     }
     nRow+=_countRepatingRow[sheetName];
     TableModel *tm = _data[sheetName];
-    TableView *view = _views[sheetName];
+    QTableView *view = _views[sheetName];
     assert(tm);
     assert(view);
     view->setItemDelegateForRow(nRow, _delegateNotFounded);
@@ -641,7 +641,7 @@ void ExcelWidget::onCurrentRowChanged()
         return;
     TableModel *tm = _data.value(sheet, 0);
     assert(tm);
-    ItemSelectionModel *ism = _selections.value(sheet, 0);
+    QItemSelectionModel *ism = _selections.value(sheet, 0);
     int nRow = ism->selectedIndexes().first().row();
     QStringList row = tm->getRow(nRow);
 
@@ -827,7 +827,7 @@ void ExcelWidget::onSheetRead(const QString &sheet)
     emit toDebug(objectName(),
                  QString("Лист \"%1\" прочитан")
                  .arg(sheet));
-    TableView *view = _views[sheet];
+    QTableView *view = _views[sheet];
     assert(view);
     /*int index = */_ui->_tabWidget->addTab(view, sheet);
 //    _sheetIndex.insert(sheet, index);
@@ -840,7 +840,7 @@ void ExcelWidget::onHideColumn(const QString &sheet, int column)
 //                  +sheet+" column"
 //                  +QString::number(column)
 //                  );
-    TableView *view = _views[sheet];
+    QTableView *view = _views[sheet];
     assert(view);
     view->setColumnHidden(column, true);
 }
@@ -996,7 +996,7 @@ void ExcelWidget::onAddNewAddr(QString addr)
     row = tm->getRow(nRow);
 //    emit isOneColumn(false);
     emit rowReaded(sheet, nRow, row);
-    TableView *tv = _views.value(sheet, 0);
+    QTableView *tv = _views.value(sheet, 0);
     tv->selectRow(nRow);
     tv->scrollTo(tm->index(nRow, nCol));
     connect(_parser, SIGNAL(rowParsed(QString,int,Address)),

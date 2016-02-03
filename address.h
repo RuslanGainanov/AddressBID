@@ -1,17 +1,16 @@
 #ifndef ADDRESS_H
 #define ADDRESS_H
 
+#include <QList>
 #include <QString>
 #include <QStringList>
 #include "defines.h"
 
-enum TypeOfData
-{
-    RAW = 1,
-    PARSED = 2
-};
-
-
+// ********************* class Address ********************
+/**
+ * \class Address
+ * \brief Класс для работы с данными адреса
+ */
 class Address
 {
 public:
@@ -66,7 +65,7 @@ public:
     void setFsubj(const QString f);
     QString getFsubj() const;
 
-    QString toString(TypeOfData t=RAW) const;
+    QString toDebug() const;
     QString toCsv() const;
     QString toInsertSqlQuery() const;
     bool isEmpty() const;
@@ -102,11 +101,34 @@ private:
     QString _fsubj;         ///< federal subject (название федерального субъекта)
     bool    _isCorrect;     ///< флаг устанавливается в 1, если адрес был успешно распарсен
 
+    /**
+     * \fn QString trim(QString str) const
+     * \brief Функция удаления незначащих символов (знаков пунктуации, пробелов и пр.) в начале и в конце строки
+     */
     QString trim(QString str) const;
+
+    /**
+     * \fn QString toLower(QString str) const
+     * \brief Функция приведения строки к нижнему регистру
+     */
     QString toLower(QString str) const;
-    void workWithBranches(QString &s); //работа со скобками
-    void convertToCorrectTypeOfStreet(QString &s);
+
+    /**
+     * \fn void workWithBranches(QString &s)
+     * \brief Функция работы со скобками в строке
+     *
+     * Переносит все, что содержится в скобках в поле "допольнительная информация"
+     */
+    void workWithBranches(QString &s);
+
+    /**
+     * \fn void convertToCorrectTypeOfStreet(QString &s) const
+     * \brief Функция приведения типа улицы к корректному значению
+     */
+    void convertToCorrectTypeOfStreet(QString &s) const;
 
 };
+
+typedef QList< Address > ListAddress;
 
 #endif // ADDRESS_H

@@ -9,8 +9,11 @@
 #include "defines.h"
 #include "address.h"
 
-typedef QList< Address > ListAddress;
-
+// ********************* class CsvWorker ********************
+/**
+ * \class CsvWorker
+ * \brief Класс для чтения данных БД из csv-файла
+ */
 class CsvWorker : public QObject
 {
     Q_OBJECT
@@ -31,11 +34,17 @@ signals:
     void finished();
 
 public slots:
-    void process();
-    void process(QString fname, int maxCount=0);
-    //читает заданное количество строк из файла, и сохраняет в список объектов класса Address
-    //(парсинг не выполняется; отправка сигналов не происходит)
-    ListAddress readFile(QString fname, int maxCount=0);
+//    void process();
+//    void process(QString fname, int maxCount=0);
+
+    /**
+     * \fn ListAddress readFile(QString fname, int maxCount=0)
+     * \brief Функция чтения заданного количества строк из файла
+     * \return Cписок объектов класса Address с непарсенными адресами (заполненное поле RAW)
+     *
+     * Отправка сигналов не происходит
+     */
+    ListAddress readFile(QString &fname, int maxCount=0);
 
 private:
     QString _fname;

@@ -6,10 +6,11 @@
 #include "address.h"
 #include "defines.h"
 
-const int CountTogetherInsertQuery=1000;
-
-typedef QList< Address > ListAddress;
-
+// ********************* class Database ********************
+/**
+ * \class Database
+ * \brief Класс-обертка для БД
+ */
 class Database : public QObject
 {
     Q_OBJECT
@@ -56,7 +57,6 @@ private:
 //    QSet< quint64 > _bids;
 
     void openTableToModel();
-//    void selectAddress(Address &a);
 };
 
 #endif // DATABASE_H

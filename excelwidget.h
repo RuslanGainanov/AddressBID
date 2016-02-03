@@ -11,55 +11,21 @@
 #include <QProgressDialog>
 #include <QAxObject>
 #include <QMessageBox>
-#include <QStyledItemDelegate>
-#include <QPainter>
+#include <QTableView>
+#include <QItemSelectionModel>
 #include <shlobj.h> //для использования QAxObject в отдельном потоке
 
 #include "defines.h"
 #include "address.h"
 #include "xlsparser.h"
 #include "tablemodel.h"
-#include "tableview.h"
-#include "tabwidget.h"
 #include "parseexcelwidget.h"
-#include "itemselectionmodel.h"
 #include "database.h"
-
-typedef QList< Address > ListAddress;
+#include "simpledelegate.h"
 
 #define HIDE_PARSED_COLUMNS 1
 
 const int MAX_OPEN_IN_ROWS=0;
-const QString FoundedColor = "#33FF66"; //цвет строки для которой найден BID в базе
-const QString NotFoundedColor = "#FFA07A"; //цвет строки для которой не найден BID в базе
-const QString RepeatFoundedColor = "#FFCC33"; //цвет строки для которой найдено >1 BID в базе
-
-class SimpleDelegate : public QStyledItemDelegate {
-public:
-    SimpleDelegate(QBrush b=QBrush(), QObject* pobj = 0) : QStyledItemDelegate(pobj)
-    {
-        _b=b;
-    }
-
-    void paint(QPainter*                   pPainter,
-               const QStyleOptionViewItem& option,
-               const QModelIndex&          index
-              ) const
-    {
-        if(!index.isValid())
-        {
-            QStyledItemDelegate::paint(pPainter, option, index);
-            return;
-        }
-        QRect rect = option.rect;
-        pPainter->setBrush(_b);
-        pPainter->drawRect(rect);
-        QStyledItemDelegate::paint(pPainter, option, index);
-    }
-
-private:
-    QBrush _b;
-};
 
 namespace Ui {
 class ExcelWidget;
@@ -85,7 +51,6 @@ signals:
     void rowReaded(QString sheet, int nRow, QStringList row);
     void countRows(QString sheet, int count);
     void sheetsReaded(QStringList sheets);
-//    void isOneColumn(bool);
 
     void rowParsed(QString sheet, int row);
     void sheetParsed(QString sheet);
@@ -139,8 +104,8 @@ private:
     Ui::ExcelWidget             *_ui;
     XlsParser                   *_parser;
     QHash<QString, TableModel *> _data;
-    QHash<QString, TableView *>  _views;
-    QHash<QString, ItemSelectionModel *>  _selections;
+    QHash<QString, QTableView *>  _views;
+    QHash<QString, QItemSelectionModel *>  _selections;
 //    QHash<QString, int>          _sheetIndex;
     QFutureWatcher<QVariant>     _futureWatcher;
     QFutureWatcher<ListAddress>     _futureWatcherS;
