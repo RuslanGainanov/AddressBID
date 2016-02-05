@@ -13,7 +13,13 @@ int main(int argc, char *argv[])
         canRun=false;
 #endif
 
-    MainWindow w;
+    MainWindow *w = new MainWindow;
+    QObject::connect(w, &MainWindow::windowClosed, [=](){
+//        qDebug() << "MainWindow::windowClosed emited";
+//        qApp->quit();
+        delete w;
+        exit(0);
+    });
     QMessageBox msgBox(QMessageBox::Critical,
                        QObject::trUtf8("Запуск невозможен"),
                        QObject::trUtf8("Данная версия программы более не поддерживается.\n"
@@ -22,7 +28,7 @@ int main(int argc, char *argv[])
                        );
     if(canRun)
     {
-        w.show();
+        w->show();
     }
     else
     {

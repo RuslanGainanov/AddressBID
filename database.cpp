@@ -11,6 +11,7 @@ Database::Database(QObject *parent) :
 //    if(_model->lastError().isValid())
 //        emit toDebug(objectName(),
 //                     "openModel:"+_model->lastError().text());
+    setObjectName("Database");
 }
 
 Database::~Database()
@@ -27,6 +28,7 @@ void Database::setBaseName(QString name)
 QString Database::baseName()
 {
     return _baseName;
+//    return DefaultBaseName;
 }
 
 //ListAddress Database::search(QString sheetName, ListAddress addr)
@@ -43,15 +45,17 @@ QString Database::baseName()
 void Database::removeBase(QString filename)
 {
     qDebug() << "Database removeBase" << filename << this->thread()->currentThreadId();
+
     removeConnection();
-    if(QFile::exists(filename))
+    QFile f(filename);
+    if(f.exists())
     {
-        if(QFile::remove(filename))
+        if(f.remove())
             emit toDebug(objectName(),
                     QString("%1 remove success").arg(filename));
         else
             emit toDebug(objectName(),
-                    QString("%1 remove error").arg(filename));
+                    QString("%1 remove error: %2").arg(filename).arg(f.errorString()));
     }
     else
     {
@@ -65,7 +69,7 @@ void Database::openBase(QString filename)
 //    qDebug() << "Database openBase" << filename << this->thread()->currentThreadId();
     emit toDebug(objectName(),
                  QString("Открывается база данных %1").arg(filename));
-    if(filename!=_baseName)
+    if(filename!=baseName())
         removeConnection();
     setBaseName(filename);
     if(!_connected)
@@ -74,6 +78,7 @@ void Database::openBase(QString filename)
         return;
     createTable();
     openTableToModel();
+//    _connected=true;
     emit countRows(_model->rowCount());
     emit baseOpened();
 }
@@ -97,8 +102,16 @@ void Database::openTableToModel()
     _model->select();
 
     if(_model->lastError().isValid())
+    {
         emit toDebug(objectName(),
-                     "openModel:"+_model->lastError().text());
+                     "При создании модели возникла ошибка: "+_model->lastError().text());
+    }
+    else
+    {
+        emit toDebug(objectName(),
+                     QString("Модель успешно создана и открыта"));
+        emit selectedRows(_model->rowCount());
+    }
 }
 
 void Database::updateTableModel()
@@ -108,6 +121,7 @@ void Database::updateTableModel()
 
 void Database::removeConnection()
 {
+//    qDebug() << "removeConnection()";
     if(!_connected)
         return;
 
@@ -116,7 +130,8 @@ void Database::removeConnection()
         delete _model;
         _model=nullptr;
     }
-    QSqlDatabase::removeDatabase(_baseName);
+//    qDebug() << QString("QSqlDatabase::removeDatabase(%1)").arg(baseName());
+    QSqlDatabase::removeDatabase(baseName());
     _connected=false;
 }
 
@@ -126,84 +141,95 @@ void Database::createConnection()
         return;
 
     QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
-    db.setDatabaseName(_baseName);
+    db.setDatabaseName(baseName());
     db.setUserName("user");
     db.setHostName("rt");
     db.setPassword("user");
-    QString str;
     if (!db.open())
     {
         _connected=false;
-        str+="Cannot open database:" + db.lastError().text();
         emit toDebug(objectName(),
-                     str);
+                     QString("База данных '%1' не может быть открыта. Ошибка: %2")
+                     .arg(baseName())
+                     .arg(db.lastError().text()));
     }
     else
     {
         _connected=true;
-        str += "Success open base:" + _baseName;
         emit toDebug(objectName(),
-                     str);
+                     QString("База данных '%1' открыта.").arg(baseName()));
     }
 }
 
 void Database::createTable()
 {
-    QSqlQuery query;
-    QString str =
-            QString("CREATE TABLE IF NOT EXISTS %18 ( "
-                    "'%1' INTEGER PRIMARY KEY NOT NULL, "
-                    "'%2' TEXT, "
-                    "'%3' TEXT, "
-                    "'%4' TEXT, "
-                    "'%5' TEXT, "
-                    "'%6' TEXT, "
-                    "'%7' TEXT, "
-                    "'%8' TEXT, "
-                    "'%9' TEXT, "
-                    "'%10' TEXT, "
-                    "'%11' TEXT, "
-                    "'%12' TEXT, "
-                    "'%13' TEXT, "
-                    "'%14' TEXT, "
-                    "'%15' TEXT, "
-                    "'%16' TEXT, "
-                    "'%17' TEXT "
-                    ");")
-            .arg(MapColumnNames[BUILD_ID])
-            .arg(MapColumnNames[STREET])
-            .arg(MapColumnNames[STREET_ID])
-            .arg(MapColumnNames[KORP])
-            .arg(MapColumnNames[BUILD])
-            .arg(MapColumnNames[TYPE_OF_STREET])
-            .arg(MapColumnNames[ADDITIONAL])
-            .arg(MapColumnNames[TYPE_OF_CITY1])
-            .arg(MapColumnNames[CITY1])
-            .arg(MapColumnNames[TYPE_OF_CITY2])
-            .arg(MapColumnNames[CITY2])
-            .arg(MapColumnNames[DISTRICT])
-            .arg(MapColumnNames[FSUBJ])
-            .arg(MapColumnNames[RAW_ADDR])
-            .arg(MapColumnNames[LITERA])
-            .arg(MapColumnNames[CORRECT])
-            .arg(MapColumnNames[TYPE_OF_FSUBJ])
-            .arg(TableName);
+    QStringList tables=QSqlDatabase::database().tables();
+    if(tables.isEmpty() || !tables.contains(TableName))
+    {
+        QSqlQuery query;
+        QString str =
+                QString("CREATE TABLE IF NOT EXISTS %18 ( "
+                        "'%1' INTEGER PRIMARY KEY NOT NULL, "
+                        "'%2' TEXT, "
+                        "'%3' TEXT, "
+                        "'%4' TEXT, "
+                        "'%5' TEXT, "
+                        "'%6' TEXT, "
+                        "'%7' TEXT, "
+                        "'%8' TEXT, "
+                        "'%9' TEXT, "
+                        "'%10' TEXT, "
+                        "'%11' TEXT, "
+                        "'%12' TEXT, "
+                        "'%13' TEXT, "
+                        "'%14' TEXT, "
+                        "'%15' TEXT, "
+                        "'%16' TEXT, "
+                        "'%17' TEXT "
+                        ");")
+                .arg(MapColumnNames[BUILD_ID])
+                .arg(MapColumnNames[STREET])
+                .arg(MapColumnNames[STREET_ID])
+                .arg(MapColumnNames[KORP])
+                .arg(MapColumnNames[BUILD])
+                .arg(MapColumnNames[TYPE_OF_STREET])
+                .arg(MapColumnNames[ADDITIONAL])
+                .arg(MapColumnNames[TYPE_OF_CITY1])
+                .arg(MapColumnNames[CITY1])
+                .arg(MapColumnNames[TYPE_OF_CITY2])
+                .arg(MapColumnNames[CITY2])
+                .arg(MapColumnNames[DISTRICT])
+                .arg(MapColumnNames[FSUBJ])
+                .arg(MapColumnNames[RAW_ADDR])
+                .arg(MapColumnNames[LITERA])
+                .arg(MapColumnNames[CORRECT])
+                .arg(MapColumnNames[TYPE_OF_FSUBJ])
+                .arg(TableName);
 
-    if(!query.exec(str))
-        emit toDebug(objectName(),
-                "Unable to create a table:\r\n"+query.lastError().text());
-    else
-        emit toDebug(objectName(),
-                "Success create a table");
+        if(!query.exec(str))
+            emit toDebug(objectName(),
+                         "Unable to create a table:\r\n"+query.lastError().text());
+        else
+            emit toDebug(objectName(),
+                         "Success create a table");
+    }
 }
 
 void Database::insertListAddressWithCheck(ListAddress &la)
 {
     ListAddress::iterator it=la.begin();
+    /*QString currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
+    qDebug() << "Begin TR"
+             << */QSqlDatabase::database().driver()->beginTransaction()/*
+             << currTime*/;
     for(;it!=la.end();it++)
     {
         insertAddressWithCheck(*it);
     }
+    /*currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
+    qDebug() << "End TR"
+             << */QSqlDatabase::database().driver()->commitTransaction()/*
+             << currTime*/;
 }
 
 void Database::insertAddressWithCheck(Address &a)
@@ -217,6 +243,7 @@ void Database::insertAddressWithCheck(Address &a)
 //    }
 //    _bids.insert(a.getBuildId());
     QSqlQuery query;
+
     if (!query.exec(a.toInsertSqlQuery()))
     {
         emit toDebug(objectName(),
@@ -224,6 +251,53 @@ void Database::insertAddressWithCheck(Address &a)
                 +query.lastError().text());
         //        assert(0);
     }
+}
+
+void Database::selectAddress(Address a)
+{
+    if(_model==nullptr)
+        return;
+    QString filter;
+    filter+=QString("CORRECT = '%1'").arg(1);
+    if(a.getTypeOfFSubj()!=INCORRECT_SUBJ)
+        filter+=" AND " + QString("TYPE_OF_FSUBJ = '%1'").arg(a.getTypeOfFSubjInString());
+    if(a.getFsubj()!="*")
+       filter+=" AND " + QString("FSUBJ = '%1'").arg(a.getFsubj());
+    if(a.getDistrict()!="*")
+       filter+=" AND " + QString("DISTRICT = '%1'").arg(a.getDistrict());
+    if(a.getTypeOfCity1()!="*")
+       filter+=" AND " + QString("TYPE_OF_CITY1 = '%1'").arg(a.getTypeOfCity1());
+    if(a.getCity1()!="*")
+       filter+=" AND " + QString("CITY1 = '%1'").arg(a.getCity1());
+    if(a.getTypeOfCity2()!="*")
+       filter+=" AND " + QString("TYPE_OF_CITY2 = '%1'").arg(a.getTypeOfCity2());
+    if(a.getCity2()!="*")
+       filter+=" AND " + QString("CITY2 = '%1'").arg(a.getCity2());
+    if(a.getTypeOfStreet()!="*")
+       filter+=" AND " + QString("TYPE_OF_STREET = '%1'").arg(a.getTypeOfStreet());
+    if(a.getStreet()!="*")
+       filter+=" AND " + QString("STREET = '%1'").arg(a.getStreet());
+    if(a.getBuild()!="*")
+       filter+=" AND " + QString("BUILD = '%1'").arg(a.getBuild());
+    if(a.getKorp()!="*")
+       filter+=" AND " + QString("KORP = '%1'").arg(a.getKorp());
+    if(a.getLitera()!="*")
+       filter+=" AND " + QString("LITERA = '%1'").arg(a.getLitera());
+    if(a.getAdditional()!="*")
+       filter+=" AND " + QString("ADDITIONAL = '%1'").arg(a.getAdditional());
+
+    emit toDebug(objectName(),
+                 QString("Устанавливаем фильтр: %1").arg(filter));
+    _model->setFilter(filter);
+
+    emit toDebug(objectName(),
+                 QString("Выполняем select"));
+    _model->select();
+
+    emit toDebug(objectName(),
+                 QString("Select выполнен. Найдено строк: %1").arg(_model->rowCount()));
+
+    emit selectedRows(_model->rowCount());
 }
 
 void Database::selectAddress(QString sheet, int nRow, Address a)

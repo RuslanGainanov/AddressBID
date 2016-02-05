@@ -378,8 +378,8 @@ bool Address::isCorrect() const
 
 QString Address::trim(QString str) const
 {
-    str.remove(QRegExp("^\\s*[\\.,\\\\;()-/]*"));
-    str.remove(QRegExp("[\\.,\\\\;()-/]*\\s*$"));
+    str.remove(QRegExp("^\\s*[\\.,\\\\;()/-]*"));
+    str.remove(QRegExp("[\\.,\\\\;()/-]*\\s*$"));
     return str;
 }
 
@@ -424,7 +424,7 @@ void Address::convertToCorrectTypeOfStreet(QString &s) const
         s="пл";
     else if(s.contains(QRegExp("участок|уч-к")))
         s="уч-к";
-    else if(s.contains(QRegExp("квартал||кв-л")))
+    else if(s.contains(QRegExp("квартал|кв-л")))
         s="кв-л";
     else if(s.contains(QRegExp("километр|км")))
         s="км";

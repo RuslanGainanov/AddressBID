@@ -40,11 +40,22 @@ signals:
     void addressFounded(QString sheet, int nRow, Address a);
     void addressNotFounded(QString sheet, int nRow, Address a);
 
+    /**
+     * \fn void selectedRows(int count)
+     * \brief Сигнал отправляемый при изменении модели.
+     * \param[out]    count    новое количество строк в модели
+     *
+     * Отправляет count==256 когда кол-во строк >= 256.
+     */
+    void selectedRows(int count);
+
 public slots:
     void openBase(QString filename);
     void removeBase(QString filename);
 
     void selectAddress(QString sheet, int nRow, Address a);
+
+    void selectAddress(Address a);
 
     void insertListAddressWithCheck(ListAddress &la);
     void insertAddressWithCheck(Address &a);

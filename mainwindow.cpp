@@ -40,10 +40,16 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(_ui->_pushButtonSave, SIGNAL(clicked()),
             this, SLOT(save()));
 
+//    connect(_dbw, SIGNAL(exitSignal()),
+//            this, SLOT(close()));
+//    connect(_dbw, SIGNAL(exitSignal()),
+//            qApp, SLOT(quit()));
+    connect(_dbw, SIGNAL(exitSignal()),
+            SIGNAL(windowClosed()));
     connect( this, SIGNAL(windowClosed()),
              _dbw, SLOT(close()) );
-    connect( this, SIGNAL(windowClosed()),
-             _excel, SLOT(close()) );
+//    connect( this, SIGNAL(windowClosed()),
+//             _excel, SLOT(close()) );
     connect( this, SIGNAL(windowClosed()),
              _helpBrowser, SLOT(close()) );
 
@@ -60,8 +66,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(_excel, &ExcelWidget::searchFinished,
             this, &MainWindow::onFinishSearching);
 
-//        _dbw->openExisting();
-//        _dbw->show();
     _ui->_debugWidget->hide();
     _ui->_pushButtonOpenBase->hide();
     _ui->_progressBar->hide();
@@ -70,16 +74,23 @@ MainWindow::MainWindow(QWidget *parent) :
             this, SLOT(showAbout()));
     connect(_ui->_actionHelp, SIGNAL(triggered(bool)),
             this, SLOT(showHelp()));
+
+//    _dbw->show();
+//    _dbw->openExisting();
+    qDebug() << "end constructor MainWindow";
 }
 
 MainWindow::~MainWindow()
 {
+    qDebug() << "~MainWindow()";
     delete _ui;
     delete _dbw;
+    delete _helpBrowser;
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
+    qDebug() << "closeEvent()";
     emit windowClosed();
     QWidget::closeEvent(event);
 }
@@ -95,6 +106,13 @@ void MainWindow::keyPressEvent(QKeyEvent *pe)
         QWidget::keyPressEvent(pe);
         break;
     }
+}
+
+void MainWindow::show()
+{
+    QMainWindow::show();
+    _dbw->show();
+    _dbw->openExisting();
 }
 
 void MainWindow::showAbout()

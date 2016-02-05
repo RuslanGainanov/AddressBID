@@ -11,10 +11,6 @@ DatabaseWidget::DatabaseWidget(QWidget *parent) :
     _db->moveToThread(&_thread);
     _thread.start();
 
-    _ui->_progressBarReaded->hide();
-
-    openExisting();
-
     connect(_db, SIGNAL(countRows(int)),
             this, SLOT(onCountRow(int)));
     connect(_db, SIGNAL(rowParsed(int)),
@@ -27,14 +23,42 @@ DatabaseWidget::DatabaseWidget(QWidget *parent) :
             this, SLOT(onOpenBase()));
     connect(_db, SIGNAL(baseOpened()),
             this, SLOT(onBaseOpened()));
+
     connect(_db, SIGNAL(toDebug(QString,QString)),
-             SIGNAL(toDebug(QString,QString)));
+             this, SIGNAL(toDebug(QString,QString)));
 
     connect(&_futureWatcher, SIGNAL(finished()),
             this, SLOT(onProcessOfOpenFinished()));
     connect(&_futureWatcherParser, SIGNAL(finished()),
             this, SLOT(onProcessOfParsingFinished()));
-//    _ui->_pushButtonLoadOld->hide();
+
+    _parser = new XlsParser;
+
+    connect(_ui->comboBoxTypeFSubj, SIGNAL(activated(int)), this, SLOT(onFindButtonClicked()));
+    connect(_ui->lineEditFSubj, SIGNAL(returnPressed()), this, SLOT(onFindButtonClicked()));
+    connect(_ui->lineEditDistrict, SIGNAL(returnPressed()), this, SLOT(onFindButtonClicked()));
+    connect(_ui->lineEditTypeOfCity, SIGNAL(returnPressed()), this, SLOT(onFindButtonClicked()));
+    connect(_ui->lineEditTypeOfCity2, SIGNAL(returnPressed()), this, SLOT(onFindButtonClicked()));
+    connect(_ui->lineEditCity, SIGNAL(returnPressed()), this, SLOT(onFindButtonClicked()));
+    connect(_ui->lineEditCity2, SIGNAL(returnPressed()), this, SLOT(onFindButtonClicked()));
+    connect(_ui->lineEditTypeOfStreet, SIGNAL(returnPressed()), this, SLOT(onFindButtonClicked()));
+    connect(_ui->lineEditStreet, SIGNAL(returnPressed()), this, SLOT(onFindButtonClicked()));
+    connect(_ui->lineEditBuild, SIGNAL(returnPressed()), this, SLOT(onFindButtonClicked()));
+    connect(_ui->lineEditKorp, SIGNAL(returnPressed()), this, SLOT(onFindButtonClicked()));
+    connect(_ui->lineEditLiter, SIGNAL(returnPressed()), this, SLOT(onFindButtonClicked()));
+    connect(_ui->lineEditAdditional, SIGNAL(returnPressed()), this, SLOT(onFindButtonClicked()));
+
+    connect(_ui->_lineEditAddress, SIGNAL(returnPressed()), this, SLOT(onParseButtonClicked()));
+
+    connect(this, SIGNAL(selectAddress(Address)),
+            _db, SLOT(selectAddress(Address)));
+    connect(_db, SIGNAL(selectedRows(int)),
+            this, SLOT(onSelectedRows(int)));
+
+    _ui->_progressBarReaded->hide();
+    _ui->_progressBarParsed->hide();
+    _ui->_pushButtonLoadOld->hide();
+    _ui->_lineEditFilename->hide();
 }
 
 DatabaseWidget::~DatabaseWidget()
@@ -43,6 +67,7 @@ DatabaseWidget::~DatabaseWidget()
     delete _db;
     _thread.quit();
     _thread.wait();
+    qDebug() << " ~DatabaseWidget()";
 }
 
 void DatabaseWidget::readCsvBase(QString openFilename)
@@ -240,28 +265,41 @@ void DatabaseWidget::onProcessOfParsingFinished()
     }
 }
 
-void DatabaseWidget::open()
+bool DatabaseWidget::open()
 {
     QString fname =
             QFileDialog::getOpenFileName(this, trUtf8("Укажите файл базы данных"),
                                          "",
                                          tr("Excel (*.csv)"));
     if(fname.isEmpty())
-        return;
+    {
+        return false;
+    }
     _ui->_lineEditFilename->setEnabled(true);
-    _csvFileName=fname;
+//    _csvFileName=fname;
     _ui->_lineEditFilename->setText(fname);
-    clear();
-    _db->setBaseName(QString(fname).replace(".csv", ".db", Qt::CaseInsensitive));
+//    clear();
+//    _db->setBaseName(QString(fname).replace(".csv", ".db", Qt::CaseInsensitive));
+    _db->setBaseName(QDir::current().filePath(DefaultBaseName));
     _db->removeBase(_db->baseName());
     _db->openBase(_db->baseName());
 
     readCsvBase(fname);
     _db->updateTableModel();
+    onBaseOpened();
+    return true;
+}
+
+void DatabaseWidget::openExisting(QString fname)
+{
+    _db->openBase(fname);
+    _db->updateTableModel();
+    onBaseOpened();
 }
 
 void DatabaseWidget::openExisting()
 {
+    /*
     QStringList files = QDir::current().entryList(QStringList("*.db"), QDir::Files);
     emit toDebug(objectName(), "databases:"+files.join(" "));
     if(files.size()>1 || files.isEmpty())
@@ -273,13 +311,61 @@ void DatabaseWidget::openExisting()
         if(fname.isEmpty())
             return;
         _db->openBase(fname);
+//        _db->updateTableModel();
     }
     else
     {
         QString fname = files.first();
         _db->openBase(fname);
+        _db->updateTableModel();
     }
-
+    */
+    if(QDir::current().exists(DefaultBaseName))
+    {
+        openExisting(QDir::current().filePath(DefaultBaseName));
+    }
+    else
+    {
+        QMessageBox msgBox(QMessageBox::Warning,
+                           trUtf8("Внимание"),
+                           trUtf8("База данных '%1' в каталоге '%2' не найдена."
+                                  "\nЗагрузить новую или найти старую?")
+                           .arg(DefaultBaseName)
+                           .arg(QDir::current().absolutePath()));
+        QPushButton *openOldButton = msgBox.addButton(trUtf8("Указать старую"),
+                                                      QMessageBox::AcceptRole);
+        QPushButton *openNewButton = msgBox.addButton(trUtf8("Загрузить новую"),
+                                                    QMessageBox::DestructiveRole);
+        QPushButton *cancelButton = msgBox.addButton(trUtf8("Отмена"),
+                                                    QMessageBox::RejectRole);
+        msgBox.exec();
+        if (msgBox.clickedButton() == openOldButton) {
+            QString fname =
+                    QFileDialog::getOpenFileName(this, trUtf8("Укажите файл базы данных"),
+                                                 "",
+                                                 tr("SQLite (*.db)"));
+            if(fname.isEmpty())
+            {
+                emit exitSignal();
+                return;
+            }
+            //копируем файл базы в текущий каталог (в каталог с программой)
+            if(QFile::copy(fname, QDir::current().filePath(DefaultBaseName)))
+            {
+                //успешно скопировалось
+                openExisting(QDir::current().filePath(DefaultBaseName));
+            }
+            else
+            {
+                openExisting(fname);
+            }
+        } else if (msgBox.clickedButton() == openNewButton) {
+            if(!open())
+                emit exitSignal();
+        } else if (msgBox.clickedButton() == cancelButton) {
+            emit exitSignal();
+        }
+    }
 }
 
 void DatabaseWidget::clear()
@@ -353,4 +439,128 @@ void DatabaseWidget::connectModelWithView(QSqlTableModel *model)
     _ui->_tableView->setModel(model);
 //    _ui->_tableView->hideColumn(0);
     _ui->_tableView->hideColumn(model->columnCount()-1);
+}
+
+void DatabaseWidget::onToDebug(QString obj, QString mes)
+{
+    emit toDebug(obj, mes);
+}
+
+void DatabaseWidget::on__pushButtonFindParsAddr_clicked()
+{
+    onFindButtonClicked();
+}
+
+
+void DatabaseWidget::onFindButtonClicked()
+{
+    Address a;
+    if(_ui->comboBoxTypeFSubj->currentText().isEmpty())
+        a.setTypeOfFSubj(MapFSubjString[INCORRECT_SUBJ]);
+    else
+        a.setTypeOfFSubj(_ui->comboBoxTypeFSubj->currentText());
+    a.setFsubj(_ui->lineEditFSubj->text());
+    a.setDistrict(_ui->lineEditDistrict->text());
+    a.setTypeOfCity1(_ui->lineEditTypeOfCity->text());
+    a.setTypeOfCity2(_ui->lineEditTypeOfCity2->text());
+    a.setCity1(_ui->lineEditCity->text());
+    a.setCity2(_ui->lineEditCity2->text());
+    a.setTypeOfStreet(_ui->lineEditTypeOfStreet->text());
+    a.setStreet(_ui->lineEditStreet->text());
+    a.setBuild(_ui->lineEditBuild->text());
+    a.setKorp(_ui->lineEditKorp->text());
+    a.setLitera(_ui->lineEditLiter->text());
+    a.setAdditional(_ui->lineEditAdditional->text());
+
+    emit toDebug(objectName(),
+                 QString("Произодим поиск след. адреса(-ов): %1").arg(a.toCsv()));
+//    _db->setQueryAddress(a);
+    emit selectAddress(a);
+}
+
+void DatabaseWidget::on__pushButtonFindStrAddr_clicked()
+{
+    onParseButtonClicked();
+}
+
+void DatabaseWidget::onParseButtonClicked()
+{
+    QString addr(_ui->_lineEditAddress->text());
+    emit toDebug(objectName(),
+                 QString("Распознаем адрес для поиска: %1").arg(addr));
+    Address a;
+    _parser->parseAddress(addr, a);
+
+    emit toDebug(objectName(),
+                 QString("Адрес распознан: %1").arg(a.toCsv()));
+    QString str;
+    str=a.getTypeOfFSubjInString();
+    int index = _ui->comboBoxTypeFSubj->findText(str, Qt::MatchExactly);
+    if(index != -1)
+        _ui->comboBoxTypeFSubj->setCurrentIndex(index);
+    else
+        _ui->comboBoxTypeFSubj->setCurrentIndex(0);
+    str=a.getFsubj();
+    _ui->lineEditFSubj->setText(str);
+    str=a.getDistrict();
+    _ui->lineEditDistrict->setText(str);
+    str=a.getTypeOfCity1();
+    _ui->lineEditTypeOfCity->setText(str);
+    str=a.getCity1();
+    _ui->lineEditCity->setText(str);
+    str=a.getTypeOfCity2();
+    _ui->lineEditTypeOfCity2->setText(str);
+    str=a.getCity2();
+    _ui->lineEditCity2->setText(str);
+    str=a.getAdditional();
+    _ui->lineEditAdditional->setText(str);
+    str=a.getTypeOfStreet();
+    _ui->lineEditTypeOfStreet->setText(str);
+    str=a.getStreet();
+    _ui->lineEditStreet->setText(str);
+    str=a.getBuild();
+    _ui->lineEditBuild->setText(str);
+    str=a.getKorp();
+    _ui->lineEditKorp->setText(str);
+    str=a.getLitera();
+    _ui->lineEditLiter->setText(str);
+
+    _ui->_pushButtonFindParsAddr->setFocus();
+//    _db->setQueryAddress(a);
+}
+
+
+void DatabaseWidget::onSelectedRows(int count)
+{
+    QString str;
+    if(count==256)
+        str=">256";
+    else
+        str=QString::number(count);
+    _ui->_labelCountRows->setText(str);
+}
+
+void DatabaseWidget::on__pushButtonClear_clicked()
+{
+    onClearButtonClicked();
+}
+
+void DatabaseWidget::onClearButtonClicked()
+{
+    QString str("*");
+    _ui->comboBoxTypeFSubj->setCurrentIndex(0);
+    _ui->lineEditFSubj->setText(str);
+    _ui->lineEditDistrict->setText(str);
+    _ui->lineEditTypeOfCity->setText(str);
+    _ui->lineEditCity->setText(str);
+    _ui->lineEditTypeOfCity2->setText(str);
+    _ui->lineEditCity2->setText(str);
+    _ui->lineEditAdditional->setText(str);
+    _ui->lineEditTypeOfStreet->setText(str);
+    _ui->lineEditStreet->setText(str);
+    _ui->lineEditBuild->setText(str);
+    _ui->lineEditKorp->setText(str);
+    _ui->lineEditLiter->setText(str);
+
+    _ui->_pushButtonFindParsAddr->setFocus();
 }

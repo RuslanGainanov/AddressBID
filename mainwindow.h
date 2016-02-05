@@ -8,7 +8,7 @@
 #include "address.h"
 #include "excelwidget.h"
 #include "debugwidget.h"
-#include "HelpBrowser.h"
+#include "helpbrowser.h"
 
 typedef QList< Address > ListAddress;
 
@@ -33,6 +33,7 @@ protected:
     void keyPressEvent(QKeyEvent *pe);
 
 public slots:
+    void show();
     void onBaseOpenTriggered();
     void onExcelOpenTriggered();
     void onErrorOccured(QString nameObject, int code, QString errorDesc);

@@ -23,13 +23,13 @@ public slots:
     void onReadRow(const QString &sheet,
                    const int &rowNumber,
                    const QStringList &row);
+    void parseAddress(QString &str, Address &a);
 //    void onIsOneColumn(bool b);
 
 private:
     QMap<QString, MapAddressElementPosition> _mapHead;
     bool _error;
 
-    void parseAddress(QString &str, Address &a);
     bool parseObject(QString &str, QString &result, QString regPattern, int regCap);
     bool parseObject(QString &str, QStringList &result, QString regPattern);
 };
