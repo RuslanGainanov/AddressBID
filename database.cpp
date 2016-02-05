@@ -3,7 +3,8 @@
 Database::Database(QObject *parent) :
     QObject(parent),
     _model(nullptr),
-    _connected(false)
+    _connected(false),
+    _canceled(false)
 {
 //    _model = new QSqlTableModel(this);
 //    _model->setTable(TableName);
@@ -31,6 +32,16 @@ QString Database::baseName()
 //    return DefaultBaseName;
 }
 
+void Database::cancelInsertOperation()
+{
+    _canceled=true;
+}
+
+bool Database::isCanceled()
+{
+    return _canceled;
+}
+
 //ListAddress Database::search(QString sheetName, ListAddress addr)
 //{
 //    qDebug() << "Database::search" << this->thread()->currentThreadId()
@@ -44,7 +55,8 @@ QString Database::baseName()
 
 void Database::removeBase(QString filename)
 {
-    qDebug() << "Database removeBase" << filename << this->thread()->currentThreadId();
+    emit toDebug(objectName(),
+            QString("Удаляем старую базу '%1'.").arg(filename));
 
     removeConnection();
     QFile f(filename);
@@ -52,15 +64,18 @@ void Database::removeBase(QString filename)
     {
         if(f.remove())
             emit toDebug(objectName(),
-                    QString("%1 remove success").arg(filename));
+                    QString("База '%1' успешно удалена.").arg(filename));
         else
             emit toDebug(objectName(),
-                    QString("%1 remove error: %2").arg(filename).arg(f.errorString()));
+                    QString("Невозможно удалить файл '%1'. Ошибка: %2")
+                         .arg(filename)
+                         .arg(f.errorString()));
     }
     else
     {
         emit toDebug(objectName(),
-                QString("%1 cannot remove. File is not exists").arg(filename));
+                QString("Невозможно удалить файл '%1'. Файл не существует.")
+                     .arg(filename));
     }
 }
 
@@ -68,7 +83,7 @@ void Database::openBase(QString filename)
 {
 //    qDebug() << "Database openBase" << filename << this->thread()->currentThreadId();
     emit toDebug(objectName(),
-                 QString("Открывается база данных %1").arg(filename));
+                 QString("Открывается база данных '%1'.").arg(filename));
     if(filename!=baseName())
         removeConnection();
     setBaseName(filename);
@@ -77,14 +92,21 @@ void Database::openBase(QString filename)
     if(!_connected)
         return;
     createTable();
-    openTableToModel();
+    createModel();
 //    _connected=true;
-    emit countRows(_model->rowCount());
+//    emit countRows(_model->rowCount());
     emit baseOpened();
 }
 
 void Database::clear()
 {
+    if(_model!=nullptr)
+    {
+        _model->clear();
+        emit selectedRows(0);
+        delete _model;
+        _model=nullptr;
+    }
 }
 
 QSqlTableModel *Database::getModel()
@@ -92,10 +114,9 @@ QSqlTableModel *Database::getModel()
     return _model;
 }
 
-void Database::openTableToModel()
+void Database::createModel()
 {
-    if(_model!=nullptr)
-        delete _model;
+    clear();
     _model = new QSqlTableModel;
     _model->setTable(TableName);
     _model->setEditStrategy(QSqlTableModel::OnManualSubmit);
@@ -109,14 +130,22 @@ void Database::openTableToModel()
     else
     {
         emit toDebug(objectName(),
-                     QString("Модель успешно создана и открыта"));
-        emit selectedRows(_model->rowCount());
+                     QString("Модель успешно создана и открыта."));
+//        emit selectedRows(_model->rowCount());
     }
 }
 
 void Database::updateTableModel()
 {
-    _model->select();
+    emit toDebug(objectName(),
+                 QString("Обновляется отображение модели."));
+    if(_model!=nullptr)
+    {
+        _model->select();
+        emit selectedRows(_model->rowCount());
+    }
+    else
+        emit selectedRows(0);
 }
 
 void Database::removeConnection()
@@ -124,14 +153,14 @@ void Database::removeConnection()
 //    qDebug() << "removeConnection()";
     if(!_connected)
         return;
-
-    if(_model!=nullptr)
+    clear();
+    QStringList cNames = QSqlDatabase::connectionNames();
+    if(!cNames.isEmpty())
     {
-        delete _model;
-        _model=nullptr;
+        emit toDebug(objectName(),
+                     QString("Удаляем соединение к базе '%1'.").arg(cNames.first()));
+        QSqlDatabase::removeDatabase(cNames.first());
     }
-//    qDebug() << QString("QSqlDatabase::removeDatabase(%1)").arg(baseName());
-    QSqlDatabase::removeDatabase(baseName());
     _connected=false;
 }
 
@@ -139,6 +168,9 @@ void Database::createConnection()
 {
     if(_connected)
         return;
+
+    emit toDebug(objectName(),
+                 QString("Cоздаем соединение к базе '%1'.").arg(baseName()));
 
     QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
     db.setDatabaseName(baseName());
@@ -208,15 +240,18 @@ void Database::createTable()
 
         if(!query.exec(str))
             emit toDebug(objectName(),
-                         "Unable to create a table:\r\n"+query.lastError().text());
+                         QString("Невозможно создать таблицу '%1'. Ошибка: '%2'.")
+                         .arg(TableName)
+                         .arg(query.lastError().text()));
         else
             emit toDebug(objectName(),
-                         "Success create a table");
+                         QString("Таблица '%1' была создана.").arg(TableName));
     }
 }
 
 void Database::insertListAddressWithCheck(ListAddress &la)
 {
+    _canceled=false;
     ListAddress::iterator it=la.begin();
     /*QString currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
     qDebug() << "Begin TR"
@@ -224,7 +259,13 @@ void Database::insertListAddressWithCheck(ListAddress &la)
              << currTime*/;
     for(;it!=la.end();it++)
     {
-        insertAddressWithCheck(*it);
+        if(_canceled){
+//            qDebug() << "cancel";
+            break;
+        }
+
+        if(it->getBuildId()!=0)
+            insertAddressWithCheck(*it);
     }
     /*currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
     qDebug() << "End TR"
@@ -247,8 +288,9 @@ void Database::insertAddressWithCheck(Address &a)
     if (!query.exec(a.toInsertSqlQuery()))
     {
         emit toDebug(objectName(),
-                "Unable to make insert operation:\r\n"
-                +query.lastError().text());
+                QString("Невозможно выполнить операцию вставки строки '%1' в БД. Ошибка: %2")
+                     .arg(a.toCsv())
+                     .arg(query.lastError().text()));
         //        assert(0);
     }
 }

@@ -18,13 +18,11 @@ public:
     explicit Database(QObject *parent = 0);
     ~Database();
     QSqlTableModel *getModel();
-    void removeConnection();
-    void createConnection();
-    void dropTable();
-    void createTable();
-    void updateTableModel();
     void setBaseName(QString name);
     QString baseName();
+
+    void cancelInsertOperation();
+    bool isCanceled();
 
 signals:
     void headReaded(QStringList head);
@@ -32,8 +30,8 @@ signals:
     void rowReaded(int rowNumber);
     void rowParsed(int rowNumber);
     void readedRows(int count);
-    void countRows(int count);
-    void workingWithOpenBase();
+//    void countRows(int count);
+//    void workingWithOpenBase();
     void baseOpened();
 
     void toDebug(QString,QString);
@@ -59,15 +57,21 @@ public slots:
 
     void insertListAddressWithCheck(ListAddress &la);
     void insertAddressWithCheck(Address &a);
+    void updateTableModel();
     void clear();
 
 private:
     QSqlTableModel *_model;
     QString _baseName;
     bool _connected;
+    bool _canceled;
 //    QSet< quint64 > _bids;
 
-    void openTableToModel();
+    void createModel();
+    void removeConnection();
+    void createConnection();
+    void dropTable();
+    void createTable();
 };
 
 #endif // DATABASE_H

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>810</width>
-    <height>462</height>
+    <height>486</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -47,7 +47,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="_pushButtonFindStrAddr">
+             <widget class="QPushButton" name="_pushButtonParseAddr">
               <property name="enabled">
                <bool>true</bool>
               </property>
@@ -436,6 +436,13 @@
       </spacer>
      </item>
      <item>
+      <widget class="QPushButton" name="_pushButtonDelete">
+       <property name="text">
+        <string>Delete</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QPushButton" name="_pushButtonOpen">
        <property name="text">
         <string>Открыть новую базу</string>
@@ -472,7 +479,7 @@
  </widget>
  <tabstops>
   <tabstop>_lineEditAddress</tabstop>
-  <tabstop>_pushButtonFindStrAddr</tabstop>
+  <tabstop>_pushButtonParseAddr</tabstop>
   <tabstop>comboBoxTypeFSubj</tabstop>
   <tabstop>lineEditFSubj</tabstop>
   <tabstop>lineEditDistrict</tabstop>

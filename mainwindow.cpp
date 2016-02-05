@@ -77,7 +77,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 //    _dbw->show();
 //    _dbw->openExisting();
-    qDebug() << "end constructor MainWindow";
+//    qDebug() << "end constructor MainWindow";
 }
 
 MainWindow::~MainWindow()

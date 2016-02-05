@@ -11,16 +11,16 @@ DatabaseWidget::DatabaseWidget(QWidget *parent) :
     _db->moveToThread(&_thread);
     _thread.start();
 
-    connect(_db, SIGNAL(countRows(int)),
-            this, SLOT(onCountRow(int)));
-    connect(_db, SIGNAL(rowParsed(int)),
-            this, SLOT(onParseRow(int)));
-    connect(_db, SIGNAL(rowReaded(int)),
-            this, SLOT(onReadRow(int)));
-    connect(_db, SIGNAL(readedRows(int)),
-            this, SLOT(onReadRows(int)));
-    connect(_db, SIGNAL(workingWithOpenBase()),
-            this, SLOT(onOpenBase()));
+//    connect(_db, SIGNAL(countRows(int)),
+//            this, SLOT(onCountRow(int)));
+//    connect(_db, SIGNAL(rowParsed(int)),
+//            this, SLOT(onParseRow(int)));
+//    connect(_db, SIGNAL(rowReaded(int)),
+//            this, SLOT(onReadRow(int)));
+//    connect(_db, SIGNAL(readedRows(int)),
+//            this, SLOT(onReadRows(int)));
+//    connect(_db, SIGNAL(workingWithOpenBase()),
+//            this, SLOT(onOpenBase()));
     connect(_db, SIGNAL(baseOpened()),
             this, SLOT(onBaseOpened()));
 
@@ -55,6 +55,9 @@ DatabaseWidget::DatabaseWidget(QWidget *parent) :
     connect(_db, SIGNAL(selectedRows(int)),
             this, SLOT(onSelectedRows(int)));
 
+    connect(this, SIGNAL(updateModel()),
+            _db, SLOT(updateTableModel()));
+
     _ui->_progressBarReaded->hide();
     _ui->_progressBarParsed->hide();
     _ui->_pushButtonLoadOld->hide();
@@ -67,15 +70,19 @@ DatabaseWidget::~DatabaseWidget()
     delete _db;
     _thread.quit();
     _thread.wait();
+    _paddr.take();
     qDebug() << " ~DatabaseWidget()";
 }
 
 void DatabaseWidget::readCsvBase(QString openFilename)
 {
-    QString currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
-    qDebug().noquote() << "readCsvBase BEGIN"
-             << currTime
-             << this->thread()->currentThreadId();
+//    QString currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
+//    qDebug().noquote() << "readCsvBase BEGIN"
+//             << currTime
+//             << this->thread()->currentThreadId();
+
+    emit toDebug(objectName(),
+                 QString("Открывается файл '%1'.").arg(openFilename));
 
     QString name = QFileInfo(openFilename).fileName();
 
@@ -92,10 +99,14 @@ void DatabaseWidget::readCsvBase(QString openFilename)
                      dialog, SLOT(setValue(int)));
     QObject::connect(&_futureWatcher, SIGNAL(finished()),
                      dialog, SLOT(deleteLater()));
+    QObject::connect(&_futureWatcher, SIGNAL(finished()),
+                     dialog, SLOT(hide()));
 
     CsvWorker *csv = new CsvWorker;
     QObject::connect(&_futureWatcher, SIGNAL(finished()),
                      csv, SLOT(deleteLater()));
+    connect(csv, SIGNAL(toDebug(QString,QString)),
+            SIGNAL(toDebug(QString,QString)));
 
     QFuture<ListAddress> f1 = QtConcurrent::run(csv,
                                          &CsvWorker::readFile,
@@ -105,10 +116,10 @@ void DatabaseWidget::readCsvBase(QString openFilename)
     _futureWatcher.setFuture(f1);
     dialog->exec();
 
-    currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
-    qDebug().noquote() << "readCsvBase END"
-             << currTime
-             << this->thread()->currentThreadId();
+//    currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
+//    qDebug().noquote() << "readCsvBase END"
+//             << currTime
+//             << this->thread()->currentThreadId();
 }
 
 void parsingAddress(Address &a)
@@ -168,46 +179,50 @@ void DatabaseWidget::onProcessOfOpenFinished()
             && !_futureWatcher.isCanceled())
     {
         _addrs = _futureWatcher.future().result();
+        _paddr.reset(new ListAddress(_futureWatcher.future().result()));
         emit toDebug(objectName(),
-                     QString("finish open good, size=%1")
-                     .arg(QString::number(_addrs.size()))
-                     );
+                     QString("Открытие файла успешно завершено. Прочитано строк = %1")
+                     .arg(_addrs.size()));
         if(!_addrs.isEmpty())
         {
-                QString currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
-                qDebug().noquote() << "onProcessOfOpenFinished BEGIN"
-                         << currTime
-                         << this->thread()->currentThreadId();
+//                QString currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
+//                qDebug().noquote() << "onProcessOfOpenFinished BEGIN"
+//                         << currTime
+//                         << this->thread()->currentThreadId();
 
-                QProgressDialog *dialog = new QProgressDialog;
-                dialog->setWindowTitle(trUtf8("Обработка базы (2/3)"));
-                dialog->setLabelText(trUtf8("Обрабатывается файл. Строк: \"%1\". \nОжидайте ...")
-                                     .arg(_addrs.size()));
-                dialog->setCancelButtonText(trUtf8("Отмена"));
-                QObject::connect(dialog, SIGNAL(canceled()),
-                                 &_futureWatcherParser, SLOT(cancel()));
-                QObject::connect(&_futureWatcherParser, SIGNAL(progressRangeChanged(int,int)),
-                                 dialog, SLOT(setRange(int,int)));
-                QObject::connect(&_futureWatcherParser, SIGNAL(progressValueChanged(int)),
-                                 dialog, SLOT(setValue(int)));
-                QObject::connect(&_futureWatcherParser, SIGNAL(finished()),
-                                 dialog, SLOT(deleteLater()));
+            emit toDebug(objectName(),
+                         QString("Начало обработки прочитанной базы."));
 
-                QFuture<void> f1 = QtConcurrent::map(_addrs,
-                                                     parsingAddress
-                                                     );
-                // Start the computation.
-                _futureWatcherParser.setFuture(f1);
-                dialog->exec();
+            QProgressDialog *dialog = new QProgressDialog;
+            dialog->setWindowTitle(trUtf8("Обработка базы (2/3)"));
+            dialog->setLabelText(trUtf8("Обрабатывается файл. Строк: \"%1\". \nОжидайте ...")
+                                 .arg(_addrs.size()));
+            dialog->setCancelButtonText(trUtf8("Отмена"));
+            QObject::connect(dialog, SIGNAL(canceled()),
+                             &_futureWatcherParser, SLOT(cancel()));
+            QObject::connect(&_futureWatcherParser, SIGNAL(progressRangeChanged(int,int)),
+                             dialog, SLOT(setRange(int,int)));
+            QObject::connect(&_futureWatcherParser, SIGNAL(progressValueChanged(int)),
+                             dialog, SLOT(setValue(int)));
+            QObject::connect(&_futureWatcherParser, SIGNAL(finished()),
+                             dialog, SLOT(deleteLater()));
 
-                currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
-                qDebug().noquote() << "onProcessOfOpenFinished END"
-                         << currTime
-                         << this->thread()->currentThreadId();
+            QFuture<void> f1 = QtConcurrent::map(_addrs,
+                                                 parsingAddress
+                                                 );
+            // Start the computation.
+            _futureWatcherParser.setFuture(f1);
+            dialog->exec();
+
+//            currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
+//            qDebug().noquote() << "onProcessOfOpenFinished END"
+//                               << currTime
+//                               << this->thread()->currentThreadId();
         }
     }
     else
-        emit toDebug(objectName(),QString("finish open bad"));
+        emit toDebug(objectName(),
+                     QString("Открытие файла завершено неудачей."));
 }
 
 void DatabaseWidget::onProcessOfParsingFinished()
@@ -216,16 +231,18 @@ void DatabaseWidget::onProcessOfParsingFinished()
             && !_futureWatcherParser.isCanceled())
     {
         emit toDebug(objectName(),
-                     QString("finish parsing good, size=%1")
-                     .arg(QString::number(_addrs.size()))
-                     );
+                     QString("Обработка файла успешно завершена. Обработано строк = %1")
+                     .arg(_addrs.size()));
 
-        QString currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
-        qDebug().noquote() << "Insert in Base BEGIN"
-                 << currTime
-                 << this->thread()->currentThreadId();
+//        QString currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
+//        qDebug().noquote() << "Insert in Base BEGIN"
+//                 << currTime
+//                 << this->thread()->currentThreadId();
 
         QString name = QFileInfo(_db->baseName()).fileName();
+
+        emit toDebug(objectName(),
+                     QString("Добавление обработанных строк в базу '%1'.").arg(name));
 
         QProgressDialog *dialog = new QProgressDialog;
         QFutureWatcher<void> *futureWatcher = new QFutureWatcher<void>;
@@ -251,17 +268,29 @@ void DatabaseWidget::onProcessOfParsingFinished()
         futureWatcher->setFuture(f1);
         dialog->exec();
 
-        currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
-        qDebug().noquote() << "Insert in Base END"
-                 << currTime
-                 << this->thread()->currentThreadId();
+        if(dialog->wasCanceled())
+        {
+            emit toDebug(objectName(),
+                         QString("Добавление отменено."));
+            _db->cancelInsertOperation();
+        }
+        else if(f1.isFinished())
+            emit toDebug(objectName(),
+                         QString("Добавление завершено."));
+
+//        currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
+//        qDebug().noquote() << "Insert in Base END"
+//                 << currTime
+//                 << this->thread()->currentThreadId();
     }
     else
     {
         emit toDebug(objectName(),
-                     QString("finish parsing bad, size=%1")
-                     .arg(QString::number(_addrs.size()))
-                     );
+                     QString("Обработка прочитанного файла завершена неудачей."));
+//        emit toDebug(objectName(),
+//                     QString("finish parsing bad, size=%1")
+//                     .arg(QString::number(_addrs.size()))
+//                     );
     }
 }
 
@@ -285,41 +314,21 @@ bool DatabaseWidget::open()
     _db->openBase(_db->baseName());
 
     readCsvBase(fname);
-    _db->updateTableModel();
-    onBaseOpened();
+//    _db->updateTableModel();
+    emit updateModel();
+//    onBaseOpened();
     return true;
 }
 
 void DatabaseWidget::openExisting(QString fname)
 {
     _db->openBase(fname);
-    _db->updateTableModel();
-    onBaseOpened();
+//    _db->updateTableModel();
+//    onBaseOpened();
 }
 
 void DatabaseWidget::openExisting()
 {
-    /*
-    QStringList files = QDir::current().entryList(QStringList("*.db"), QDir::Files);
-    emit toDebug(objectName(), "databases:"+files.join(" "));
-    if(files.size()>1 || files.isEmpty())
-    {
-        QString fname =
-                QFileDialog::getOpenFileName(this, trUtf8("Укажите файл базы данных"),
-                                             "",
-                                             tr("SQLite (*.db)"));
-        if(fname.isEmpty())
-            return;
-        _db->openBase(fname);
-//        _db->updateTableModel();
-    }
-    else
-    {
-        QString fname = files.first();
-        _db->openBase(fname);
-        _db->updateTableModel();
-    }
-    */
     if(QDir::current().exists(DefaultBaseName))
     {
         openExisting(QDir::current().filePath(DefaultBaseName));
@@ -393,28 +402,28 @@ void DatabaseWidget::on__pushButtonLoadOld_clicked()
     openExisting();
 }
 
-void DatabaseWidget::onReadRow(int row)
-{
-    _ui->_progressBarReaded->setValue(row+1);
-}
+//void DatabaseWidget::onReadRow(int row)
+//{
+//    _ui->_progressBarReaded->setValue(row+1);
+//}
 
-void DatabaseWidget::onReadRows(int rows)
-{
-    _ui->_progressBarReaded->setMaximum(rows);
-    _ui->_progressBarParsed->setMaximum(rows);
-}
+//void DatabaseWidget::onReadRows(int rows)
+//{
+//    _ui->_progressBarReaded->setMaximum(rows);
+//    _ui->_progressBarParsed->setMaximum(rows);
+//}
 
-void DatabaseWidget::onParseRow(int row)
-{
-    _ui->_progressBarParsed->setValue(row+1);
-}
+//void DatabaseWidget::onParseRow(int row)
+//{
+//    _ui->_progressBarParsed->setValue(row+1);
+//}
 
-void DatabaseWidget::onCountRow(int count)
-{
-    _ui->_progressBarReaded->reset();
-    _ui->_progressBarReaded->setMaximum(count);
-    _ui->_progressBarParsed->setMaximum(count);
-}
+//void DatabaseWidget::onCountRow(int count)
+//{
+//    _ui->_progressBarReaded->reset();
+//    _ui->_progressBarReaded->setMaximum(count);
+//    _ui->_progressBarParsed->setMaximum(count);
+//}
 
 void DatabaseWidget::onOpenBase()
 {
@@ -423,34 +432,24 @@ void DatabaseWidget::onOpenBase()
 
 void DatabaseWidget::onBaseOpened()
 {
+    emit toDebug(objectName(),
+                 QString("База данных '%1' была открыта.").arg(_db->baseName()));
+
+    _ui->_tableView->setModel(_db->getModel());
+    emit updateModel();
+
     _ui->_pushButtonOpen->setEnabled(true);
     _ui->_pushButtonLoadOld->setEnabled(true);
-
-    connectModelWithView(_db->getModel());
-
     _ui->_progressBarReaded->setMaximum(1);
     _ui->_progressBarParsed->setMaximum(1);
     _ui->_progressBarReaded->setValue(1);
     _ui->_progressBarParsed->setValue(1);
 }
 
-void DatabaseWidget::connectModelWithView(QSqlTableModel *model)
-{
-    _ui->_tableView->setModel(model);
-//    _ui->_tableView->hideColumn(0);
-    _ui->_tableView->hideColumn(model->columnCount()-1);
-}
-
-void DatabaseWidget::onToDebug(QString obj, QString mes)
-{
-    emit toDebug(obj, mes);
-}
-
 void DatabaseWidget::on__pushButtonFindParsAddr_clicked()
 {
     onFindButtonClicked();
 }
-
 
 void DatabaseWidget::onFindButtonClicked()
 {
@@ -474,11 +473,10 @@ void DatabaseWidget::onFindButtonClicked()
 
     emit toDebug(objectName(),
                  QString("Произодим поиск след. адреса(-ов): %1").arg(a.toCsv()));
-//    _db->setQueryAddress(a);
     emit selectAddress(a);
 }
 
-void DatabaseWidget::on__pushButtonFindStrAddr_clicked()
+void DatabaseWidget::on__pushButtonParseAddr_clicked()
 {
     onParseButtonClicked();
 }
@@ -526,12 +524,13 @@ void DatabaseWidget::onParseButtonClicked()
     _ui->lineEditLiter->setText(str);
 
     _ui->_pushButtonFindParsAddr->setFocus();
-//    _db->setQueryAddress(a);
 }
 
 
 void DatabaseWidget::onSelectedRows(int count)
 {
+    emit toDebug(objectName(),
+                 QString("Получено строк в модели = '%1'").arg(count));
     QString str;
     if(count==256)
         str=">256";
@@ -563,4 +562,9 @@ void DatabaseWidget::onClearButtonClicked()
     _ui->lineEditLiter->setText(str);
 
     _ui->_pushButtonFindParsAddr->setFocus();
+}
+
+void DatabaseWidget::on__pushButtonDelete_clicked()
+{
+    _db->removeBase(_db->baseName());
 }

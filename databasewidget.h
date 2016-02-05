@@ -8,6 +8,7 @@
 #include <QFutureWatcher>
 #include <QFuture>
 #include <QProgressDialog>
+#include <QScopedPointer>
 #include <QMessageBox>
 #include "database.h"
 #include "defines.h"
@@ -43,10 +44,10 @@ public slots:
     void waitSearch();
 
 private slots:
-    void onReadRow(int row);
-    void onReadRows(int rows);
-    void onParseRow(int row);
-    void onCountRow(int count);
+//    void onReadRow(int row);
+//    void onReadRows(int rows);
+//    void onParseRow(int row);
+//    void onCountRow(int count);
     void onOpenBase();
     void onBaseOpened();
     void readCsvBase(QString openFilename);
@@ -60,16 +61,17 @@ private slots:
     void onProcessOfOpenFinished();
     void onProcessOfParsingFinished();
 
-    void onToDebug(QString obj, QString mes);
-
+    void on__pushButtonParseAddr_clicked();
     void on__pushButtonFindParsAddr_clicked();
-    void on__pushButtonFindStrAddr_clicked();
     void on__pushButtonClear_clicked();
+    void on__pushButtonDelete_clicked();
+
 
 signals:
     void toDebug(QString, QString);
     void exitSignal();
     void selectAddress(Address a);
+    void updateModel();
 
 private:
     Ui::DatabaseWidget             *_ui;
@@ -78,10 +80,10 @@ private:
     QFutureWatcher<ListAddress>     _futureWatcher;
     QFutureWatcher<void>            _futureWatcherParser;
     ListAddress                     _addrs;
+    QScopedPointer<ListAddress>     _paddr;
     QString                         _csvFileName;
     QThread                         _thread;
 
-    void connectModelWithView(QSqlTableModel *model);
 //    void parsingAddress(Address &a);
 
 };

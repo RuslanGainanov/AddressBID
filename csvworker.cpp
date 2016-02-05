@@ -132,12 +132,14 @@ void CsvWorker::setMaxCountRead(int maxCount)
 
 ListAddress CsvWorker::readFile(QString &fname, int maxCount)
 {
-    qDebug().noquote() << "CsvWorker readFile BEGIN" << QThread::currentThreadId();
+//    qDebug().noquote() << "CsvWorker readFile BEGIN" << QThread::currentThreadId();
     QFile file1(fname);
     ListAddress addrs;
     if (!file1.open(QIODevice::ReadOnly))
     {
-        qDebug().noquote() << "Ошибка открытия для чтения";
+//        qDebug().noquote() << "Ошибка открытия для чтения";
+        emit toDebug(objectName(),
+                     QString("Ошибка открытия файла '%1' для чтения").arg(fname));
         return addrs;
     }
 
@@ -168,7 +170,7 @@ ListAddress CsvWorker::readFile(QString &fname, int maxCount)
             break;
     }
     file1.close();
-    qDebug().noquote() << "CsvWorker readFile END" << QThread::currentThreadId();
+//    qDebug().noquote() << "CsvWorker readFile END" << QThread::currentThreadId();
 //    QThread::msleep(3000);
     return addrs;
 }

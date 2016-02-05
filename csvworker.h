@@ -32,6 +32,7 @@ signals:
     void headReaded(QStringList head);
     void headReaded(QString head);
     void finished();
+    void toDebug(QString,QString);
 
 public slots:
 //    void process();
