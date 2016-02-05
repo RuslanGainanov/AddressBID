@@ -178,12 +178,12 @@ void DatabaseWidget::onProcessOfOpenFinished()
     if(_futureWatcher.isFinished()
             && !_futureWatcher.isCanceled())
     {
-        _addrs = _futureWatcher.future().result();
+//        _addrs = _futureWatcher.future().result();
         _paddr.reset(new ListAddress(_futureWatcher.future().result()));
         emit toDebug(objectName(),
                      QString("Открытие файла успешно завершено. Прочитано строк = %1")
-                     .arg(_addrs.size()));
-        if(!_addrs.isEmpty())
+                     .arg(_paddr.data()->size()));
+        if(!_paddr.data()->isEmpty())
         {
 //                QString currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
 //                qDebug().noquote() << "onProcessOfOpenFinished BEGIN"
@@ -196,7 +196,7 @@ void DatabaseWidget::onProcessOfOpenFinished()
             QProgressDialog *dialog = new QProgressDialog;
             dialog->setWindowTitle(trUtf8("Обработка базы (2/3)"));
             dialog->setLabelText(trUtf8("Обрабатывается файл. Строк: \"%1\". \nОжидайте ...")
-                                 .arg(_addrs.size()));
+                                 .arg(_paddr.data()->size()));
             dialog->setCancelButtonText(trUtf8("Отмена"));
             QObject::connect(dialog, SIGNAL(canceled()),
                              &_futureWatcherParser, SLOT(cancel()));
@@ -207,7 +207,7 @@ void DatabaseWidget::onProcessOfOpenFinished()
             QObject::connect(&_futureWatcherParser, SIGNAL(finished()),
                              dialog, SLOT(deleteLater()));
 
-            QFuture<void> f1 = QtConcurrent::map(_addrs,
+            QFuture<void> f1 = QtConcurrent::map(*_paddr,
                                                  parsingAddress
                                                  );
             // Start the computation.
@@ -232,7 +232,7 @@ void DatabaseWidget::onProcessOfParsingFinished()
     {
         emit toDebug(objectName(),
                      QString("Обработка файла успешно завершена. Обработано строк = %1")
-                     .arg(_addrs.size()));
+                     .arg(_paddr.data()->size()));
 
 //        QString currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
 //        qDebug().noquote() << "Insert in Base BEGIN"
@@ -263,7 +263,7 @@ void DatabaseWidget::onProcessOfParsingFinished()
 
         QFuture<void> f1 = QtConcurrent::run(_db,
                                              &Database::insertListAddressWithCheck,
-                                             _addrs);
+                                             *_paddr);
         // Start the computation.
         futureWatcher->setFuture(f1);
         dialog->exec();
@@ -277,6 +277,7 @@ void DatabaseWidget::onProcessOfParsingFinished()
         else if(f1.isFinished())
             emit toDebug(objectName(),
                          QString("Добавление завершено."));
+        _paddr.reset();
 
 //        currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
 //        qDebug().noquote() << "Insert in Base END"

@@ -249,10 +249,10 @@ void Database::createTable()
     }
 }
 
-void Database::insertListAddressWithCheck(ListAddress &la)
+void Database::insertListAddressWithCheck(const ListAddress &la)
 {
     _canceled=false;
-    ListAddress::iterator it=la.begin();
+    ListAddress::const_iterator it=la.begin();
     /*QString currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
     qDebug() << "Begin TR"
              << */QSqlDatabase::database().driver()->beginTransaction()/*
@@ -273,7 +273,7 @@ void Database::insertListAddressWithCheck(ListAddress &la)
              << currTime*/;
 }
 
-void Database::insertAddressWithCheck(Address &a)
+void Database::insertAddressWithCheck(const Address &a)
 {
 //    if(_bids.contains(a.getBuildId()))
 //    {

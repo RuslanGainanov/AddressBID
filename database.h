@@ -55,8 +55,8 @@ public slots:
 
     void selectAddress(Address a);
 
-    void insertListAddressWithCheck(ListAddress &la);
-    void insertAddressWithCheck(Address &a);
+    void insertListAddressWithCheck(const ListAddress &la);
+    void insertAddressWithCheck(const Address &a);
     void updateTableModel();
     void clear();
 

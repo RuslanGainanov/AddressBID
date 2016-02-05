@@ -79,7 +79,7 @@ private:
     XlsParser                      *_parser;
     QFutureWatcher<ListAddress>     _futureWatcher;
     QFutureWatcher<void>            _futureWatcherParser;
-    ListAddress                     _addrs;
+//    ListAddress                     _addrs;
     QScopedPointer<ListAddress>     _paddr;
     QString                         _csvFileName;
     QThread                         _thread;
