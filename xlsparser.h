@@ -13,8 +13,8 @@ public:
     ~XlsParser();
 
 signals:
-    void finished();
-    void sheetParsed(QString sheet);
+//    void finished();
+//    void sheetParsed(QString sheet);
     void rowParsed(QString sheet, int row, Address addr);
 
 public slots:
@@ -28,7 +28,7 @@ public slots:
 
 private:
     QMap<QString, MapAddressElementPosition> _mapHead;
-    bool _error;
+//    bool _error;
 
     bool parseObject(QString &str, QString &result, QString regPattern, int regCap);
     bool parseObject(QString &str, QStringList &result, QString regPattern);

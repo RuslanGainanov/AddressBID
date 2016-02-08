@@ -32,25 +32,30 @@ ExcelWidget::ExcelWidget(QWidget *parent) :
     connect(&_futureWatcher, SIGNAL(finished()),
             this, SLOT(onProcessOfOpenFinished()));
 
-    connect(this, SIGNAL(searchFinished(QString)), SLOT(onSearchFinished(QString)));
+//    connect(this, SIGNAL(searchFinished(QString)), SLOT(onSearchFinished(QString)));
 
     _ui->_lineEditFilename->hide();
+    _ui->_lineEditNewAddr->hide();
+    _ui->pushButton->hide();
 
-    connect(_ui->_parseWidget, SIGNAL(rowRemoved(QString,int)),
+    _parseWidget = _ui->_parseWidget;
+    connect(_parseWidget, SIGNAL(rowRemoved(QString,int)),
             this, SLOT(onRemoveRow(QString,int)));
-    connect(_ui->_parseWidget, SIGNAL(dataChanged(QString,int,MapAEValue)),
+    connect(_parseWidget, SIGNAL(dataChanged(QString,int,MapAEValue)),
             this, SLOT(onParsedDataChanged(QString,int,MapAEValue)));
     connect(this, SIGNAL(currentRowChanged(QString,int,MapAEValue)),
-            _ui->_parseWidget, SLOT(onCurrentRowChanged(QString,int,MapAEValue)));
+            _parseWidget, SLOT(onCurrentRowChanged(QString,int,MapAEValue)));
 
-
+    setObjectName("ExcelWidget");
 }
 
 ExcelWidget::~ExcelWidget()
 {
+    qDebug() << "  ~ExcelWidget() <";
+    emit objectDeleted();
     delete _ui;
-    foreach (QString key, _data.keys()) {
-        delete _data.take(key);
+    foreach (QString key, _models.keys()) {
+        /*delete*/ _models.take(key)->deleteLater();
     }
     if(_parser)
         delete _parser;
@@ -59,10 +64,14 @@ ExcelWidget::~ExcelWidget()
     delete _delegateRepeatFounded;
     _thread->quit();
     _thread->wait();
+    qDebug() << "  ~ExcelWidget() >";
 }
 
 bool ExcelWidget::save()
 {
+    if(_models.isEmpty())
+        return false;
+
     QString filter="Comma-Separated Values (*.csv);;Excel (*.xls *.xlsx)";
     QString str =
             QFileDialog::getSaveFileName(this,
@@ -92,11 +101,11 @@ bool ExcelWidget::runThreadSave(const QString &filename, const QString &sheetNam
 
     QString name = QFileInfo(filename).fileName();
 
-    if(_data.isEmpty())
+    if(_models.isEmpty())
         return false;
     if(!_mapHead.contains(sheetName))
         return false;
-    if(_data.value(sheetName, 0)==0)
+    if(_models.value(sheetName, 0)==0)
         return false;
 
     emit saving(sheetName, filename);
@@ -108,7 +117,7 @@ bool ExcelWidget::runThreadSave(const QString &filename, const QString &sheetNam
 
     QProgressDialog *dialog = new QProgressDialog;
     QFutureWatcher<bool> *futureWatcher = new QFutureWatcher<bool>();
-    dialog->setWindowTitle(trUtf8("Сохранение вкадки '%1'...").arg(sheetName));
+    dialog->setWindowTitle(trUtf8("Сохранение вкладки '%1'...").arg(sheetName));
     dialog->setLabelText(trUtf8("Сохраняется в файл \"%1\". Ожидайте ...")
                          .arg(name));
     dialog->setCancelButtonText(trUtf8("Отмена"));
@@ -217,14 +226,18 @@ QVariant ExcelWidget::openExcelFile(QString filename, int maxCountRows)
     switch(h_result)
     {
     case S_OK:
-        qDebug("TestConnector: The COM library was initialized successfully on this thread");
+//        qDebug("TestConnector: The COM library was initialized successfully on this thread");
         break;
     case S_FALSE:
-        qWarning("TestConnector: The COM library is already initialized on this thread");
+        emit toDebug(objectName(), "TestConnector: The COM library is already initialized on this thread");
+//        qWarning("TestConnector: The COM library is already initialized on this thread");
         break;
     case RPC_E_CHANGED_MODE:
-        qWarning() << "TestConnector: A previous call to CoInitializeEx specified the concurrency model for this thread as multithread apartment (MTA)."
-                   << " This could also indicate that a change from neutral-threaded apartment to single-threaded apartment has occurred";
+        emit toDebug(objectName(),
+                     "TestConnector: A previous call to CoInitializeEx specified the concurrency model for this thread as multithread apartment (MTA)."
+                     " This could also indicate that a change from neutral-threaded apartment to single-threaded apartment has occurred");
+//        qWarning() << "TestConnector: A previous call to CoInitializeEx specified the concurrency model for this thread as multithread apartment (MTA)."
+//                   << " This could also indicate that a change from neutral-threaded apartment to single-threaded apartment has occurred";
         break;
     }
     // получаем указатель на Excel
@@ -356,23 +369,81 @@ void ExcelWidget::search()
     if(!sheetName.isEmpty() && _data2.contains(sheetName))
     {
         _countRepatingRow.remove(sheetName);
+        _searchingRows.remove(sheetName);
+
+        Searcher *searcher = new Searcher(sheetName);
+        QThread *thread = new QThread;
+        searcher->moveToThread(thread);
+//        connect(this, &ExcelWidget::startSearchThread,
+//                thread, &QThread::start);
+        connect(this, &ExcelWidget::searchInBase2,
+                searcher, &Searcher::selectAddress);
+        connect(searcher, &Searcher::addressFounded,
+                this, &ExcelWidget::onFounedAddress);
+        connect(searcher, &Searcher::addressNotFounded,
+                this, &ExcelWidget::onNotFounedAddress);
+        connect(searcher, &Searcher::finished,
+                thread, &QThread::quit);
+//        connect(searcher, &Searcher::finished, [=](){
+//            qDebug() << "Searcher::finished";
+//            onSearchFinished(sheetName);
+//        });
+        connect(this, &ExcelWidget::objectDeleted,
+                searcher, &Searcher::deleteLater);
+        connect(this, &ExcelWidget::objectDeleted,
+                thread, &QThread::deleteLater);
+        connect(this, &ExcelWidget::finishSearchThread,
+                searcher, &Searcher::cancel, Qt::DirectConnection);
+//        connect(this, &ExcelWidget::finishSearchThread, [=](){
+//            qDebug() << "ExcelWidget::finishSearchThread <" << searcher << thread->isRunning() << thread->isFinished();
+//            if(searcher!=nullptr)
+//                searcher->cancel();
+//        });
+        connect(thread, &QThread::finished, [=](){
+//            qDebug() << "QThread::finished";
+            onSearchFinished(sheetName);
+        });
+//        connect(thread, &QThread::finished,
+//                this, &ExcelWidget::onSearchFinished, Qt::DirectConnection);
+        connect(thread, &QThread::finished,
+                thread, &QThread::deleteLater);
+        connect(thread, &QThread::finished,
+                searcher, &QThread::deleteLater);
+        thread->start();
+        emit toDebug(objectName(),
+                     QString("Поиск %1 строк").arg(_data2[sheetName].size()));
+        searcher->setCountRows(_data2[sheetName].size());
+//        emit startSearchThread(QThread::InheritPriority);
         for(int i=0; i<_data2[sheetName].size(); i++)
         {
             if(!_data2[sheetName].at(i).isEmpty()
                     && _data2[sheetName].at(i).getBuildId()==0
                    /* && _data2[sheetName].at(i).getStreetId()==0*/)
             {
+                bool needFind=true;
                 QAbstractItemDelegate *delegate=_views[sheetName]->itemDelegateForRow(i);
                 if(delegate && delegate==_delegateNotFounded) //если данная строка уже искалась и не найден результат
-                    continue;
-                _searchingRows[sheetName].insert(i);
+                {
+                    needFind=false;
+//                    continue;
+                }
+                if(needFind)
+                {
+                    _searchingRows[sheetName].insert(i);
 //                    emit toDebug(objectName(), QString("Поиск строки %1").arg(QString::number(i)));
-                emit findRowInBase(sheetName, i, _data2[sheetName].at(i));
+//                    emit searchInBase(sheetName, i, _data2[sheetName].at(i));
+                }
+                emit searchInBase2(sheetName, i, _data2[sheetName].at(i), needFind);
             }
         }
 
+//        emit finishSearchThread();
         if(!_searchingRows.value(sheetName).isEmpty())
+        {
             emit searching(sheetName);
+        }
+        else
+            emit finishSearchThread();
     }
     else
     {
@@ -385,14 +456,26 @@ void ExcelWidget::search()
 //             << this->thread()->currentThreadId();
 }
 
+void ExcelWidget::stopSearch()
+{
+    emit toDebug(objectName(),
+                 QString("Остановить поиск у '%1'").arg(getCurrentTab()));
+    emit finishSearchThread();
+}
+
+void ExcelWidget::waitSearchThread()
+{
+    QThread::currentThread()->msleep(500);
+}
 
 void ExcelWidget::onProcessOfOpenFinished()
 {
-    QString currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
-    qDebug() << "ExcelWidget onProcessOfOpenFinished BEGIN"
-             << currTime
-             << this->thread()->currentThreadId();
+//    QString currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
+//    qDebug() << "ExcelWidget onProcessOfOpenFinished BEGIN"
+//             << currTime
+//             << this->thread()->currentThreadId();
 
+    bool canOpen=true;
     if(_futureWatcher.isFinished()
             && !_futureWatcher.isCanceled())
     {
@@ -409,30 +492,40 @@ void ExcelWidget::onProcessOfOpenFinished()
 //                disconnect(_parser, SIGNAL(rowParsed(QString,int,Address)),
 //                        this, SLOT(onCurrentRowChanged()));
                 foreach (QString sheetName, data.keys()) {
-                    _data.insert(sheetName, new TableModel(sheetName));
+                    _models.insert(sheetName, new TableModel(sheetName));
                     _views.insert(sheetName, new QTableView(_ui->_tabWidget));
-                    _views[sheetName]->setModel(_data[sheetName]);
-                    _selections.insert(sheetName, new QItemSelectionModel(_data[sheetName], this));
+                    _views[sheetName]->setModel(_models[sheetName]);
+                    _selections.insert(sheetName, new QItemSelectionModel(_models[sheetName], this));
                     _views[sheetName]->setSelectionModel(_selections[sheetName]);
                     connect(_selections[sheetName], SIGNAL(currentRowChanged(QModelIndex,QModelIndex)),
-                            _data[sheetName], SLOT(onCurrentRowChanged(QModelIndex,QModelIndex)));
-                    connect(_data[sheetName], SIGNAL(currentRowChanged(QString,int,QStringList)),
+                            _models[sheetName], SLOT(onCurrentRowChanged(QModelIndex,QModelIndex)));
+                    connect(_models[sheetName], SIGNAL(currentRowChanged(QString,int,QStringList)),
                             this, SLOT(onCurrentRowChanged(QString,int,QStringList)));
-                    connect(_data[sheetName], SIGNAL(dataChanged(QModelIndex,QModelIndex,QVector<int>)),
+                    connect(_models[sheetName], SIGNAL(dataChanged(QModelIndex,QModelIndex,QVector<int>)),
                             this, SLOT(onTableDataChanged(QModelIndex,QModelIndex,QVector<int>)));
                     ExcelSheet rows = data[sheetName];
-                    _countRow.insert(sheetName, rows.size());
+                    _countRow.insert(sheetName, 0);
                     _countParsedRow.insert(sheetName, 0);
                     _countRepatingRow.insert(sheetName, 0);
                     int nRow=0;
                     foreach (QStringList row, rows) {
                         if(nRow==0)
-                            onHeadRead(sheetName, row);
+                        {
+                            if(!onHeadRead(sheetName, row))
+                            {
+                                canOpen=false;
+                                break;
+                            }
+                        }
                         else
                             onRowRead(sheetName, nRow-1, row);
                         nRow++;
                     }
-                    onSheetRead(sheetName);
+                    if(canOpen)
+                        onSheetRead(sheetName);
+//                    else
+//                        emit messageReady(QString("Некорректный заголовок у таблицы '%1'")
+//                                          .arg(sheetName));
                 }
             }
             else if(result.canConvert< QString >())
@@ -445,55 +538,80 @@ void ExcelWidget::onProcessOfOpenFinished()
             {
 //                emit toDebug("excel", "canconvert QStringList");
                 QStringList data = result.value<QStringList>();
-                QString sheetName = "csv";
-                _data.insert(sheetName, new TableModel(sheetName));
+                QString sheetName = "Лист1 ["+QFileInfo(_openFilename).fileName().remove(".csv")+"]";
+                _models.insert(sheetName, new TableModel(sheetName));
                 _views.insert(sheetName, new QTableView(_ui->_tabWidget));
-                _views[sheetName]->setModel(_data[sheetName]);
-                _selections.insert(sheetName, new QItemSelectionModel(_data[sheetName], this));
+                _views[sheetName]->setModel(_models[sheetName]);
+                _selections.insert(sheetName, new QItemSelectionModel(_models[sheetName], this));
                 _views[sheetName]->setSelectionModel(_selections[sheetName]);
                 connect(_selections[sheetName], SIGNAL(currentRowChanged(QModelIndex,QModelIndex)),
-                        _data[sheetName], SLOT(onCurrentRowChanged(QModelIndex,QModelIndex)));
-                connect(_data[sheetName], SIGNAL(currentRowChanged(QString,int,QStringList)),
+                        _models[sheetName], SLOT(onCurrentRowChanged(QModelIndex,QModelIndex)));
+                connect(_models[sheetName], SIGNAL(currentRowChanged(QString,int,QStringList)),
                         this, SLOT(onCurrentRowChanged(QString,int,QStringList)));
-                connect(_data[sheetName], SIGNAL(dataChanged(QModelIndex,QModelIndex,QVector<int>)),
+                connect(_models[sheetName], SIGNAL(dataChanged(QModelIndex,QModelIndex,QVector<int>)),
                         this, SLOT(onTableDataChanged(QModelIndex,QModelIndex,QVector<int>)));
-                _countRow.insert(sheetName, data.size());
+                _countRow.insert(sheetName, 0);
                 _countParsedRow.insert(sheetName, 0);
                 _countRepatingRow.insert(sheetName, 0);
                 int nRow=0;
                 foreach (QString line, data) {
                     QStringList row = line.split(';');
                     if(nRow==0)
-                        onHeadRead(sheetName, row);
+                    {
+                        if(!onHeadRead(sheetName, row))
+                        {
+                            canOpen=false;
+                            break;
+                        }
+                    }
                     else
                         onRowRead(sheetName, nRow-1, row);
                     nRow++;
                 }
-                onSheetRead(sheetName);
+                if(canOpen)
+                    onSheetRead(sheetName);
+//                else
+//                    emit messageReady(QString("Некорректный заголовок у таблицы '%1'")
+//                                      .arg(sheetName));
             }
+            else
+                canOpen=false;
         }
+        else
+            canOpen=false;
     }
-    currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
-    qDebug() << "ExcelWidget onProcessOfOpenFinished END"
-             << currTime
-             << this->thread()->currentThreadId();
-    emit openFinished();
-    emit messageReady("Открытие завершено");
+    else
+        canOpen=false;
+//    currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
+//    qDebug() << "ExcelWidget onProcessOfOpenFinished END"
+//             << currTime
+//             << this->thread()->currentThreadId();
+    if(canOpen){
+        emit openFinished(_openFilename);
+    }
+    else{
+        emit openError(_openFilename);
+    }
+//    emit messageReady("Открытие завершено");
 }
 
 void ExcelWidget::onFounedAddress(QString sheetName, int nRow, Address addr)
 {
+    if(!_models.contains(sheetName)) //если данная вкладка не существует (удалена)
+    {
+        return;
+    }
     emit toDebug(objectName(),
                  QString("Найдена строка %1: ").arg(nRow)+/*"\r\n"+*/addr.toCsv());
     if(_searchingRows.contains(sheetName))
     {
         _searchingRows[sheetName].remove(nRow);
-        if(_searchingRows.value(sheetName).isEmpty())
-            emit searchFinished(sheetName);
+//        if(_searchingRows.value(sheetName).isEmpty())
+//            emit searchFinished(sheetName);
     }
 
     nRow+=_countRepatingRow[sheetName];
-    TableModel *tm = _data[sheetName];
+    TableModel *tm = _models[sheetName];
     QTableView *view = _views[sheetName];
     assert(tm);
     assert(view);
@@ -541,11 +659,11 @@ void ExcelWidget::onNotFounedAddress(QString sheetName, int nRow, Address addr)
     if(_searchingRows.contains(sheetName))
     {
         _searchingRows[sheetName].remove(nRow);
-        if(_searchingRows.value(sheetName).isEmpty())
-            emit searchFinished(sheetName);
+//        if(_searchingRows.value(sheetName).isEmpty())
+//            emit searchFinished(sheetName);
     }
     nRow+=_countRepatingRow[sheetName];
-    TableModel *tm = _data[sheetName];
+    TableModel *tm = _models[sheetName];
     QTableView *view = _views[sheetName];
     assert(tm);
     assert(view);
@@ -555,7 +673,7 @@ void ExcelWidget::onNotFounedAddress(QString sheetName, int nRow, Address addr)
 void ExcelWidget::onRemoveRow(QString sheet, int nRow)
 {
     qDebug() << "ExcelWidget onRemoveRow" << sheet << nRow;
-    TableModel *tm = _data.value(sheet, 0);
+    TableModel *tm = _models.value(sheet, 0);
     assert(tm);
     if(nRow>=0 && nRow<tm->rowCount())
     {
@@ -637,9 +755,9 @@ void ExcelWidget::onCurrentRowChanged()
 {
 //    qDebug() << "ExcelWidget onCurrentRowChanged";
     QString sheet = _ui->_tabWidget->tabText(_ui->_tabWidget->currentIndex());
-    if(_data.isEmpty())
+    if(_models.isEmpty())
         return;
-    TableModel *tm = _data.value(sheet, 0);
+    TableModel *tm = _models.value(sheet, 0);
     assert(tm);
     QItemSelectionModel *ism = _selections.value(sheet, 0);
     int nRow = ism->selectedIndexes().first().row();
@@ -673,7 +791,7 @@ void ExcelWidget::onParsedDataChanged(QString sheet, int nRow,
     _views[sheet]->setItemDelegateForRow(nRow, _views[sheet]->itemDelegate());
     int colSid = _mapHead[sheet].value(STREET_ID);
     int colBid = _mapHead[sheet].value(BUILD_ID);
-    TableModel *tm = _data[sheet];
+    TableModel *tm = _models[sheet];
     assert(tm);
     tm->setData(tm->index(nRow, colSid),
                 "");
@@ -683,7 +801,7 @@ void ExcelWidget::onParsedDataChanged(QString sheet, int nRow,
     _data2[sheet][nRow].setStreetId(0);
 
     foreach (AddressElements ae, row.keys()) {
-        TableModel *tm=_data[sheet];
+        TableModel *tm=_models[sheet];
         assert(tm);
         QString param = row.value(ae).toLower();
         tm->setData(tm->index(nRow,
@@ -698,10 +816,11 @@ void ExcelWidget::runThreadOpen(QString openFilename)
     emit toDebug(objectName(),
                  QString("Открывается файл '%1'").arg(openFilename));
 
+    _openFilename=openFilename;
     QString name = QFileInfo(openFilename).fileName();
-    emit messageReady(QString("Открывается файл '%1'").arg(name));
+//    emit messageReady(QString("Открывается файл '%1'").arg(name));
 
-    emit opening();
+    emit opening(openFilename);
 
     QProgressDialog *dialog = new QProgressDialog;
     dialog->setWindowTitle(trUtf8("Открываю файл..."));
@@ -739,7 +858,7 @@ void ExcelWidget::onRowRead(const QString &sheet, const int &nRow, QStringList &
 //                 QString("onRowRead \"%1\" \"%2\"")
 //                 .arg(sheet)
 //                 .arg(row.join(";")));
-    TableModel *tm = _data[sheet];
+    TableModel *tm = _models[sheet];
     tm->insertRow(tm->rowCount());
     for(int col=0; col<row.size(); col++)
         tm->setData(tm->index(nRow, col),
@@ -748,12 +867,12 @@ void ExcelWidget::onRowRead(const QString &sheet, const int &nRow, QStringList &
     emit rowReaded(sheet, nRow, row);
 }
 
-void ExcelWidget::onHeadRead(const QString &sheet, QStringList &head)
+bool ExcelWidget::onHeadRead(const QString &sheet, QStringList &head)
 {
-    emit toDebug(objectName(),
-                 QString("Прочитана шапка у листа \"%1\"")
-                 .arg(sheet));
-    TableModel *tm = _data[sheet];
+//    emit toDebug(objectName(),
+//                 QString("Прочитана шапка у листа '%1'")
+//                 .arg(sheet));
+    TableModel *tm = _models[sheet];
     for(int col=0; col < head.size(); col++)
         tm->setHeaderData(
                     col, Qt::Horizontal, head.at(col));
@@ -762,8 +881,8 @@ void ExcelWidget::onHeadRead(const QString &sheet, QStringList &head)
     QString colname = MapColumnNames[ STREET ];    
     if(!head.contains(colname))
     {
-        emit onNotFoundMandatoryColumn(sheet, STREET, colname);
-        return;
+        onNotFoundMandatoryColumn(sheet, STREET, colname);
+        return false;
     }
     colname = MapColumnNames[ STREET_ID ];
     if(head.indexOf(colname)==-1)
@@ -820,12 +939,14 @@ void ExcelWidget::onHeadRead(const QString &sheet, QStringList &head)
     }
     if(_mapHead.contains(sheet))
         emit headReaded(sheet, _mapHead[sheet]);
+
+    return true;
 }
 
 void ExcelWidget::onSheetRead(const QString &sheet)
 {
     emit toDebug(objectName(),
-                 QString("Лист \"%1\" прочитан")
+                 QString("Лист '%1' прочитан")
                  .arg(sheet));
     QTableView *view = _views[sheet];
     assert(view);
@@ -859,9 +980,9 @@ void ExcelWidget::onRowParsed(QString sheet, int nRow, Address a)
 //    emit toDebug(objectName(),
 //                 "ExcelWidget::onRowParsed "
 //                 +sheet+" row:"
-//                 +QString::number(nRow)+"\n"+a.toString(PARSED)
+//                 +QString::number(nRow)/*+"\n"+a.toDebug()*/
 //                 );
-    TableModel *tm=_data.value(sheet, 0);
+    TableModel *tm=_models.value(sheet, 0);
     assert(tm);
     int nCol=0;
     nCol = _mapPHead.value(sheet).value(FSUBJ);//получаем номер столбца
@@ -922,7 +1043,7 @@ void ExcelWidget::onRowParsed(QString sheet, int nRow, Address a)
             _countParsedRow[sheet]++;
             emit rowParsed(sheet, nRow);
             if(_countParsedRow[sheet]>=_countRow[sheet])
-                emit sheetParsed(sheet);
+                onSheetParsed(sheet);
 //        }
     }
 
@@ -930,26 +1051,28 @@ void ExcelWidget::onRowParsed(QString sheet, int nRow, Address a)
 
 void ExcelWidget::onSheetParsed(QString sheet)
 {
-    emit toDebug(objectName(),
-                 "ExcelWidget::onSheetParsed(QString)"+sheet
-                 );
+//    emit toDebug(objectName(),
+//                 "ExcelWidget::onSheetParsed(QString)"+sheet
+//                 );
     emit sheetParsed(sheet);
 }
 
 void ExcelWidget::onSearchFinished(QString sheet)
 {
-    emit toDebug(objectName(),
-                 "ExcelWidget::onSearchFinished(): "+sheet
-                 );
+//    emit toDebug(objectName(),
+//                 "ExcelWidget::onSearchFinished(): "+sheet
+//                 );
+    emit searchFinished(sheet);
 
 }
 
 void ExcelWidget::onNotFoundMandatoryColumn(QString sheet, AddressElements ae, QString colName)
 {
+    Q_UNUSED(ae);
     emit toDebug(objectName(),
-                 "ExcelWidget::onNotFoundMandatoryColumn()"
-                 +sheet
-                 +QString::number(ae)+"\n"+colName
+                 QString("Невозможно найти столбец с именем '%1' на листе '%2'")
+                 .arg(colName)
+                 .arg(sheet)
                  );
     int n = QMessageBox::critical(0,
                                   "Внимание",
@@ -981,11 +1104,11 @@ void ExcelWidget::onAddNewAddr(QString addr)
 {
 //    qDebug() << "ExcelWidget onAddNewAddr" << this->thread()->currentThreadId();
     QString sheet = _ui->_tabWidget->tabText(_ui->_tabWidget->currentIndex());
-    if(_data.isEmpty())
+    if(_models.isEmpty())
         return;
     if(!_mapHead.value(sheet).contains(STREET))
         return;
-    TableModel *tm = _data.value(sheet, 0);
+    TableModel *tm = _models.value(sheet, 0);
     assert(tm);
     int nCol = _mapHead.value(sheet).value(STREET);
     int nRow = tm->rowCount();
@@ -1005,7 +1128,7 @@ void ExcelWidget::onAddNewAddr(QString addr)
 
 bool ExcelWidget::saveToCsv(const QString &filename, const QString &sheet)
 {
-    TableModel *tm = _data.value(sheet);
+    TableModel *tm = _models.value(sheet);
     assert(tm);
     QFile file1(filename);
     if (!file1.open(QIODevice::WriteOnly))
@@ -1048,7 +1171,7 @@ bool ExcelWidget::saveToCsv(const QString &filename, const QString &sheet)
 
 bool ExcelWidget::saveToExcel(const QString &filename, const QString &sheetName)
 {
-    TableModel *tm = _data.value(sheetName);
+    TableModel *tm = _models.value(sheetName);
     assert(tm);
 
     // получаем указатель на Excel
@@ -1214,19 +1337,26 @@ QString ExcelWidget::getCurrentTab()
     return _ui->_tabWidget->tabText(_ui->_tabWidget->currentIndex());
 }
 
+int ExcelWidget::getCountTab()
+{
+    return _ui->_tabWidget->count();
+}
 
-void ExcelWidget::closeTab()
+bool ExcelWidget::closeTab()
 {
     QString sheet = getCurrentTab();
     if(sheet.isEmpty())
-        return;
+        return false;
+    emit toDebug(objectName(),
+                 QString("Закрытие вкладки '%1'").arg(sheet));
+    emit finishSearchThread();
     QMessageBox msgBox(QMessageBox::Question,
                        trUtf8("Внимание"),
                        trUtf8("Вкладка '%1' будет закрыта."
                               "\nСохранить результаты перед закрытием?").arg(sheet));
     QPushButton *saveButton = msgBox.addButton(trUtf8("Cохранить"),
                                                   QMessageBox::AcceptRole);
-    /*QPushButton *notSaveButton = */msgBox.addButton(trUtf8("Не сохранять"),
+    QPushButton *notSaveButton = msgBox.addButton(trUtf8("Не сохранять"),
                                                 QMessageBox::DestructiveRole);
     QPushButton *cancelButton = msgBox.addButton(trUtf8("Отмена"),
                                                 QMessageBox::RejectRole);
@@ -1236,41 +1366,32 @@ void ExcelWidget::closeTab()
         emit toDebug(objectName(),
                      "Сохраняются результаты перед закрытием");
         if(!save())
-            return;
-    }/* else if (msgBox.clickedButton() == notSaveButton) {
-        return;
-    } */else if (msgBox.clickedButton() == cancelButton) {
-        return;
+            return true;
+    } else if (msgBox.clickedButton() == notSaveButton) {
+        emit toDebug(objectName(),
+                     QString("Выбрано не сохранять результаты у вкладки '%1'").arg(sheet));
+    } else if (msgBox.clickedButton() == cancelButton) {
+        emit toDebug(objectName(),
+                     QString("Отмена закрытия вкладки '%1'").arg(sheet));
+        return true;
     }
-
-//    int n = QMessageBox::question(0,
-//                                 trUtf8("Внимание"),
-//                                 trUtf8("Вкладка '%1' будет закрыта."
-//                                 "\nСохранить результаты перед закрытием?").arg(sheet),
-//                                 QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel,
-//                                 QMessageBox::Save
-//                                 );
-//    if (n == QMessageBox::Save) {
-//        emit toDebug(objectName(),
-//                     "Сохраняются результаты перед закрытием");
-//        save();
-//    }
-//    else if(n == QMessageBox::Cancel)
-//    {
-//        return;
-//    }
     removeSheet(sheet);
     _ui->_tabWidget->removeTab(_ui->_tabWidget->currentIndex());
     emit toDebug(objectName(),
                  QString("Вкладка '%1' успешно закрыта").arg(sheet));
     emit messageReady(QString("Вкладка '%1' успешно закрыта").arg(sheet));
+
+    if(_ui->_tabWidget->count()>0)
+        return true;
+    else
+        return false;
 }
 
 void ExcelWidget::removeSheet(QString &sheet)
 {
-    _data.remove(sheet);
-    _views.remove(sheet);
-    _selections.remove(sheet);
+    _views.take(sheet)->deleteLater();
+    _selections.take(sheet)->deleteLater();
+    _models.take(sheet)->deleteLater();
     _mapHead.remove(sheet);
     _mapPHead.remove(sheet);
     _countParsedRow.remove(sheet);

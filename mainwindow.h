@@ -49,8 +49,14 @@ private slots:
     void save();
     void onStartSearching(const QString &sheet);
     void onFinishSearching(const QString &sheet);
+    void onSheetParsed(const QString &sheet);
+    void onFileOpening(const QString &fname);
+    void onFileOpened(const QString &fname);
+    void onFileError(const QString &fname);
     void showAbout();
     void showHelp();
+
+    void on__pushButtonStop_clicked();
 
 private:
     Ui::MainWindow *_ui;

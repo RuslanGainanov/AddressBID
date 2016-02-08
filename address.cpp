@@ -339,8 +339,8 @@ void Address::setRawAddress(const QString &str)
     if((*(s.end()-1)) == '\"')
         s.remove(s.size()-1,1);
     _rawAddress = s.split("\";\"");
-    _buildId = _rawAddress.at(0).toULongLong();
-    _streetId = _rawAddress.at(2).toULongLong();
+    _buildId = _rawAddress.at(2).toULongLong();
+    _streetId = _rawAddress.at(0).toULongLong();
 }
 
 void Address::setRawAddress(const QStringList &row)

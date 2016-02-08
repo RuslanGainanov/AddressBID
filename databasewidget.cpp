@@ -19,8 +19,8 @@ DatabaseWidget::DatabaseWidget(QWidget *parent) :
 //            this, SLOT(onReadRow(int)));
 //    connect(_db, SIGNAL(readedRows(int)),
 //            this, SLOT(onReadRows(int)));
-//    connect(_db, SIGNAL(workingWithOpenBase()),
-//            this, SLOT(onOpenBase()));
+    connect(_db, SIGNAL(baseOpening()),
+            this, SLOT(onBaseOpening()));
     connect(_db, SIGNAL(baseOpened()),
             this, SLOT(onBaseOpened()));
 
@@ -57,21 +57,18 @@ DatabaseWidget::DatabaseWidget(QWidget *parent) :
 
     connect(this, SIGNAL(updateModel()),
             _db, SLOT(updateTableModel()));
-
-    _ui->_progressBarReaded->hide();
-    _ui->_progressBarParsed->hide();
-    _ui->_pushButtonLoadOld->hide();
-    _ui->_lineEditFilename->hide();
+    _ui->_pushButtonDelete->hide();
 }
 
 DatabaseWidget::~DatabaseWidget()
 {
+    qDebug() << " ~DatabaseWidget() <";
     delete _ui;
     delete _db;
     _thread.quit();
     _thread.wait();
-    _paddr.take();
-    qDebug() << " ~DatabaseWidget()";
+//    _paddr.take();
+    qDebug() << " ~DatabaseWidget() >";
 }
 
 void DatabaseWidget::readCsvBase(QString openFilename)
@@ -140,6 +137,14 @@ void parsingAddress(Address &a)
     if(pos==-1)
     {
         a.setCorrect(false);
+//        reg.setPattern(PatternForNotCorrect);
+//        pos=reg.indexIn(line);
+//        if(pos!=-1)
+//        {
+//            QStringList caps = reg.capturedTexts();
+//            a.setBuildId(caps.at(3));
+//            a.setStreetId(caps.at(1));
+//        }
     }
     else
     {
@@ -178,7 +183,6 @@ void DatabaseWidget::onProcessOfOpenFinished()
     if(_futureWatcher.isFinished()
             && !_futureWatcher.isCanceled())
     {
-//        _addrs = _futureWatcher.future().result();
         _paddr.reset(new ListAddress(_futureWatcher.future().result()));
         emit toDebug(objectName(),
                      QString("Открытие файла успешно завершено. Прочитано строк = %1")
@@ -305,27 +309,29 @@ bool DatabaseWidget::open()
     {
         return false;
     }
-    _ui->_lineEditFilename->setEnabled(true);
+//    _ui->_lineEditFilename->setEnabled(true);
 //    _csvFileName=fname;
-    _ui->_lineEditFilename->setText(fname);
+//    _ui->_lineEditFilename->setText(fname);
 //    clear();
 //    _db->setBaseName(QString(fname).replace(".csv", ".db", Qt::CaseInsensitive));
     _db->setBaseName(QDir::current().filePath(DefaultBaseName));
-    _db->removeBase(_db->baseName());
-    _db->openBase(_db->baseName());
+    if(_db->removeBase(_db->baseName()))
+    {
+        _db->openBase(_db->baseName());
 
-    readCsvBase(fname);
-//    _db->updateTableModel();
-    emit updateModel();
-//    onBaseOpened();
-    return true;
+        readCsvBase(fname);
+        //    _db->updateTableModel();
+        emit updateModel();
+        //    onBaseOpened();
+        return true;
+    }
+    else
+        return false;
 }
 
 void DatabaseWidget::openExisting(QString fname)
 {
     _db->openBase(fname);
-//    _db->updateTableModel();
-//    onBaseOpened();
 }
 
 void DatabaseWidget::openExisting()
@@ -383,10 +389,10 @@ void DatabaseWidget::clear()
 
 }
 
-void DatabaseWidget::waitSearch()
-{
-    _thread.start();
-}
+//void DatabaseWidget::waitSearch()
+//{
+//    _thread.start();
+//}
 
 void DatabaseWidget::viewInfo()
 {
@@ -396,11 +402,6 @@ void DatabaseWidget::viewInfo()
 void DatabaseWidget::on__pushButtonOpen_clicked()
 {
     open();
-}
-
-void DatabaseWidget::on__pushButtonLoadOld_clicked()
-{
-    openExisting();
 }
 
 //void DatabaseWidget::onReadRow(int row)
@@ -426,9 +427,12 @@ void DatabaseWidget::on__pushButtonLoadOld_clicked()
 //    _ui->_progressBarParsed->setMaximum(count);
 //}
 
-void DatabaseWidget::onOpenBase()
+void DatabaseWidget::onBaseOpening()
 {
+    emit toDebug(objectName(),
+                 QString("База данных '%1' открывается.").arg(_db->baseName()));
     _ui->_pushButtonOpen->setEnabled(false);
+    _ui->_pushButtonFindParsAddr->setEnabled(false);
 }
 
 void DatabaseWidget::onBaseOpened()
@@ -436,15 +440,18 @@ void DatabaseWidget::onBaseOpened()
     emit toDebug(objectName(),
                  QString("База данных '%1' была открыта.").arg(_db->baseName()));
 
+//    _thread.wait(200);
+//    qDebug() << "_db->getModel()" << _db->getModel();
     _ui->_tableView->setModel(_db->getModel());
     emit updateModel();
 
     _ui->_pushButtonOpen->setEnabled(true);
-    _ui->_pushButtonLoadOld->setEnabled(true);
-    _ui->_progressBarReaded->setMaximum(1);
-    _ui->_progressBarParsed->setMaximum(1);
-    _ui->_progressBarReaded->setValue(1);
-    _ui->_progressBarParsed->setValue(1);
+    _ui->_pushButtonFindParsAddr->setEnabled(true);
+//    _ui->_pushButtonLoadOld->setEnabled(true);
+//    _ui->_progressBarReaded->setMaximum(1);
+//    _ui->_progressBarParsed->setMaximum(1);
+//    _ui->_progressBarReaded->setValue(1);
+//    _ui->_progressBarParsed->setValue(1);
 }
 
 void DatabaseWidget::on__pushButtonFindParsAddr_clicked()
@@ -471,6 +478,9 @@ void DatabaseWidget::onFindButtonClicked()
     a.setKorp(_ui->lineEditKorp->text());
     a.setLitera(_ui->lineEditLiter->text());
     a.setAdditional(_ui->lineEditAdditional->text());
+    a.setBuildId(_ui->lineEditBuildId->text());
+    a.setStreetId(_ui->lineEditStreetId->text());
+    a.setCorrect((bool)_ui->checkBoxCorrect->checkState());
 
     emit toDebug(objectName(),
                  QString("Произодим поиск след. адреса(-ов): %1").arg(a.toCsv()));
@@ -561,6 +571,9 @@ void DatabaseWidget::onClearButtonClicked()
     _ui->lineEditBuild->setText(str);
     _ui->lineEditKorp->setText(str);
     _ui->lineEditLiter->setText(str);
+    _ui->lineEditBuildId->setText(str);
+    _ui->lineEditStreetId->setText(str);
+    _ui->checkBoxCorrect->setChecked(true);
 
     _ui->_pushButtonFindParsAddr->setFocus();
 }

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>810</width>
-    <height>486</height>
+    <height>448</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -60,14 +60,21 @@
           </item>
           <item>
            <layout class="QGridLayout" name="gridLayout">
-            <item row="1" column="0">
-             <widget class="QLabel" name="label">
+            <item row="0" column="1">
+             <widget class="QLineEdit" name="lineEditStreetId">
               <property name="text">
-               <string>Район</string>
+               <string>*</string>
               </property>
              </widget>
             </item>
-            <item row="0" column="1">
+            <item row="1" column="1">
+             <widget class="QLineEdit" name="lineEditBuildId">
+              <property name="text">
+               <string>*</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="1">
              <layout class="QHBoxLayout" name="horizontalLayoutFSubj">
               <item>
                <widget class="QComboBox" name="comboBoxTypeFSubj">
@@ -124,7 +131,14 @@
               </item>
              </layout>
             </item>
-            <item row="2" column="1">
+            <item row="3" column="0">
+             <widget class="QLabel" name="label">
+              <property name="text">
+               <string>Район</string>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="1">
              <layout class="QHBoxLayout" name="horizontalLayout_3">
               <item>
                <widget class="QLineEdit" name="lineEditTypeOfCity">
@@ -160,35 +174,35 @@
               </item>
              </layout>
             </item>
-            <item row="2" column="0">
+            <item row="4" column="0">
              <widget class="QLabel" name="labelCity">
               <property name="text">
                <string>Город</string>
               </property>
              </widget>
             </item>
-            <item row="4" column="0">
+            <item row="6" column="0">
              <widget class="QLabel" name="label_7">
               <property name="text">
                <string>Дополнительно</string>
               </property>
              </widget>
             </item>
-            <item row="3" column="0">
+            <item row="5" column="0">
              <widget class="QLabel" name="labelCity2">
               <property name="text">
                <string>Город (доп.)</string>
               </property>
              </widget>
             </item>
-            <item row="1" column="1">
+            <item row="3" column="1">
              <widget class="QLineEdit" name="lineEditDistrict">
               <property name="text">
                <string>*</string>
               </property>
              </widget>
             </item>
-            <item row="5" column="1">
+            <item row="7" column="1">
              <layout class="QHBoxLayout" name="horizontalLayout_2">
               <item>
                <widget class="QLineEdit" name="lineEditTypeOfStreet">
@@ -224,21 +238,42 @@
               </item>
              </layout>
             </item>
-            <item row="5" column="0">
+            <item row="7" column="0">
              <widget class="QLabel" name="label_4">
               <property name="text">
                <string>Название улицы</string>
               </property>
              </widget>
             </item>
-            <item row="4" column="1">
+            <item row="6" column="1">
              <widget class="QLineEdit" name="lineEditAdditional">
               <property name="text">
                <string>*</string>
               </property>
              </widget>
             </item>
-            <item row="3" column="1">
+            <item row="9" column="1">
+             <widget class="QLineEdit" name="lineEditKorp">
+              <property name="text">
+               <string>*</string>
+              </property>
+             </widget>
+            </item>
+            <item row="9" column="0">
+             <widget class="QLabel" name="label_6">
+              <property name="text">
+               <string>Корпус</string>
+              </property>
+             </widget>
+            </item>
+            <item row="8" column="1">
+             <widget class="QLineEdit" name="lineEditBuild">
+              <property name="text">
+               <string>*</string>
+              </property>
+             </widget>
+            </item>
+            <item row="5" column="1">
              <layout class="QHBoxLayout" name="horizontalLayout_4">
               <item>
                <widget class="QLineEdit" name="lineEditTypeOfCity2">
@@ -274,52 +309,62 @@
               </item>
              </layout>
             </item>
-            <item row="6" column="1">
-             <widget class="QLineEdit" name="lineEditBuild">
-              <property name="text">
-               <string>*</string>
-              </property>
-             </widget>
-            </item>
-            <item row="7" column="1">
-             <widget class="QLineEdit" name="lineEditKorp">
-              <property name="text">
-               <string>*</string>
-              </property>
-             </widget>
-            </item>
-            <item row="7" column="0">
-             <widget class="QLabel" name="label_6">
-              <property name="text">
-               <string>Корпус</string>
-              </property>
-             </widget>
-            </item>
-            <item row="6" column="0">
+            <item row="8" column="0">
              <widget class="QLabel" name="label_5">
               <property name="text">
                <string>Дом</string>
               </property>
              </widget>
             </item>
-            <item row="0" column="0">
+            <item row="2" column="0">
              <widget class="QLabel" name="labelFsubj">
               <property name="text">
                <string>Федеральный субъект</string>
               </property>
              </widget>
             </item>
-            <item row="8" column="0">
+            <item row="10" column="1">
+             <widget class="QLineEdit" name="lineEditLiter">
+              <property name="text">
+               <string>*</string>
+              </property>
+             </widget>
+            </item>
+            <item row="10" column="0">
              <widget class="QLabel" name="label_8">
               <property name="text">
                <string>Литера</string>
               </property>
              </widget>
             </item>
-            <item row="8" column="1">
-             <widget class="QLineEdit" name="lineEditLiter">
+            <item row="1" column="0">
+             <widget class="QLabel" name="label_3">
               <property name="text">
-               <string>*</string>
+               <string>BUILD_ID</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="0">
+             <widget class="QLabel" name="label_2">
+              <property name="text">
+               <string>STREET_ID</string>
+              </property>
+             </widget>
+            </item>
+            <item row="11" column="0">
+             <widget class="QLabel" name="label_9">
+              <property name="text">
+               <string>Корректный адрес</string>
+              </property>
+             </widget>
+            </item>
+            <item row="11" column="1">
+             <widget class="QCheckBox" name="checkBoxCorrect">
+              <property name="text">
+               <string/>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
               </property>
              </widget>
             </item>
@@ -365,6 +410,9 @@
             </item>
             <item>
              <widget class="QPushButton" name="_pushButtonFindParsAddr">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
               <property name="text">
                <string>Найти</string>
               </property>
@@ -451,30 +499,6 @@
      </item>
     </layout>
    </item>
-   <item>
-    <widget class="QPushButton" name="_pushButtonLoadOld">
-     <property name="text">
-      <string>Загрузить сохраненную базу</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QLineEdit" name="_lineEditFilename"/>
-   </item>
-   <item>
-    <widget class="QProgressBar" name="_progressBarReaded">
-     <property name="value">
-      <number>0</number>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QProgressBar" name="_progressBarParsed">
-     <property name="value">
-      <number>0</number>
-     </property>
-    </widget>
-   </item>
   </layout>
  </widget>
  <tabstops>
@@ -497,8 +521,6 @@
   <tabstop>_tableView</tabstop>
   <tabstop>_pushButtonClear</tabstop>
   <tabstop>_pushButtonOpen</tabstop>
-  <tabstop>_pushButtonLoadOld</tabstop>
-  <tabstop>_lineEditFilename</tabstop>
  </tabstops>
  <resources>
   <include location="resources.qrc"/>

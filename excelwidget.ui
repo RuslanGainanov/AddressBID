@@ -46,6 +46,9 @@
      </item>
      <item>
       <widget class="ParseExcelWidget" name="_parseWidget" native="true">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="minimumSize">
         <size>
          <width>20</width>

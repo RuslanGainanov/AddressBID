@@ -14,8 +14,8 @@ MainWindow::MainWindow(QWidget *parent) :
     id = qRegisterMetaType< ListAddress >("ListAddress");
     Q_UNUSED(id);
     _dbw = new DatabaseWidget;
-    Database *db = _dbw->getDatabase();
     _excel = _ui->_excelWidget;
+    _excel->setObjectName("ExcelWidget");
 
     _helpBrowser = new HelpBrowser(":/doc", "index.htm");
 
@@ -53,18 +53,26 @@ MainWindow::MainWindow(QWidget *parent) :
     connect( this, SIGNAL(windowClosed()),
              _helpBrowser, SLOT(close()) );
 
-    connect(_excel, SIGNAL(findRowInBase(QString,int,Address)),
-            db, SLOT(selectAddress(QString,int,Address)));
-    connect(db, SIGNAL(addressFounded(QString,int,Address)),
-            _excel, SLOT(onFounedAddress(QString,int,Address)));
-    connect(db, SIGNAL(addressNotFounded(QString,int,Address)),
-            _excel, SLOT(onNotFounedAddress(QString,int,Address)));
-
+//    Database *db = _dbw->getDatabase();
+//    connect(_excel, SIGNAL(searchInBase(QString,int,Address)),
+//            db, SLOT(selectAddress(QString,int,Address)));
+//    connect(db, SIGNAL(addressFounded(QString,int,Address)),
+//            _excel, SLOT(onFounedAddress(QString,int,Address)));
+//    connect(db, SIGNAL(addressNotFounded(QString,int,Address)),
+//            _excel, SLOT(onNotFounedAddress(QString,int,Address)));
 
     connect(_excel, &ExcelWidget::searching,
             this, &MainWindow::onStartSearching);
     connect(_excel, &ExcelWidget::searchFinished,
             this, &MainWindow::onFinishSearching);
+    connect(_excel, &ExcelWidget::sheetParsed,
+            this, &MainWindow::onSheetParsed);
+    connect(_excel, &ExcelWidget::opening,
+            this, &MainWindow::onFileOpening);
+    connect(_excel, &ExcelWidget::openFinished,
+            this, &MainWindow::onFileOpened);
+    connect(_excel, &ExcelWidget::openError,
+            this, &MainWindow::onFileError);
 
     _ui->_debugWidget->hide();
     _ui->_pushButtonOpenBase->hide();
@@ -111,7 +119,7 @@ void MainWindow::keyPressEvent(QKeyEvent *pe)
 void MainWindow::show()
 {
     QMainWindow::show();
-    _dbw->show();
+//    _dbw->show();
     _dbw->openExisting();
 }
 
@@ -151,6 +159,8 @@ void MainWindow::onErrorOccured(QString nameObject, int code, QString errorDesc)
 void MainWindow::onMessageReady(QString mes)
 {
     _ui->statusBar->showMessage(mes, 4000);
+    emit toDebug(objectName(),
+                 "MR: "+mes);
 }
 
 void MainWindow::on__pushButtonOpen_clicked()
@@ -171,6 +181,8 @@ void MainWindow::on__pushButtonSearch_clicked()
 void MainWindow::onStartSearching(const QString &sheet)
 {
     _ui->_pushButtonSearch->setEnabled(false);
+    _ui->_pushButtonStop->setEnabled(true);
+    _ui->_pushButtonWait->setEnabled(true);
     QString mes=QString("Поиск в документе '%1' начат").arg(sheet);
     _ui->statusBar->showMessage(mes, 3000);
     emit toDebug(objectName(),
@@ -179,8 +191,58 @@ void MainWindow::onStartSearching(const QString &sheet)
 
 void MainWindow::onFinishSearching(const QString &sheet)
 {
-    _ui->_pushButtonSearch->setEnabled(true);
+    if(_excel->getCountTab()>0)
+        _ui->_pushButtonSearch->setEnabled(true);
+    else
+        _ui->_pushButtonSearch->setEnabled(false);
+    _ui->_pushButtonStop->setEnabled(false);
+    _ui->_pushButtonWait->setEnabled(false);
     QString mes=QString("Поиск в документе '%1' завершен").arg(sheet);
+    _ui->statusBar->showMessage(mes, 3000);
+    emit toDebug(objectName(),
+                 mes);
+}
+
+void MainWindow::onSheetParsed(const QString &sheet)
+{
+    _ui->_pushButtonSearch->setEnabled(true);
+    QString mes=QString("Обработка документа '%1' завершена").arg(sheet);
+    _ui->statusBar->showMessage(mes, 3000);
+    emit toDebug(objectName(),
+                 mes);
+}
+
+void MainWindow::onFileOpening(const QString &fname)
+{
+    _ui->_pushButtonSearch->setEnabled(false);
+    _ui->_pushButtonOpen->setEnabled(false);
+    QString name = QFileInfo(fname).fileName();
+    QString mes=QString("Документ '%1' открывается").arg(name);
+    _ui->statusBar->showMessage(mes, 3000);
+    emit toDebug(objectName(),
+                 mes);
+}
+
+void MainWindow::onFileError(const QString &fname)
+{
+//    _ui->_pushButtonSearch->setEnabled(false);
+    _ui->_pushButtonOpen->setEnabled(true);
+    QString name = QFileInfo(fname).fileName();
+    QString mes=QString("Документ '%1' не открывается").arg(name);
+    _ui->statusBar->showMessage(mes, 3000);
+    emit toDebug(objectName(),
+                 mes);
+}
+
+void MainWindow::onFileOpened(const QString &fname)
+{
+    _ui->_pushButtonSearch->setEnabled(false);
+    _ui->_pushButtonOpen->setEnabled(true);
+    _ui->_pushButtonSave->setEnabled(true);
+    _ui->_pushButtonCloseTab->setEnabled(true);
+    _excel->getParseWidget()->setEnabled(true);
+    QString name = QFileInfo(fname).fileName();
+    QString mes=QString("Документ '%1' успешно открыт. Начата его обработка").arg(name);
     _ui->statusBar->showMessage(mes, 3000);
     emit toDebug(objectName(),
                  mes);
@@ -193,10 +255,30 @@ void MainWindow::save()
 
 void MainWindow::on__pushButtonWait_clicked()
 {
-    QThread::yieldCurrentThread();
+//    QThread::yieldCurrentThread();
+    _excel->waitSearchThread();
 }
 
 void MainWindow::on__pushButtonCloseTab_clicked()
 {
-    _excel->closeTab();
+    if(_excel->closeTab())
+    {
+        _ui->_pushButtonCloseTab->setEnabled(true);
+        _ui->_pushButtonSave->setEnabled(true);
+    }
+    else
+    {
+        //если закрыли последнюю вкладку
+        _ui->_pushButtonCloseTab->setEnabled(false);
+        _ui->_pushButtonSave->setEnabled(false);
+        _ui->_pushButtonSearch->setEnabled(false);
+        _excel->getParseWidget()->setEnabled(false);
+
+        _ui->_pushButtonOpen->setFocus();
+    }
+}
+
+void MainWindow::on__pushButtonStop_clicked()
+{
+    _excel->stopSearch();
 }

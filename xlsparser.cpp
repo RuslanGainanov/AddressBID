@@ -2,7 +2,7 @@
 
 XlsParser::XlsParser(QObject *parent) :
     QObject(parent)
-  , _error(false)
+//  , _error(false)
 {
 //    qDebug() << "XlsParser constructor" << this->thread()->currentThreadId();
 }
@@ -37,9 +37,9 @@ void XlsParser::onReadRow(const QString &sheet,
 //    a.setRawAddress(row);
     //парсинг строки начат
     QString str;
-    QStringList resList;
+//    QStringList resList;
     QString addrString;
-    QString ptrn;
+//    QString ptrn;
 
     if(_mapHead[sheet].contains(FSUBJ))
     {

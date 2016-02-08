@@ -135,6 +135,7 @@ ListAddress CsvWorker::readFile(QString &fname, int maxCount)
 //    qDebug().noquote() << "CsvWorker readFile BEGIN" << QThread::currentThreadId();
     QFile file1(fname);
     ListAddress addrs;
+//    addrs.reserve(ListAddressMemoryReserve);
     if (!file1.open(QIODevice::ReadOnly))
     {
 //        qDebug().noquote() << "Ошибка открытия для чтения";

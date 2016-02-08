@@ -22,6 +22,8 @@
 #include "parseexcelwidget.h"
 #include "database.h"
 #include "simpledelegate.h"
+#include "searcher.h"
+#include "parseexcelwidget.h"
 
 #define HIDE_PARSED_COLUMNS 1
 
@@ -39,12 +41,19 @@ public:
     explicit ExcelWidget(QWidget *parent = 0);
     ~ExcelWidget();
     QString getCurrentTab();
+    int getCountTab();
+    ParseExcelWidget *getParseWidget()
+    {
+        return _parseWidget;
+    }
 
 public slots:
     void open();
     void search();
-    void closeTab();
-    bool save();
+    void stopSearch();
+    bool closeTab(); //если есть еще вкладки, то true
+    bool save(); //если успешно сохранено, то true
+    void waitSearchThread();
 
 signals:
     void headReaded(QString sheet, MapAddressElementPosition head);
@@ -55,8 +64,9 @@ signals:
     void rowParsed(QString sheet, int row);
     void sheetParsed(QString sheet);
 
-    void opening(); //начало чтения файла
-    void openFinished(); //чтение файла окончено
+    void opening(QString fname); //начало чтения файла
+    void openFinished(QString fname); //чтение файла окончено
+    void openError(QString fname); //чтение файла окончено c ошибкой
 
     void searching(QString sheet); //поиск начат
     void searchFinished(QString sheet); //поиск в базе окончен
@@ -66,21 +76,26 @@ signals:
 
     void toDebug(QString objName, QString mes);
 
-    void findRowInBase(QString sheetName, int nRow, Address addr);
+    void searchInBase(QString sheetName, int nRow, Address addr);
+    void searchInBase2(QString sheetName, int nRow, Address addr, bool findIt);
+    void startSearchThread(QThread::Priority);
+    void finishSearchThread();
 
     void messageReady(QString);
     void errorOccured(QString nameObject, int code, QString errorDesc);
 
     void currentRowChanged(QString sheet, int nRow, MapAEValue data); //срабатывает по изменении строки в модели
 
+    void objectDeleted();
+
 private slots:
     void onRowRead(const QString &sheet, const int &nRow, QStringList &row);
-    void onHeadRead(const QString &sheet, QStringList &head);
+    bool onHeadRead(const QString &sheet, QStringList &head);
     void onSheetRead(const QString &sheet);
     void onHideColumn(const QString &sheet, int column);
 
-    //parser signal-slots
-    void onRowParsed(QString sheet, int nRow, Address a);
+
+    void onRowParsed(QString sheet, int nRow, Address a); //parser signal-slots
     void onSheetParsed(QString sheet);
     void onSearchFinished(QString sheet);
     void onNotFoundMandatoryColumn(QString sheet, AddressElements ae, QString colName);
@@ -103,7 +118,8 @@ private slots:
 private:
     Ui::ExcelWidget             *_ui;
     XlsParser                   *_parser;
-    QHash<QString, TableModel *> _data;
+    ParseExcelWidget            *_parseWidget;
+    QHash<QString, TableModel *> _models;
     QHash<QString, QTableView *>  _views;
     QHash<QString, QItemSelectionModel *>  _selections;
 //    QHash<QString, int>          _sheetIndex;
@@ -123,6 +139,7 @@ private:
     SimpleDelegate *_delegateNotFounded;
     SimpleDelegate *_delegateRepeatFounded;
     QMap<QString, ListAddress > _data2;
+    QString _openFilename;
 //    ExcelDocument _data;
 //    QThread *_thread;
 

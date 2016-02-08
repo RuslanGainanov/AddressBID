@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>597</width>
+    <width>626</width>
     <height>300</height>
    </rect>
   </property>
@@ -50,6 +50,9 @@
      <layout class="QGridLayout" name="_gridLayoutButtons">
       <item row="0" column="2">
        <widget class="QPushButton" name="_pushButtonSearch">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
         <property name="text">
          <string>Поиск</string>
         </property>
@@ -85,6 +88,9 @@
       </item>
       <item row="0" column="4">
        <widget class="QPushButton" name="_pushButtonSave">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
         <property name="text">
          <string>Сохранить</string>
         </property>
@@ -92,15 +98,31 @@
       </item>
       <item row="0" column="3">
        <widget class="QPushButton" name="_pushButtonWait">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
         <property name="text">
-         <string>Ускорить поиск</string>
+         <string>Ускорить</string>
         </property>
        </widget>
       </item>
       <item row="0" column="5">
        <widget class="QPushButton" name="_pushButtonCloseTab">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
         <property name="text">
          <string>Закрыть вкладку</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="6">
+       <widget class="QPushButton" name="_pushButtonStop">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="text">
+         <string>Стоп</string>
         </property>
        </widget>
       </item>
@@ -113,7 +135,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>597</width>
+     <width>626</width>
      <height>21</height>
     </rect>
    </property>

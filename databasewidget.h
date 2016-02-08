@@ -41,14 +41,14 @@ public slots:
     void openExisting(QString fname);
     void clear();
     void viewInfo();
-    void waitSearch();
+//    void waitSearch();
 
 private slots:
 //    void onReadRow(int row);
 //    void onReadRows(int rows);
 //    void onParseRow(int row);
 //    void onCountRow(int count);
-    void onOpenBase();
+    void onBaseOpening();
     void onBaseOpened();
     void readCsvBase(QString openFilename);
     void onFindButtonClicked();
@@ -57,7 +57,6 @@ private slots:
     void onSelectedRows(int count);
 
     void on__pushButtonOpen_clicked();
-    void on__pushButtonLoadOld_clicked();
     void onProcessOfOpenFinished();
     void onProcessOfParsingFinished();
 
@@ -79,7 +78,6 @@ private:
     XlsParser                      *_parser;
     QFutureWatcher<ListAddress>     _futureWatcher;
     QFutureWatcher<void>            _futureWatcherParser;
-//    ListAddress                     _addrs;
     QScopedPointer<ListAddress>     _paddr;
     QString                         _csvFileName;
     QThread                         _thread;

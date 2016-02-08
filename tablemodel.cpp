@@ -4,12 +4,12 @@ TableModel::TableModel(const QString &name, QObject* pobj)
         : QAbstractTableModel(pobj)
         , m_name(name)
 {
-//    qDebug() << "TableModel constructor" << m_name;
+//    qDebug() << "   TableModel()" << m_name;
 }
 
 TableModel::~TableModel()
 {
-//    qDebug() << "TableModel destructor" << m_name;
+//    qDebug() << "   ~TableModel()" << m_name;
 }
 
 QString TableModel::getName() const

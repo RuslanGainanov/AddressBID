@@ -25,13 +25,7 @@ public:
     bool isCanceled();
 
 signals:
-    void headReaded(QStringList head);
-    void headParsed(MapAddressElementPosition head);
-    void rowReaded(int rowNumber);
-    void rowParsed(int rowNumber);
-    void readedRows(int count);
-//    void countRows(int count);
-//    void workingWithOpenBase();
+    void baseOpening();
     void baseOpened();
 
     void toDebug(QString,QString);
@@ -49,7 +43,7 @@ signals:
 
 public slots:
     void openBase(QString filename);
-    void removeBase(QString filename);
+    bool removeBase(QString filename);
 
     void selectAddress(QString sheet, int nRow, Address a);
 
@@ -65,13 +59,14 @@ private:
     QString _baseName;
     bool _connected;
     bool _canceled;
-//    QSet< quint64 > _bids;
+    QSet< quint64 > _bids;
+    int _countNotInsertedRows;
 
     void createModel();
     void removeConnection();
     void createConnection();
-    void dropTable();
     void createTable();
+    void dropTable();
 };
 
 #endif // DATABASE_H

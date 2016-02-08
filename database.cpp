@@ -4,14 +4,9 @@ Database::Database(QObject *parent) :
     QObject(parent),
     _model(nullptr),
     _connected(false),
-    _canceled(false)
+    _canceled(false),
+    _countNotInsertedRows(0)
 {
-//    _model = new QSqlTableModel(this);
-//    _model->setTable(TableName);
-//    _model->setEditStrategy(QSqlTableModel::OnManualSubmit);
-//    if(_model->lastError().isValid())
-//        emit toDebug(objectName(),
-//                     "openModel:"+_model->lastError().text());
     setObjectName("Database");
 }
 
@@ -42,18 +37,7 @@ bool Database::isCanceled()
     return _canceled;
 }
 
-//ListAddress Database::search(QString sheetName, ListAddress addr)
-//{
-//    qDebug() << "Database::search" << this->thread()->currentThreadId()
-//             << sheetName << addr.size();
-//    for(int i=0; i<addr.size(); i++)
-//    {
-//        selectAddress(addr[i]);
-//    }
-//    return addr;
-//}
-
-void Database::removeBase(QString filename)
+bool Database::removeBase(QString filename)
 {
     emit toDebug(objectName(),
             QString("Удаляем старую базу '%1'.").arg(filename));
@@ -63,25 +47,33 @@ void Database::removeBase(QString filename)
     if(f.exists())
     {
         if(f.remove())
+        {
             emit toDebug(objectName(),
-                    QString("База '%1' успешно удалена.").arg(filename));
+                         QString("База '%1' успешно удалена.").arg(filename));
+            return true;
+        }
         else
+        {
             emit toDebug(objectName(),
-                    QString("Невозможно удалить файл '%1'. Ошибка: %2")
+                         QString("Невозможно удалить файл '%1'. Ошибка: %2")
                          .arg(filename)
                          .arg(f.errorString()));
+            return false;
+        }
     }
     else
     {
         emit toDebug(objectName(),
                 QString("Невозможно удалить файл '%1'. Файл не существует.")
                      .arg(filename));
+        return true;
     }
 }
 
 void Database::openBase(QString filename)
 {
 //    qDebug() << "Database openBase" << filename << this->thread()->currentThreadId();
+    emit baseOpening();
     emit toDebug(objectName(),
                  QString("Открывается база данных '%1'.").arg(filename));
     if(filename!=baseName())
@@ -93,8 +85,6 @@ void Database::openBase(QString filename)
         return;
     createTable();
     createModel();
-//    _connected=true;
-//    emit countRows(_model->rowCount());
     emit baseOpened();
 }
 
@@ -138,7 +128,8 @@ void Database::createModel()
 void Database::updateTableModel()
 {
     emit toDebug(objectName(),
-                 QString("Обновляется отображение модели."));
+                 QString("Обновляется отображение модели"));
+//    qDebug() << "_model" << _model << _model->rowCount();
     if(_model!=nullptr)
     {
         _model->select();
@@ -218,7 +209,8 @@ void Database::createTable()
                         "'%15' TEXT, "
                         "'%16' TEXT, "
                         "'%17' TEXT "
-                        ");")
+                        ")"
+                        )
                 .arg(MapColumnNames[BUILD_ID])
                 .arg(MapColumnNames[STREET])
                 .arg(MapColumnNames[STREET_ID])
@@ -246,17 +238,50 @@ void Database::createTable()
         else
             emit toDebug(objectName(),
                          QString("Таблица '%1' была создана.").arg(TableName));
+
+        str =
+        "PRAGMA synchronous = OFF;"
+        "PRAGMA journal_mode = MEMORY;"
+        "CREATE INDEX bid_indx ON base1(BUILD_ID);"
+        "CREATE INDEX sid_indx ON base1(STREET_ID);"
+        "CREATE INDEX tof_indx ON base1(TYPE_OF_FSUBJ);"
+        "CREATE INDEX fs_indx ON base1(FSUBJ);"
+        "CREATE INDEX d_indx ON base1(DISTRICT);"
+        "CREATE INDEX toc1_indx ON base1(TYPE_OF_CITY1);"
+        "CREATE INDEX c1_indx ON base1(CITY1);"
+        "CREATE INDEX toc2_indx ON base1(TYPE_OF_CITY2);"
+        "CREATE INDEX c2_indx ON base1(CITY2);"
+        "CREATE INDEX tos_indx ON base1(TYPE_OF_STREET);"
+        "CREATE INDEX s_indx ON base1(STREET);"
+        "CREATE INDEX b_indx ON base1(BUILD);"
+        "CREATE INDEX k_indx ON base1(KORP);"
+        "CREATE INDEX l_indx ON base1(LITERA);"
+        "CREATE INDEX c_indx ON base1(CORRECT);"
+        "CREATE INDEX a_indx ON base1(ADDITIONAL);"
+        "CREATE INDEX all_indx ON base1(STREET, STREET_ID, KORP, BUILD, BUILD_ID, ADDITIONAL, DISTRICT, FSUBJ, TYPE_OF_CITY1, CITY1, TYPE_OF_CITY2, CITY2, TYPE_OF_STREET, LITERA, CORRECT, TYPE_OF_FSUBJ);";
+        QStringList queries = str.split(";");
+        foreach (QString q, queries) {
+            if(q.isEmpty())
+                continue;
+            if(!query.exec(q))
+                emit toDebug(objectName(),
+                             QString("Невозможно выполнить '%1'. Ошибка: '%2'.")
+                             .arg(q)
+                             .arg(query.lastError().text()));
+            else
+                emit toDebug(objectName(),
+                             QString("Выполнен запрос '%1'").arg(q));
+        }
     }
 }
 
 void Database::insertListAddressWithCheck(const ListAddress &la)
 {
+    _bids.clear();
+    _countNotInsertedRows=0;
     _canceled=false;
     ListAddress::const_iterator it=la.begin();
-    /*QString currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
-    qDebug() << "Begin TR"
-             << */QSqlDatabase::database().driver()->beginTransaction()/*
-             << currTime*/;
+    QSqlDatabase::database().driver()->beginTransaction();
     for(;it!=la.end();it++)
     {
         if(_canceled){
@@ -266,23 +291,52 @@ void Database::insertListAddressWithCheck(const ListAddress &la)
 
         if(it->getBuildId()!=0)
             insertAddressWithCheck(*it);
+        else
+            _countNotInsertedRows++;
     }
-    /*currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
-    qDebug() << "End TR"
-             << */QSqlDatabase::database().driver()->commitTransaction()/*
-             << currTime*/;
+    QSqlDatabase::database().driver()->commitTransaction();
+//    qDebug() << "BIDS: " << _bids.size() << "in memory:" << _bids.size()*8 << "bytes";
+    if(_countNotInsertedRows>0)
+        emit toDebug(objectName(),
+                     QString("'%1' записей не были добавлены").arg(_countNotInsertedRows));
+    _bids.clear();
+    _countNotInsertedRows=0;
 }
 
 void Database::insertAddressWithCheck(const Address &a)
 {
-//    if(_bids.contains(a.getBuildId()))
-//    {
-//        emit toDebug(objectName(),
-//                "Database already contains this entry (BID):\r\n"
-//                +QString::number(a.getBuildId()));
-//        return;
-//    }
-//    _bids.insert(a.getBuildId());
+    if(_bids.contains(a.getBuildId()))
+    {
+        emit toDebug(objectName(),
+                QString("Запись с BID='%1' не может быть добавлена, т.к. такая запись уже существует в БД")
+                .arg(a.getBuildId()));
+
+        QSqlQuery query;
+        QString str = QString("SELECT STREET_ID, BUILD_ID, RAW "
+                              "FROM %1 "
+                              "WHERE BUILD_ID = '%2'").arg(TableName).arg(a.getBuildId());
+        if (!query.exec(str))
+        {
+            emit toDebug(objectName(),
+                    QString("Невозможно выполнить операцию выборки '%1' в БД. Ошибка: %2")
+                         .arg(str)
+                         .arg(query.lastError().text()));
+        }
+        QSqlRecord rec = query.record();
+        Address tmp;
+        if(query.next())
+        {
+            tmp.setRawAddress( query.value(rec.indexOf("RAW")).toString() );
+            tmp.setBuildId( query.value(rec.indexOf("BUILD_ID")).toULongLong() );
+            tmp.setStreetId( query.value(rec.indexOf("STREET_ID")).toULongLong() );
+        }
+        emit toDebug(objectName(),
+                QString("В базе находится следующая строка '%1'")
+                .arg(tmp.toCsv()));
+        _countNotInsertedRows++;
+        return;
+    }
+    _bids.insert(a.getBuildId());
     QSqlQuery query;
 
     if (!query.exec(a.toInsertSqlQuery()))
@@ -292,6 +346,7 @@ void Database::insertAddressWithCheck(const Address &a)
                      .arg(a.toCsv())
                      .arg(query.lastError().text()));
         //        assert(0);
+        _countNotInsertedRows++;
     }
 }
 
@@ -300,7 +355,10 @@ void Database::selectAddress(Address a)
     if(_model==nullptr)
         return;
     QString filter;
-    filter+=QString("CORRECT = '%1'").arg(1);
+    if(a.isCorrect())
+        filter+=QString("CORRECT = '1'");
+    else
+        filter+=QString("CORRECT = '0'");
     if(a.getTypeOfFSubj()!=INCORRECT_SUBJ)
         filter+=" AND " + QString("TYPE_OF_FSUBJ = '%1'").arg(a.getTypeOfFSubjInString());
     if(a.getFsubj()!="*")
@@ -327,6 +385,10 @@ void Database::selectAddress(Address a)
        filter+=" AND " + QString("LITERA = '%1'").arg(a.getLitera());
     if(a.getAdditional()!="*")
        filter+=" AND " + QString("ADDITIONAL = '%1'").arg(a.getAdditional());
+    if(a.getBuildId()!=0)
+       filter+=" AND " + QString("BUILD_ID = '%1'").arg(a.getBuildId());
+    if(a.getStreetId()!=0)
+       filter+=" AND " + QString("STREET_ID = '%1'").arg(a.getStreetId());
 
     emit toDebug(objectName(),
                  QString("Устанавливаем фильтр: %1").arg(filter));
@@ -397,53 +459,9 @@ void Database::selectAddress(QString sheet, int nRow, Address a)
         emit addressNotFounded(sheet, nRow, a);
 }
 
-//void Database::selectAddress(Address &a)
-//{
-//    int n = qrand();
-//    if(a.getBuildId()!=0 && a.getStreetId()!=0)
-//        return;
-//    if(           n%5==0
-//               || n%5==1
-//               || n%5==2
-//               || n%5==3
-//               /*|| n%5==4*/ )
-//    {
-//        a.setBuildId( 100000+qrand()%100000 );
-//        a.setStreetId( 100000+qrand()%100000 );
-//        return;
-//    }
-//    return;
-
-//    QSqlQuery query;
-//    if (!query.exec(QString("SELECT STREET_ID, BUILD_ID "
-//                    "FROM %6"
-//                    "WHERE STREET = '%1'"
-//                    "  AND TYPE_OF_STREET = '%2'"
-//                    "  AND CITY1 = '%3'"
-//                    "  AND BUILD = '%4'"
-//                    "  AND KORP = '%5';")
-//                    .arg(a.getStreet())
-//                    .arg(a.getTypeOfStreet())
-//                    .arg(a.getCity1())
-//                    .arg(a.getBuild())
-//                    .arg(a.getKorp()))) {
-//        qDebug() << "Unable to execute query - exiting"
-//                 << endl
-//                 << query.lastError().text();
-//        return;
-//    }
-
-//    //Reading of the data
-//    QSqlRecord rec     = query.record();
-//    while (query.next()) {
-//        a.setBuildId( query.value(rec.indexOf("BUILD_ID")).toULongLong() );
-//        a.setStreetId( query.value(rec.indexOf("STREET_ID")).toULongLong() );
-//    }
-//}
-
 void Database::dropTable()
 {
-    qDebug().noquote() << "Database dropTable" << QThread::currentThreadId();
+//    qDebug().noquote() << "Database dropTable" << QThread::currentThreadId();
     QSqlQuery query(
                 QString("DROP TABLE IF EXISTS %1;")
                 .arg(TableName)
@@ -451,16 +469,16 @@ void Database::dropTable()
 
     if(!query.exec())
     {
-        qDebug().noquote() << "dropTable error" << QThread::currentThreadId();
+//        qDebug().noquote() << "dropTable error" << QThread::currentThreadId();
 
-        toDebug(objectName(),
+        emit toDebug(objectName(),
                 "Unable to drop a table:\n"+query.lastError().text());
     }
     else
     {
-        qDebug().noquote() << "dropTable success" << QThread::currentThreadId();
+//        qDebug().noquote() << "dropTable success" << QThread::currentThreadId();
 
-        toDebug(objectName(),
+        emit toDebug(objectName(),
                 "Success drop a table");
     }
 }

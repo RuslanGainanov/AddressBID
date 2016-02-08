@@ -11,7 +11,7 @@ const int LogOpenMode (
         QIODevice::WriteOnly | QIODevice::Text | /*QIODevice::Truncate | */QIODevice::Append
         );
 
-//#define DEBUG_TO_FILE
+#define DEBUG_TO_FILE
 
 namespace Ui {
 class DebugWidget;
