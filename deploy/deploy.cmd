@@ -1,0 +1,1 @@
+windeployqt --release --no-quick-import --no-translations --no-system-d3d-compiler --no-webkit2 --no-angle AddressConverterV2.exe

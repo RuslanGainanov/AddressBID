@@ -18,6 +18,7 @@ Searcher::~Searcher()
 
 void Searcher::cancel()
 {
+//    qDebug() << "  Searcher::cancel()" << _sheet;
     _canceled=true;
     emit finished(_sheet);
     _isFinished=true;
@@ -26,6 +27,70 @@ void Searcher::cancel()
 bool Searcher::isCanceled()
 {
     return _canceled;
+}
+
+//static function:
+SearchStruct Searcher::concSelectAddress(SearchStruct s)
+{
+//    qDebug() << "Searcher::concSelectAddress <" << s.row << QThread::currentThreadId();
+    if(!s.findIt)
+        return s;
+    Address &a=s.a;
+
+    QString str = QString("SELECT STREET_ID, BUILD_ID, RAW "
+                          "FROM %1 "
+                          "WHERE TYPE_OF_FSUBJ = '%2' "
+                          "  AND FSUBJ = '%3' "
+                          "  AND DISTRICT = '%4' "
+                          "  AND TYPE_OF_CITY1 = '%5' "
+                          "  AND CITY1 = '%6' "
+                          "  AND TYPE_OF_CITY2 = '%7' "
+                          "  AND CITY2 = '%8'"
+                          "  AND TYPE_OF_STREET = '%9' "
+                          "  AND STREET = '%10' "
+                          "  AND BUILD = '%11' "
+                          "  AND KORP = '%12' "
+                          "  AND LITERA = '%13' "
+                          "  AND CORRECT = '1'; "
+                          )
+                  .arg(TableName)
+                  .arg(a.getTypeOfFSubjInString())
+                  .arg(a.getFsubj())
+                  .arg(a.getDistrict())
+                  .arg(a.getTypeOfCity1())
+                  .arg(a.getCity1())
+                  .arg(a.getTypeOfCity2())
+                  .arg(a.getCity2())
+                  .arg(a.getTypeOfStreet())
+                  .arg(a.getStreet())
+                  .arg(a.getBuild())
+                  .arg(a.getKorp())
+                  .arg(a.getLitera());
+//    qDebug() << "Searcher::selectAddress" << str;
+    QSqlQuery query;
+//    qDebug() << "Searcher::selectAddress BEGIN" << query.isActive() << s.row;
+    if (!query.exec(str))
+        return s;
+//    qDebug() << "Searcher::selectAddress END" << query.isActive() << s.row;
+
+    //Reading of the data
+//    qDebug() << "Searcher::Reading record BEGIN" << QDateTime::currentDateTime().toString("hh:mm:ss.zzz");
+    QSqlRecord rec = query.record();
+//    qDebug() << "Searcher::Reading record END" << QDateTime::currentDateTime().toString("hh:mm:ss.zzz");
+//    qDebug() << "Searcher::Reading record count" << rec.count();
+    bool isExists=false;
+    while (query.next()) {
+        isExists=true;
+//        qDebug() << "Searcher::Reading query isValid" << query.isValid();
+        a.setRawAddress( query.value(rec.indexOf("RAW")).toString() );
+        a.setBuildId( query.value(rec.indexOf("BUILD_ID")).toULongLong() );
+        a.setStreetId( query.value(rec.indexOf("STREET_ID")).toULongLong() );
+    }
+//    qDebug() << "Searcher::Reading next END" << QDateTime::currentDateTime().toString("hh:mm:ss.zzz");
+    s.found=isExists;
+
+//    qDebug() << "Searcher::concSelectAddress >" << s.row << QThread::currentThreadId();
+    return s;
 }
 
 void Searcher::selectAddress(QString sheet, int nRow, Address a, bool findIt)
@@ -70,8 +135,8 @@ void Searcher::selectAddress(QString sheet, int nRow, Address a, bool findIt)
                   .arg(a.getKorp())
                   .arg(a.getLitera());
 //    qDebug() << "Searcher::selectAddress" << str;
-//    qDebug() << "Searcher::selectAddress BEGIN" << nRow;
     QSqlQuery query;
+//    qDebug() << "Searcher::selectAddress BEGIN" << nRow;
     if (!query.exec(str))
     {
         emit toDebug(objectName(),

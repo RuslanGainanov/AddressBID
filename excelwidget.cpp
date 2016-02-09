@@ -15,7 +15,6 @@ ExcelWidget::ExcelWidget(QWidget *parent) :
     //excel.cpp
     _parser = new XlsParser;
     _thread = new QThread;
-
     _parser->moveToThread(_thread);
     connect(this, SIGNAL(rowReaded(QString,int,QStringList)),
             _parser, SLOT(onReadRow(QString,int,QStringList)));
@@ -57,13 +56,13 @@ ExcelWidget::~ExcelWidget()
     foreach (QString key, _models.keys()) {
         /*delete*/ _models.take(key)->deleteLater();
     }
-    if(_parser)
-        delete _parser;
     delete _delegateFounded;
     delete _delegateNotFounded;
     delete _delegateRepeatFounded;
     _thread->quit();
-    _thread->wait();
+//    _thread->wait();
+    _parser->deleteLater();
+    _thread->deleteLater();
     qDebug() << "  ~ExcelWidget() >";
 }
 
@@ -94,10 +93,10 @@ bool ExcelWidget::save()
 
 bool ExcelWidget::runThreadSave(const QString &filename, const QString &sheetName)
 {
-    QString currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
-    qDebug() << "ExcelWidget runThreadSave BEGIN"
-             << currTime
-             << this->thread()->currentThreadId();
+//    QString currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
+//    qDebug() << "ExcelWidget runThreadSave BEGIN"
+//             << currTime
+//             << this->thread()->currentThreadId();
 
     QString name = QFileInfo(filename).fileName();
 
@@ -150,12 +149,12 @@ bool ExcelWidget::runThreadSave(const QString &filename, const QString &sheetNam
     futureWatcher->setFuture(f1);
     dialog->exec();
 
-    currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
-    qDebug() << "ExcelWidget runThreadSave END"
-             << currTime
-             << this->thread()->currentThreadId();
+//    currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
+//    qDebug() << "ExcelWidget runThreadSave END"
+//             << currTime
+//             << this->thread()->currentThreadId();
 
-    emit messageReady(QString("Сохранение завершено"));
+//    emit messageReady(QString("Сохранение завершено"));
     emit saveFinished(sheetName, filename);
     return f1.result();
 }
@@ -170,7 +169,19 @@ void ExcelWidget::open()
     if(str.isEmpty())
         return;
     _ui->_lineEditFilename->setText(str);
-    runThreadOpen(str);
+
+    QString name = "["+ QFileInfo(str).fileName().remove(QRegExp("\\.csv|\\.xlsx|\\.xls")) +"]";
+//    qDebug() << name;
+    QStringList sheets = _models.keys();
+    bool isContain=false;
+    foreach (QString sheet, sheets) {
+        if(sheet.contains(name,  Qt::CaseInsensitive))
+            isContain=true;
+    }
+    if(isContain)
+        emit messageReady("Данный документ уже открыт в программе");
+    else
+        runThreadOpen(str);
 }
 
 QVariant ExcelWidget::openCsvFile(QString filename, int maxCountRows)
@@ -383,17 +394,28 @@ void ExcelWidget::search()
         connect(searcher, &Searcher::addressNotFounded,
                 this, &ExcelWidget::onNotFounedAddress);
         connect(searcher, &Searcher::finished,
-                thread, &QThread::quit);
+                thread, &QThread::quit, Qt::DirectConnection);
 //        connect(searcher, &Searcher::finished, [=](){
 //            qDebug() << "Searcher::finished";
 //            onSearchFinished(sheetName);
 //        });
         connect(this, &ExcelWidget::objectDeleted,
-                searcher, &Searcher::deleteLater);
+                searcher, &Searcher::cancel, Qt::DirectConnection);
         connect(this, &ExcelWidget::objectDeleted,
-                thread, &QThread::deleteLater);
+                searcher, &Searcher::deleteLater, Qt::DirectConnection);
+        connect(this, &ExcelWidget::objectDeleted,
+                thread, &QThread::deleteLater, Qt::DirectConnection);
         connect(this, &ExcelWidget::finishSearchThread,
                 searcher, &Searcher::cancel, Qt::DirectConnection);
+        disconnect(this, &ExcelWidget::waitSearchThread, 0, 0);
+        connect(this, &ExcelWidget::waitSearchThread, [=](int msec){
+            if(thread)
+                if(thread->isRunning()){
+                    qDebug() << "ExcelWidget::finishSearchThread wait <" << msec << QDateTime::currentDateTime().time();
+                    thread->wait(msec);
+                    qDebug() << "ExcelWidget::finishSearchThread wait >" << QDateTime::currentDateTime().time();
+                }
+        });
 //        connect(this, &ExcelWidget::finishSearchThread, [=](){
 //            qDebug() << "ExcelWidget::finishSearchThread <" << searcher << thread->isRunning() << thread->isFinished();
 //            if(searcher!=nullptr)
@@ -409,18 +431,18 @@ void ExcelWidget::search()
                 thread, &QThread::deleteLater);
         connect(thread, &QThread::finished,
                 searcher, &QThread::deleteLater);
-        thread->start();
+        thread->start(QThread::HighPriority);
         emit toDebug(objectName(),
                      QString("Поиск %1 строк").arg(_data2[sheetName].size()));
         searcher->setCountRows(_data2[sheetName].size());
 //        emit startSearchThread(QThread::InheritPriority);
         for(int i=0; i<_data2[sheetName].size(); i++)
         {
+            bool needFind=true;
             if(!_data2[sheetName].at(i).isEmpty()
                     && _data2[sheetName].at(i).getBuildId()==0
                    /* && _data2[sheetName].at(i).getStreetId()==0*/)
             {
-                bool needFind=true;
                 QAbstractItemDelegate *delegate=_views[sheetName]->itemDelegateForRow(i);
                 if(delegate && delegate==_delegateNotFounded) //если данная строка уже искалась и не найден результат
                 {
@@ -435,6 +457,8 @@ void ExcelWidget::search()
                 }
                 emit searchInBase2(sheetName, i, _data2[sheetName].at(i), needFind);
             }
+            else
+                emit searchInBase2(sheetName, i, _data2[sheetName].at(i), false);
         }
 
 //        emit finishSearchThread();
@@ -456,6 +480,84 @@ void ExcelWidget::search()
 //             << this->thread()->currentThreadId();
 }
 
+void ExcelWidget::search2()
+{
+    QString sheetName = getCurrentTab();
+    if(!sheetName.isEmpty() && _data2.contains(sheetName))
+    {
+        _countRepatingRow.remove(sheetName);
+        _searchingRows.remove(sheetName);
+        emit toDebug(objectName(),
+                     QString("Поиск %1 строк").arg(_data2[sheetName].size()));
+        for(int i=0; i<_data2[sheetName].size(); i++)
+        {
+            bool needFind=true;
+            if(!_data2[sheetName].at(i).isEmpty()
+                    && _data2[sheetName].at(i).getBuildId()==0)
+            {
+                QAbstractItemDelegate *delegate=_views[sheetName]->itemDelegateForRow(i);
+                if(delegate && delegate==_delegateNotFounded) //если данная строка уже искалась и не найден результат
+                    needFind=false;
+
+                if(needFind)
+                    _searchingRows[sheetName].insert(i);
+            }
+            else
+                needFind=false;
+
+            SearchStruct s;
+            s.row=i;
+            s.a=_data2[sheetName].at(i);
+            s.sheet=sheetName;
+            s.findIt=needFind;
+            FutureWatcher<SearchStruct> *futureWatcher = new FutureWatcher<SearchStruct>;
+            _listFuture.push_back(futureWatcher);
+//            QFuture<SearchStruct> f1;
+//            futureWatcher->setFuture(f1);
+//            qDebug() << "_threadPool"
+//                     << _threadPool.maxThreadCount()
+//                     << _threadPool.activeThreadCount()
+//                     << QThread::idealThreadCount();
+//            connect(futureWatcher, &FutureWatcher<SearchStruct>::started, [=](){
+//                qDebug() << "started" << futureWatcher << futureWatcher->isStarted();
+//                qDebug() << "_threadPool"
+//                         << _threadPool.maxThreadCount()
+//                         << _threadPool.activeThreadCount()
+//                         << QThread::idealThreadCount();
+//            });
+//            connect(futureWatcher, &FutureWatcher<SearchStruct>::finished, [=](){
+//                qDebug() << "finished"
+//                         << futureWatcher
+//                         << futureWatcher->isFinished()
+//                         << futureWatcher->isCanceled();
+//                _listFuture.removeAll(futureWatcher);
+//                futureWatcher->deleteLater();
+//            });
+//            connect(futureWatcher, &FutureWatcher<SearchStruct>::canceled, [=](){
+//                qDebug() << "canceled"
+//                         << futureWatcher
+//                         << futureWatcher->isFinished()
+//                         << futureWatcher->isCanceled();
+//            });
+            connect(futureWatcher, &FutureWatcher<SearchStruct>::finished,
+                    this, &ExcelWidget::onFinishSearch);
+//            connect(futureWatcher, &FutureWatcher<SearchStruct>::finished,
+//                    futureWatcher, &FutureWatcher<SearchStruct>::deleteLater);
+//            f1 = QtConcurrent::run(Searcher::concSelectAddress, s);
+            futureWatcher->setFuture(QtConcurrent::run(&_threadPool, Searcher::concSelectAddress, s));
+        }
+
+        if(!_searchingRows.value(sheetName).isEmpty())
+            emit searching(sheetName);
+        else
+            emit finishSearchThread();
+    }
+    else
+        emit toDebug(objectName(),
+                     QString("Данные на вкладке '%1' отсутсвуют").arg(sheetName));
+}
+
+
 void ExcelWidget::stopSearch()
 {
     emit toDebug(objectName(),
@@ -463,9 +565,25 @@ void ExcelWidget::stopSearch()
     emit finishSearchThread();
 }
 
-void ExcelWidget::waitSearchThread()
+void ExcelWidget::waitSearch()
 {
-    QThread::currentThread()->msleep(500);
+//    QThread::currentThread()->msleep(500);
+    emit waitSearchThread(2000);
+
+    //search2:
+//    foreach (FutureWatcher<SearchStruct> *fw, _listFuture) {
+//        if(!fw->isFinished()){
+//            qDebug() << "wait <" << fw << fw->isRunning() << fw->isStarted() << getCurrentTime();
+//            fw->waitForFinished();
+//            qDebug() << "wait >" << fw << fw->isRunning() << fw->isStarted() << getCurrentTime();
+//            break;
+//        }
+//    }
+
+//    //thread-pool:
+//    qDebug() << "wait <" << getCurrentTime();
+//    qDebug() <<  _threadPool.waitForDone();
+//    qDebug() << "wait >" << getCurrentTime();
 }
 
 void ExcelWidget::onProcessOfOpenFinished()
@@ -595,20 +713,55 @@ void ExcelWidget::onProcessOfOpenFinished()
 //    emit messageReady("Открытие завершено");
 }
 
+void ExcelWidget::onFinishSearch()
+{
+    FutureWatcher <SearchStruct> *fw = dynamic_cast<FutureWatcher<SearchStruct> *>(sender());
+//    qDebug() << "finish" << fw << fw->isFinished() << fw->isCanceled();
+    if(fw->isFinished()
+            && !fw->isCanceled())
+    {
+        SearchStruct ss=fw->future().result();
+//        qDebug() << ss.a.getBuildId()
+//                 << ss.a.getStreet()
+//                 << ss.row
+//                 << ss.findIt
+//                 << ss.found
+//                 << ss.sheet;
+
+        if(ss.findIt)
+        {
+            if(ss.found)
+                onFounedAddress(ss.sheet, ss.row, ss.a);
+            else
+                onNotFounedAddress(ss.sheet, ss.row, ss.a);
+        }
+    }
+
+    _listFuture.removeAll(fw);
+    fw->deleteLater();
+}
+
 void ExcelWidget::onFounedAddress(QString sheetName, int nRow, Address addr)
 {
     if(!_models.contains(sheetName)) //если данная вкладка не существует (удалена)
     {
         return;
     }
+#ifdef SHOW_FOUNDED_ITEMS_TO_DEBUG
     emit toDebug(objectName(),
-                 QString("Найдена строка %1: ").arg(nRow)+/*"\r\n"+*/addr.toCsv());
+                 QString("Найдена строка %1: %2").arg(nRow).arg(addr.getStreet()));
+#endif
     if(_searchingRows.contains(sheetName))
     {
         _searchingRows[sheetName].remove(nRow);
-//        if(_searchingRows.value(sheetName).isEmpty())
-//            emit searchFinished(sheetName);
+        if(_searchingRows.value(sheetName).isEmpty())
+            emit searchFinished(sheetName);
     }
+//    qDebug() << "onFounedAddress:"
+//             << nRow
+//             << addr.getStreet()
+//             << _countRepatingRow[sheetName]
+//             << _data2[sheetName].value(nRow).getBuildId();
 
     nRow+=_countRepatingRow[sheetName];
     TableModel *tm = _models[sheetName];
@@ -654,13 +807,15 @@ void ExcelWidget::onNotFounedAddress(QString sheetName, int nRow, Address addr)
 {
     Q_UNUSED(sheetName);
     Q_UNUSED(addr);
+#ifdef SHOW_FOUNDED_ITEMS_TO_DEBUG
     emit toDebug(objectName(),
                  QString("Cтрока %1 не найдена!").arg(nRow));
+#endif
     if(_searchingRows.contains(sheetName))
     {
         _searchingRows[sheetName].remove(nRow);
-//        if(_searchingRows.value(sheetName).isEmpty())
-//            emit searchFinished(sheetName);
+        if(_searchingRows.value(sheetName).isEmpty())
+            emit searchFinished(sheetName);
     }
     nRow+=_countRepatingRow[sheetName];
     TableModel *tm = _models[sheetName];

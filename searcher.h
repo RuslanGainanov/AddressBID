@@ -6,6 +6,27 @@
 #include "address.h"
 #include "defines.h"
 
+struct SearchStruct
+{
+    SearchStruct(){
+        row=0;
+        found=false;
+        findIt=false;
+    }
+    SearchStruct(const SearchStruct &s){
+        sheet=s.sheet;
+        row=s.row;
+        a=s.a;
+        found=s.found;
+        findIt=s.findIt;
+    }
+    QString sheet;
+    int row;
+    Address a;
+    bool found;
+    bool findIt;
+};
+
 class Searcher : public QObject
 {
     Q_OBJECT
@@ -15,6 +36,7 @@ public:
     ~Searcher();
 
     bool isCanceled();
+    static SearchStruct concSelectAddress(SearchStruct s);
 
 signals:
     void addressFounded(QString sheet, int nRow, Address a);

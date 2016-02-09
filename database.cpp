@@ -12,8 +12,10 @@ Database::Database(QObject *parent) :
 
 Database::~Database()
 {
+    qDebug() << "  ~Database() <";
     if(_model!=nullptr)
         delete _model;
+    qDebug() << "  ~Database() >";
 }
 
 void Database::setBaseName(QString name)
@@ -241,7 +243,7 @@ void Database::createTable()
 
         str =
         "PRAGMA synchronous = OFF;"
-        "PRAGMA journal_mode = MEMORY;"
+        "PRAGMA journal_mode = OFF;"
         "CREATE INDEX bid_indx ON base1(BUILD_ID);"
         "CREATE INDEX sid_indx ON base1(STREET_ID);"
         "CREATE INDEX tof_indx ON base1(TYPE_OF_FSUBJ);"
@@ -258,7 +260,8 @@ void Database::createTable()
         "CREATE INDEX l_indx ON base1(LITERA);"
         "CREATE INDEX c_indx ON base1(CORRECT);"
         "CREATE INDEX a_indx ON base1(ADDITIONAL);"
-        "CREATE INDEX all_indx ON base1(STREET, STREET_ID, KORP, BUILD, BUILD_ID, ADDITIONAL, DISTRICT, FSUBJ, TYPE_OF_CITY1, CITY1, TYPE_OF_CITY2, CITY2, TYPE_OF_STREET, LITERA, CORRECT, TYPE_OF_FSUBJ);";
+        "CREATE INDEX all_indx ON base1(STREET, STREET_ID, KORP, BUILD, BUILD_ID, ADDITIONAL, DISTRICT, FSUBJ, TYPE_OF_CITY1, CITY1, TYPE_OF_CITY2, CITY2, TYPE_OF_STREET, LITERA, CORRECT, TYPE_OF_FSUBJ);"
+        "CREATE INDEX all2_indx ON base1(TYPE_OF_FSUBJ, FSUBJ, DISTRICT, TYPE_OF_CITY1, CITY1, TYPE_OF_CITY2, CITY2, TYPE_OF_STREET, STREET, BUILD, KORP, LITERA, CORRECT);";
         QStringList queries = str.split(";");
         foreach (QString q, queries) {
             if(q.isEmpty())
@@ -355,44 +358,46 @@ void Database::selectAddress(Address a)
     if(_model==nullptr)
         return;
     QString filter;
-    if(a.isCorrect())
-        filter+=QString("CORRECT = '1'");
-    else
-        filter+=QString("CORRECT = '0'");
     if(a.getTypeOfFSubj()!=INCORRECT_SUBJ)
-        filter+=" AND " + QString("TYPE_OF_FSUBJ = '%1'").arg(a.getTypeOfFSubjInString());
+        filter+=(filter.isEmpty()?"":" AND ") + QString("TYPE_OF_FSUBJ = '%1'").arg(a.getTypeOfFSubjInString());
     if(a.getFsubj()!="*")
-       filter+=" AND " + QString("FSUBJ = '%1'").arg(a.getFsubj());
+       filter+=(filter.isEmpty()?"":" AND ") + QString("FSUBJ = '%1'").arg(a.getFsubj());
     if(a.getDistrict()!="*")
-       filter+=" AND " + QString("DISTRICT = '%1'").arg(a.getDistrict());
+       filter+=(filter.isEmpty()?"":" AND ") + QString("DISTRICT = '%1'").arg(a.getDistrict());
     if(a.getTypeOfCity1()!="*")
-       filter+=" AND " + QString("TYPE_OF_CITY1 = '%1'").arg(a.getTypeOfCity1());
+       filter+=(filter.isEmpty()?"":" AND ") + QString("TYPE_OF_CITY1 = '%1'").arg(a.getTypeOfCity1());
     if(a.getCity1()!="*")
-       filter+=" AND " + QString("CITY1 = '%1'").arg(a.getCity1());
+       filter+=(filter.isEmpty()?"":" AND ") + QString("CITY1 = '%1'").arg(a.getCity1());
     if(a.getTypeOfCity2()!="*")
-       filter+=" AND " + QString("TYPE_OF_CITY2 = '%1'").arg(a.getTypeOfCity2());
+       filter+=(filter.isEmpty()?"":" AND ") + QString("TYPE_OF_CITY2 = '%1'").arg(a.getTypeOfCity2());
     if(a.getCity2()!="*")
-       filter+=" AND " + QString("CITY2 = '%1'").arg(a.getCity2());
+       filter+=(filter.isEmpty()?"":" AND ") + QString("CITY2 = '%1'").arg(a.getCity2());
     if(a.getTypeOfStreet()!="*")
-       filter+=" AND " + QString("TYPE_OF_STREET = '%1'").arg(a.getTypeOfStreet());
+       filter+=(filter.isEmpty()?"":" AND ") + QString("TYPE_OF_STREET = '%1'").arg(a.getTypeOfStreet());
     if(a.getStreet()!="*")
-       filter+=" AND " + QString("STREET = '%1'").arg(a.getStreet());
+       filter+=(filter.isEmpty()?"":" AND ") + QString("STREET = '%1'").arg(a.getStreet());
     if(a.getBuild()!="*")
-       filter+=" AND " + QString("BUILD = '%1'").arg(a.getBuild());
+       filter+=(filter.isEmpty()?"":" AND ") + QString("BUILD = '%1'").arg(a.getBuild());
     if(a.getKorp()!="*")
-       filter+=" AND " + QString("KORP = '%1'").arg(a.getKorp());
+       filter+=(filter.isEmpty()?"":" AND ") + QString("KORP = '%1'").arg(a.getKorp());
     if(a.getLitera()!="*")
-       filter+=" AND " + QString("LITERA = '%1'").arg(a.getLitera());
+       filter+=(filter.isEmpty()?"":" AND ") + QString("LITERA = '%1'").arg(a.getLitera());
     if(a.getAdditional()!="*")
-       filter+=" AND " + QString("ADDITIONAL = '%1'").arg(a.getAdditional());
+       filter+=(filter.isEmpty()?"":" AND ") + QString("ADDITIONAL = '%1'").arg(a.getAdditional());
     if(a.getBuildId()!=0)
-       filter+=" AND " + QString("BUILD_ID = '%1'").arg(a.getBuildId());
+       filter+=(filter.isEmpty()?"":" AND ") + QString("BUILD_ID = '%1'").arg(a.getBuildId());
     if(a.getStreetId()!=0)
-       filter+=" AND " + QString("STREET_ID = '%1'").arg(a.getStreetId());
+       filter+=(filter.isEmpty()?"":" AND ") + QString("STREET_ID = '%1'").arg(a.getStreetId());
+    if(a.isCorrect())
+        filter+=(filter.isEmpty()?"":" AND ") + QString("CORRECT = '1'");
+    else
+        filter+=(filter.isEmpty()?"":" AND ") + QString("CORRECT = '0'");
 
     emit toDebug(objectName(),
                  QString("Устанавливаем фильтр: %1").arg(filter));
     _model->setFilter(filter);
+    emit toDebug(objectName(),
+                 QString("Фильтр установлен: %1").arg(_model->filter()));
 
     emit toDebug(objectName(),
                  QString("Выполняем select"));

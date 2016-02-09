@@ -80,7 +80,7 @@ private:
     QFutureWatcher<void>            _futureWatcherParser;
     QScopedPointer<ListAddress>     _paddr;
     QString                         _csvFileName;
-    QThread                         _thread;
+    QThread                        *_thread;
 
 //    void parsingAddress(Address &a);
 

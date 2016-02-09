@@ -8,6 +8,7 @@
 #include <QtConcurrentRun>
 #include <QFutureWatcher>
 #include <QFuture>
+#include <QThreadPool>
 #include <QProgressDialog>
 #include <QAxObject>
 #include <QMessageBox>
@@ -27,11 +28,30 @@
 
 #define HIDE_PARSED_COLUMNS 1
 
+//#define SHOW_FOUNDED_ITEMS_TO_DEBUG
+
 const int MAX_OPEN_IN_ROWS=0;
 
 namespace Ui {
 class ExcelWidget;
 }
+
+template<typename T>
+class FutureWatcher : public QFutureWatcher<T>
+{
+//    Q_OBJECT
+public:
+    FutureWatcher(QObject * parent = 0) :
+        QFutureWatcher<T>(parent)
+    {
+//        qDebug() << "FutureWatcher";
+    }
+
+    ~FutureWatcher()
+    {
+//        qDebug() << "~FutureWatcher";
+    }
+};
 
 class ExcelWidget : public QWidget
 {
@@ -50,10 +70,11 @@ public:
 public slots:
     void open();
     void search();
+    void search2();
     void stopSearch();
     bool closeTab(); //если есть еще вкладки, то true
     bool save(); //если успешно сохранено, то true
-    void waitSearchThread();
+    void waitSearch();
 
 signals:
     void headReaded(QString sheet, MapAddressElementPosition head);
@@ -78,8 +99,10 @@ signals:
 
     void searchInBase(QString sheetName, int nRow, Address addr);
     void searchInBase2(QString sheetName, int nRow, Address addr, bool findIt);
+
     void startSearchThread(QThread::Priority);
     void finishSearchThread();
+    void waitSearchThread(int msec);
 
     void messageReady(QString);
     void errorOccured(QString nameObject, int code, QString errorDesc);
@@ -101,6 +124,7 @@ private slots:
     void onNotFoundMandatoryColumn(QString sheet, AddressElements ae, QString colName);
 
 //    void onProcessOfSearchFinished();
+    void onFinishSearch();
     void onFounedAddress(QString sheetName, int nRow, Address addr);
     void onNotFounedAddress(QString sheetName, int nRow, Address addr);
 
@@ -140,6 +164,8 @@ private:
     SimpleDelegate *_delegateRepeatFounded;
     QMap<QString, ListAddress > _data2;
     QString _openFilename;
+    QList<FutureWatcher<SearchStruct> *> _listFuture;
+    QThreadPool _threadPool;
 //    ExcelDocument _data;
 //    QThread *_thread;
 
@@ -153,6 +179,10 @@ private:
     void runThreadOpen(QString openFilename);
 
     void removeSheet(QString &sheet);
+    QString getCurrentTime() const
+    {
+        return QDateTime::currentDateTime().toString("hh:mm:ss.zzz");
+    }
 };
 
 #endif // EXCELWIDGET_H

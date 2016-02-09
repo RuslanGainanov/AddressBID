@@ -4,12 +4,14 @@
 DatabaseWidget::DatabaseWidget(QWidget *parent) :
     QWidget(parent),
     _ui(new Ui::DatabaseWidget),
-    _csvFileName(DefaultBaseName)
+    _csvFileName(DefaultBaseName),
+    _thread(nullptr)
 {
     _ui->setupUi(this);
     _db = new Database;
-    _db->moveToThread(&_thread);
-    _thread.start();
+    _thread = new QThread;
+    _db->moveToThread(_thread);
+    _thread->start();
 
 //    connect(_db, SIGNAL(countRows(int)),
 //            this, SLOT(onCountRow(int)));
@@ -64,9 +66,10 @@ DatabaseWidget::~DatabaseWidget()
 {
     qDebug() << " ~DatabaseWidget() <";
     delete _ui;
-    delete _db;
-    _thread.quit();
-    _thread.wait();
+    _thread->quit();
+//    _thread->wait();
+    _db->deleteLater();
+    _thread->deleteLater();
 //    _paddr.take();
     qDebug() << " ~DatabaseWidget() >";
 }

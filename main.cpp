@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 #include <QApplication>
 
-#define PROTECTION_ON
+//#define PROTECTION_ON
 
 int main(int argc, char *argv[])
 {
@@ -17,7 +17,8 @@ int main(int argc, char *argv[])
     QObject::connect(w, &MainWindow::windowClosed, [=](){
 //        qDebug() << "MainWindow::windowClosed emited";
 //        qApp->quit();
-        delete w;
+//        delete w;
+        w->deleteLater();
         exit(0);
     });
     QMessageBox msgBox(QMessageBox::Critical,

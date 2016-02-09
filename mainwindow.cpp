@@ -15,12 +15,14 @@ MainWindow::MainWindow(QWidget *parent) :
     Q_UNUSED(id);
     _dbw = new DatabaseWidget;
     _excel = _ui->_excelWidget;
+//    _debugWidget =_ui->_debugWidget;
+    _debugWidget = new DebugWidget;
     _excel->setObjectName("ExcelWidget");
 
     _helpBrowser = new HelpBrowser(":/doc", "index.htm");
 
     connect(this, SIGNAL(toDebug(QString,QString)),
-            _ui->_debugWidget, SLOT(add(QString,QString)));
+            _debugWidget, SLOT(add(QString,QString)));
 
     connect(_ui->_actionOpenBase, SIGNAL(triggered()),
             this, SLOT(onBaseOpenTriggered()));
@@ -28,9 +30,9 @@ MainWindow::MainWindow(QWidget *parent) :
             this, SLOT(onExcelOpenTriggered()));
 
     connect(_dbw, SIGNAL(toDebug(QString,QString)),
-            _ui->_debugWidget, SLOT(add(QString,QString)));
+            _debugWidget, SLOT(add(QString,QString)));
     connect(_excel, SIGNAL(toDebug(QString,QString)),
-            _ui->_debugWidget, SLOT(add(QString,QString)));
+            _debugWidget, SLOT(add(QString,QString)));
     connect(_excel, SIGNAL(messageReady(QString)),
             this, SLOT(onMessageReady(QString)));
 
@@ -74,9 +76,11 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(_excel, &ExcelWidget::openError,
             this, &MainWindow::onFileError);
 
-    _ui->_debugWidget->hide();
+    _debugWidget->hide();
     _ui->_pushButtonOpenBase->hide();
     _ui->_progressBar->hide();
+    _ui->_pushButtonWait->hide();
+    _ui->_pushButtonStop->hide();
 
     connect(_ui->_actionAbout, SIGNAL(triggered(bool)),
             this, SLOT(showAbout()));
@@ -84,7 +88,7 @@ MainWindow::MainWindow(QWidget *parent) :
             this, SLOT(showHelp()));
 
 //    _dbw->show();
-//    _dbw->openExisting();
+    _dbw->openExisting();
 //    qDebug() << "end constructor MainWindow";
 }
 
@@ -118,9 +122,9 @@ void MainWindow::keyPressEvent(QKeyEvent *pe)
 
 void MainWindow::show()
 {
+//    _dbw->openExisting();
     QMainWindow::show();
 //    _dbw->show();
-    _dbw->openExisting();
 }
 
 void MainWindow::showAbout()
@@ -176,6 +180,7 @@ void MainWindow::on__pushButtonOpenBase_clicked()
 void MainWindow::on__pushButtonSearch_clicked()
 {
     _excel->search();
+//    _excel->search2();
 }
 
 void MainWindow::onStartSearching(const QString &sheet)
@@ -256,7 +261,7 @@ void MainWindow::save()
 void MainWindow::on__pushButtonWait_clicked()
 {
 //    QThread::yieldCurrentThread();
-    _excel->waitSearchThread();
+    _excel->waitSearch();
 }
 
 void MainWindow::on__pushButtonCloseTab_clicked()
