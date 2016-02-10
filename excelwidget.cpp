@@ -194,7 +194,8 @@ QVariant ExcelWidget::openCsvFile(QString filename, int maxCountRows)
     QFile file1(filename);
     if (!file1.open(QIODevice::ReadOnly))
     {
-        qDebug().noquote() << "Ошибка открытия для чтения";
+        emit toDebug(objectName(),
+                QString("Ошибка открытия файла '%1' для чтения").arg(filename));
         return data;
     }
     QTextStream in(&file1);
@@ -544,7 +545,8 @@ void ExcelWidget::search2()
 //            connect(futureWatcher, &FutureWatcher<SearchStruct>::finished,
 //                    futureWatcher, &FutureWatcher<SearchStruct>::deleteLater);
 //            f1 = QtConcurrent::run(Searcher::concSelectAddress, s);
-            futureWatcher->setFuture(QtConcurrent::run(&_threadPool, Searcher::concSelectAddress, s));
+            //TODO: uncomment next row for use this function!
+//            futureWatcher->setFuture(QtConcurrent::run(&_threadPool, Searcher::concSelectAddress, s));
         }
 
         if(!_searchingRows.value(sheetName).isEmpty())
