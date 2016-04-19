@@ -29,7 +29,7 @@ const QString BaseRegPattern =
 const QString PatternForNotCorrect=
         "\"([0-9]*)\";\"([^\"]*)\";\"([0-9]*)\";\"([^\"]*)\";\"([^\"]*)\"";
 
-const int ListAddressMemoryReserve=800000;
+//const int ListAddressMemoryReserve=800000;
 
 enum AddressElements
 {
@@ -169,9 +169,9 @@ const QMap<TypeOfFederalSubject, QString> MapFSubjString {
     {INCORRECT_SUBJ, "inc"}
 };
 
-enum Errors
-{
-    XLS_WORKER_ERROR=1,
-};
+//enum Errors
+//{
+//    XLS_WORKER_ERROR=1,
+//};
 
 #endif // DEFINES_H

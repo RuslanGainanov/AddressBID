@@ -1,6 +1,9 @@
 #include "databasewidget.h"
 #include "ui_databasewidget.h"
 
+ListAddress readFile(QString &filename, int maxCount);
+void parsingAddress(Address &a);
+
 DatabaseWidget::DatabaseWidget(QWidget *parent) :
     QWidget(parent),
     _ui(new Ui::DatabaseWidget),
@@ -13,14 +16,6 @@ DatabaseWidget::DatabaseWidget(QWidget *parent) :
     _db->moveToThread(_thread);
     _thread->start();
 
-//    connect(_db, SIGNAL(countRows(int)),
-//            this, SLOT(onCountRow(int)));
-//    connect(_db, SIGNAL(rowParsed(int)),
-//            this, SLOT(onParseRow(int)));
-//    connect(_db, SIGNAL(rowReaded(int)),
-//            this, SLOT(onReadRow(int)));
-//    connect(_db, SIGNAL(readedRows(int)),
-//            this, SLOT(onReadRows(int)));
     connect(_db, SIGNAL(baseOpening()),
             this, SLOT(onBaseOpening()));
     connect(_db, SIGNAL(baseOpened()),
@@ -74,6 +69,13 @@ DatabaseWidget::~DatabaseWidget()
     qDebug() << " ~DatabaseWidget() >";
 }
 
+
+Database *DatabaseWidget::getDatabase()
+{
+    return _db;
+}
+
+
 void DatabaseWidget::readCsvBase(QString openFilename)
 {
 //    QString currTime=QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss.zzz");
@@ -85,6 +87,13 @@ void DatabaseWidget::readCsvBase(QString openFilename)
                  QString("Открывается файл '%1'.").arg(openFilename));
 
     QString name = QFileInfo(openFilename).fileName();
+    if(!QFileInfo(openFilename).exists())
+    {
+        emit toDebug(objectName(),
+                     QString("Файл '%1' не найден").arg(openFilename));
+        return;
+    }
+
 
     QProgressDialog *dialog = new QProgressDialog;
     dialog->setWindowTitle(trUtf8("Обработка базы (1/3)"));
@@ -102,14 +111,8 @@ void DatabaseWidget::readCsvBase(QString openFilename)
     QObject::connect(&_futureWatcher, SIGNAL(finished()),
                      dialog, SLOT(hide()));
 
-    CsvWorker *csv = new CsvWorker;
-    QObject::connect(&_futureWatcher, SIGNAL(finished()),
-                     csv, SLOT(deleteLater()));
-    connect(csv, SIGNAL(toDebug(QString,QString)),
-            SIGNAL(toDebug(QString,QString)));
-
-    QFuture<ListAddress> f1 = QtConcurrent::run(csv,
-                                         &CsvWorker::readFile,
+    QFuture<ListAddress> f1 = QtConcurrent::run(
+                                         readFile,
                                          openFilename,
                                          MAX_OPEN_ROWS);
     // Start the computation.
@@ -120,6 +123,38 @@ void DatabaseWidget::readCsvBase(QString openFilename)
 //    qDebug().noquote() << "readCsvBase END"
 //             << currTime
 //             << this->thread()->currentThreadId();
+}
+
+ListAddress readFile(QString &openFilename, int maxCount)
+{
+    QFile file1(openFilename);
+    if (!file1.open(QIODevice::ReadOnly))
+        return ListAddress();
+    ListAddress addrs;
+    QTextStream in(&file1);
+    QTextCodec *defaultTextCodec = QTextCodec::codecForName("Windows-1251");
+    if (defaultTextCodec)
+      in.setCodec(defaultTextCodec);
+    int nRow=0;
+    while (!in.atEnd())
+    {
+        QString line = in.readLine();
+        if(!line.isEmpty())
+        {
+            if(nRow>0)
+            {
+                Address a;
+                a.setRawAddress(line);
+                addrs.append(a);
+            }
+            nRow++;
+        }
+        //оставливаем обработку если получено нужное количество строк
+        if(maxCount>0 && nRow >= maxCount)
+            break;
+    }
+    file1.close();
+    return addrs;
 }
 
 void parsingAddress(Address &a)
@@ -295,10 +330,6 @@ void DatabaseWidget::onProcessOfParsingFinished()
     {
         emit toDebug(objectName(),
                      QString("Обработка прочитанного файла завершена неудачей."));
-//        emit toDebug(objectName(),
-//                     QString("finish parsing bad, size=%1")
-//                     .arg(QString::number(_addrs.size()))
-//                     );
     }
 }
 
@@ -387,48 +418,10 @@ void DatabaseWidget::openExisting()
     }
 }
 
-void DatabaseWidget::clear()
-{
-
-}
-
-//void DatabaseWidget::waitSearch()
-//{
-//    _thread.start();
-//}
-
-void DatabaseWidget::viewInfo()
-{
-
-}
-
 void DatabaseWidget::on__pushButtonOpen_clicked()
 {
     open();
 }
-
-//void DatabaseWidget::onReadRow(int row)
-//{
-//    _ui->_progressBarReaded->setValue(row+1);
-//}
-
-//void DatabaseWidget::onReadRows(int rows)
-//{
-//    _ui->_progressBarReaded->setMaximum(rows);
-//    _ui->_progressBarParsed->setMaximum(rows);
-//}
-
-//void DatabaseWidget::onParseRow(int row)
-//{
-//    _ui->_progressBarParsed->setValue(row+1);
-//}
-
-//void DatabaseWidget::onCountRow(int count)
-//{
-//    _ui->_progressBarReaded->reset();
-//    _ui->_progressBarReaded->setMaximum(count);
-//    _ui->_progressBarParsed->setMaximum(count);
-//}
 
 void DatabaseWidget::onBaseOpening()
 {
@@ -450,11 +443,6 @@ void DatabaseWidget::onBaseOpened()
 
     _ui->_pushButtonOpen->setEnabled(true);
     _ui->_pushButtonFindParsAddr->setEnabled(true);
-//    _ui->_pushButtonLoadOld->setEnabled(true);
-//    _ui->_progressBarReaded->setMaximum(1);
-//    _ui->_progressBarParsed->setMaximum(1);
-//    _ui->_progressBarReaded->setValue(1);
-//    _ui->_progressBarParsed->setValue(1);
 }
 
 void DatabaseWidget::on__pushButtonFindParsAddr_clicked()

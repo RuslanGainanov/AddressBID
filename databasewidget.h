@@ -12,7 +12,6 @@
 #include <QMessageBox>
 #include "database.h"
 #include "defines.h"
-#include "csvworker.h"
 #include "xlsparser.h"
 
 namespace Ui {
@@ -30,36 +29,40 @@ class DatabaseWidget : public QWidget
 public:
     explicit DatabaseWidget(QWidget *parent = 0);
     ~DatabaseWidget();
-    Database *getDatabase()
-    {
-        return _db;
-    }
+    Database *getDatabase();
 
-public slots:
+public slots:    
+    /**
+     * \fn bool open();
+     * \brief Производит парсинг и открытие БД из csv-файла.
+     * \return  статус открытия БД
+     */
     bool open();
+
+    /**
+     * \fn void openExisting(QString fname);
+     * \brief Производит открытие сохраненной и распарсенной БД из файла DefaultBaseName.
+     */
     void openExisting();
+
+    /**
+     * \fn void openExisting(QString fname);
+     * \brief Сигнал отправляемый при изменении модели.
+     * \param[in]    count    новое количество строк в модели
+     */
     void openExisting(QString fname);
-    void clear();
-    void viewInfo();
-//    void waitSearch();
 
 private slots:
-//    void onReadRow(int row);
-//    void onReadRows(int rows);
-//    void onParseRow(int row);
-//    void onCountRow(int count);
     void onBaseOpening();
     void onBaseOpened();
-    void readCsvBase(QString openFilename);
     void onFindButtonClicked();
     void onParseButtonClicked();
     void onClearButtonClicked();
     void onSelectedRows(int count);
-
-    void on__pushButtonOpen_clicked();
     void onProcessOfOpenFinished();
     void onProcessOfParsingFinished();
 
+    void on__pushButtonOpen_clicked();
     void on__pushButtonParseAddr_clicked();
     void on__pushButtonFindParsAddr_clicked();
     void on__pushButtonClear_clicked();
@@ -82,8 +85,7 @@ private:
     QString                         _csvFileName;
     QThread                        *_thread;
 
-//    void parsingAddress(Address &a);
-
+    void readCsvBase(QString openFilename);
 };
 
 #endif // DATABASEWIDGET_H

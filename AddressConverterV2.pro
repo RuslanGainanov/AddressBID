@@ -19,7 +19,6 @@ SOURCES += main.cpp\
     address.cpp \
     database.cpp \
     databasewidget.cpp \
-    csvworker.cpp \
     debugwidget.cpp \
     excelwidget.cpp \
     xlsparser.cpp \
@@ -34,7 +33,6 @@ HEADERS  += mainwindow.h \
     address.h \
     database.h \
     databasewidget.h \
-    csvworker.h \
     debugwidget.h \
     excelwidget.h \
     xlsparser.h \
