@@ -1,9 +1,3 @@
-#-------------------------------------------------
-#
-# Project created by QtCreator 2015-11-17T20:48:33
-#
-#-------------------------------------------------
-
 QT       += core gui sql axcontainer concurrent
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
@@ -66,4 +60,6 @@ DISTFILES += \
     doc/img/image008.png \
     doc/img/image009.png \
     doc/img/image010.png \
-    README.txt
+    README.txt \
+    README.md \
+    deploy/AddressBID_setup_v2.iss

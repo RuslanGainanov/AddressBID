@@ -1,8 +1,3 @@
-; -- Example1.iss --
-; Demonstrates copying 3 files and creating an icon.
-
-; SEE THE DOCUMENTATION FOR DETAILS ON CREATING .ISS SCRIPT FILES!
-
 [Setup]
 AppName=AddressBID
 AppVersion=2.0
@@ -11,7 +6,6 @@ DefaultGroupName=AddressBID
 UninstallDisplayIcon={app}\AddressBID.exe
 Compression=lzma2
 SolidCompression=yes
-; OutputDir=userdocs:Inno Setup Examples Output
 
 [Files]
 Source: "AddressBID.exe"; DestDir: "{app}"

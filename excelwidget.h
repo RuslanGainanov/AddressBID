@@ -26,8 +26,10 @@
 #include "searcher.h"
 #include "parseexcelwidget.h"
 
+/// Cкрывать столбец с распарсенным элементами
 #define HIDE_PARSED_COLUMNS 1
 
+/// Отправить найденные элементы отладчику
 //#define SHOW_FOUNDED_ITEMS_TO_DEBUG
 
 const int MAX_OPEN_IN_ROWS=0;
@@ -37,22 +39,13 @@ class ExcelWidget;
 }
 
 template<typename T>
-class FutureWatcher : public QFutureWatcher<T>
-{
-//    Q_OBJECT
-public:
-    FutureWatcher(QObject * parent = 0) :
-        QFutureWatcher<T>(parent)
-    {
-//        qDebug() << "FutureWatcher";
-    }
+class FutureWatcher;
 
-    ~FutureWatcher()
-    {
-//        qDebug() << "~FutureWatcher";
-    }
-};
-
+// ********************* class ExcelWidget ********************
+/**
+ * \class ExcelWidget
+ * \brief Основной класс, производящий всю работу над самим документом с адресами (Excel, csv)
+ */
 class ExcelWidget : public QWidget
 {
     Q_OBJECT
@@ -182,6 +175,22 @@ private:
     QString getCurrentTime() const
     {
         return QDateTime::currentDateTime().toString("hh:mm:ss.zzz");
+    }
+};
+
+template<typename T>
+class FutureWatcher : public QFutureWatcher<T>
+{
+public:
+    FutureWatcher(QObject * parent = 0) :
+        QFutureWatcher<T>(parent)
+    {
+//        qDebug() << "FutureWatcher";
+    }
+
+    ~FutureWatcher()
+    {
+//        qDebug() << "~FutureWatcher";
     }
 };
 

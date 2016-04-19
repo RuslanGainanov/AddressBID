@@ -7,6 +7,11 @@ namespace Ui {
 class HelpBrowser;
 }
 
+// ********************* class HelpBrowser ********************
+/**
+ * \class HelpBrowser
+ * \brief Класс для работы со справкой
+ */
 class HelpBrowser : public QWidget
 {
     Q_OBJECT

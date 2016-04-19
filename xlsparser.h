@@ -5,6 +5,11 @@
 #include "defines.h"
 #include "address.h"
 
+// ********************* class XlsParser ********************
+/**
+ * \class XlsParser
+ * \brief Класс, парсинг прочитанной строки Excel-файла
+ */
 class XlsParser : public QObject
 {
     Q_OBJECT
@@ -13,8 +18,6 @@ public:
     ~XlsParser();
 
 signals:
-//    void finished();
-//    void sheetParsed(QString sheet);
     void rowParsed(QString sheet, int row, Address addr);
 
 public slots:
@@ -24,12 +27,9 @@ public slots:
                    const int &rowNumber,
                    const QStringList &row);
     void parseAddress(QString &str, Address &a);
-//    void onIsOneColumn(bool b);
 
 private:
     QMap<QString, MapAddressElementPosition> _mapHead;
-//    bool _error;
-
     bool parseObject(QString &str, QString &result, QString regPattern, int regCap);
     bool parseObject(QString &str, QStringList &result, QString regPattern);
 };

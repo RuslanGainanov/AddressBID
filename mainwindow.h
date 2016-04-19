@@ -10,12 +10,15 @@
 #include "debugwidget.h"
 #include "helpbrowser.h"
 
-typedef QList< Address > ListAddress;
-
 namespace Ui {
 class MainWindow;
 }
 
+// ********************* class MainWindow ********************
+/**
+ * \class MainWindow
+ * \brief Главный класс-виджет
+ */
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -45,8 +48,8 @@ private slots:
     void on__pushButtonSearch_clicked();
     void on__pushButtonWait_clicked();
     void on__pushButtonCloseTab_clicked();
+    void on__pushButtonStop_clicked();
 
-    void save();
     void onStartSearching(const QString &sheet);
     void onFinishSearching(const QString &sheet);
     void onSheetParsed(const QString &sheet);
@@ -55,8 +58,7 @@ private slots:
     void onFileError(const QString &fname);
     void showAbout();
     void showHelp();
-
-    void on__pushButtonStop_clicked();
+    void save();
 
 private:
     Ui::MainWindow *_ui;

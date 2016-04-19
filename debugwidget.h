@@ -6,17 +6,24 @@
 #include <QTextStream>
 #include "defines.h"
 
+/// Отправлять отладочные сообщения в файл
+#define DEBUG_TO_FILE
+
 const QString LogFileName = "Log1.txt";
 const int LogOpenMode (
         QIODevice::WriteOnly | QIODevice::Text | /*QIODevice::Truncate | */QIODevice::Append
         );
 
-#define DEBUG_TO_FILE
 
 namespace Ui {
 class DebugWidget;
 }
 
+// ********************* class DebugWidget ********************
+/**
+ * \class DebugWidget
+ * \brief Класс для сохранения и показа отладочных сообщений
+ */
 class DebugWidget : public QWidget
 {
     Q_OBJECT

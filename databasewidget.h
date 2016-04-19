@@ -42,13 +42,15 @@ public slots:
     /**
      * \fn void openExisting(QString fname);
      * \brief Производит открытие сохраненной и распарсенной БД из файла DefaultBaseName.
+     *
+     * Если DefaultBaseName отсутсвует, то отображает окно с выбором дальнейших действий
      */
     void openExisting();
 
     /**
      * \fn void openExisting(QString fname);
-     * \brief Сигнал отправляемый при изменении модели.
-     * \param[in]    count    новое количество строк в модели
+     * \brief Производит открытие сохраненной и распарсенной БД из файла fname.
+     * \param[in]    fname    имя распарсенной БД (.db)
      */
     void openExisting(QString fname);
 
@@ -87,5 +89,23 @@ private:
 
     void readCsvBase(QString openFilename);
 };
+
+
+/**
+ * \fn ListAddress readFile(QString &filename, int maxCount);
+ * \brief Производит чтение заданного количества строк из БД (csv-файла)
+ * \param[in]    filename    имя csv-файла
+ * \param[in]    maxCount    число строк, которое необходимо прочитать (0 - читать все)
+ */
+ListAddress readFile(QString &filename, int maxCount);
+
+/**
+ * \fn void parsingAddress(Address &a);
+ * \brief Производит парсинг адреса по паттерну BaseRegPattern.
+ * \param[in/out]    a    адрес
+ *
+ * Значение адреса для обработки берется из getRawAddressString()
+ */
+void parsingAddress(Address &a);
 
 #endif // DATABASEWIDGET_H

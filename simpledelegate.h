@@ -9,6 +9,12 @@ const QString FoundedColor = "#33FF66";         ///< цвет строки дл�
 const QString NotFoundedColor = "#FFA07A";      ///< цвет строки для которой не найден BID в базе
 const QString RepeatFoundedColor = "#FFCC33";   ///< цвет строки для которой найдено >1 BID в базе
 
+
+// ********************* class SimpleDelegate ********************
+/**
+ * \class SimpleDelegate
+ * \brief Вспомогательный класс, выполняющий выделение строк, которые были найдены или не найдены в БД
+ */
 class SimpleDelegate : public QStyledItemDelegate
 {
 public:

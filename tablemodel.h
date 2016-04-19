@@ -5,6 +5,11 @@
 #include <QDebug>
 typedef QList< QStringList > ExcelSheet;
 
+// ********************* class TableModel ********************
+/**
+ * \class TableModel
+ * \brief Вспомогательный класс-модель, хранит данные из Excel-файла
+ */
 class TableModel : public QAbstractTableModel
 {
     Q_OBJECT

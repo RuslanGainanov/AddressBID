@@ -8,6 +8,11 @@ namespace Ui {
 class ParseExcelWidget;
 }
 
+// ********************* class ParseExcelWidget ********************
+/**
+ * \class ParseExcelWidget
+ * \brief Класс-виджет для чтения и работы с распарсенным адресом из загруженого Excel-файла
+ */
 class ParseExcelWidget : public QWidget
 {
     Q_OBJECT
@@ -40,8 +45,6 @@ private slots:
 private slots:
     void saveData();
     void clearData();
-
-
     void on_pushButtonShowCity2_clicked();
 
 private:

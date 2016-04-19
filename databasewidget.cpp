@@ -1,8 +1,6 @@
 #include "databasewidget.h"
 #include "ui_databasewidget.h"
 
-ListAddress readFile(QString &filename, int maxCount);
-void parsingAddress(Address &a);
 
 DatabaseWidget::DatabaseWidget(QWidget *parent) :
     QWidget(parent),
