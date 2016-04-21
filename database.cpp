@@ -360,6 +360,8 @@ void Database::selectAddress(Address a)
     QString filter;
     if(a.getTypeOfFSubj()!=INCORRECT_SUBJ)
         filter+=(filter.isEmpty()?"":" AND ") + QString("TYPE_OF_FSUBJ = '%1'").arg(a.getTypeOfFSubjInString());
+    else
+        filter+=(filter.isEmpty()?"":" AND ") + QString("TYPE_OF_FSUBJ = 'inc'");
     if(a.getFsubj()!="*")
        filter+=(filter.isEmpty()?"":" AND ") + QString("FSUBJ = '%1'").arg(a.getFsubj());
     if(a.getDistrict()!="*")
