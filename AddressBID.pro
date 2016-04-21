@@ -2,7 +2,7 @@ QT       += core gui sql axcontainer concurrent
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-TARGET = AddressConverterV2
+TARGET = AddressBID
 TEMPLATE = app
 
 #DEFINES += QT_NO_DEBUG_OUTPUT
@@ -62,4 +62,5 @@ DISTFILES += \
     doc/img/image010.png \
     README.txt \
     README.md \
-    deploy/AddressBID_setup_v2.iss
+    deploy/AddressBID_setup_v2.iss \
+    deploy/deploy.cmd
