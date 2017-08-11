@@ -8,7 +8,7 @@
 
 Пройден весь этап разработки ПО - от сбора требований до этапа внедрения в эксплуатацию.
 
-Установочный файл программы доступен по адресу: <a href='http://bit.ly/AddressBID_setup'>bit.ly/AddressBID_setup</a>
+Установочный файл программы доступен по адресу: <a href='https://www.dropbox.com/s/bz7tp7pgu8pr579/AddressBID_v2_setup.exe'>AddressBID_setup</a>
 
 Создано по заказу и при поддержке компании <a href='http://rt.ru'>АО Ростелеком</a> (2015-2016 гг.).
 ![MainScreen](images/GIF_IMAGE.gif)
